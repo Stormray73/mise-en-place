@@ -37,7 +37,7 @@
     "@types/node": "^22.13.5",
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^9.21.0",
     "eslint-config-next": "16.2.4",
     "husky": "^9.1.7",

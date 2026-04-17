@@ -1,5 +1,4 @@
 import "@testing-library/jest-dom";
-import { vi } from "vitest";
 
 // Add any global test setup here
 // For example, mocking the Next.js router:
