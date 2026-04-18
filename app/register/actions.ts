@@ -40,6 +40,7 @@ export async function registerUser(data: RegisterData) {
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {
       throw error;
     }
+    console.error("Registration error:", error);
     return { error: "A database error occurred. Please try again later." };
   }
 }
