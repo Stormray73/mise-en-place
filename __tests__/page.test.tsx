@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import Home from "../app/page";
 import { expect, test } from "vitest";
 
-test("Home page renders deploy link", () => {
+test("Home page renders Get Started link", () => {
   render(<Home />);
-  const deployLink = screen.getByRole("link", { name: /Deploy Now/i });
-  expect(deployLink).toBeInTheDocument();
+  const getStartedLink = screen.getByRole("link", { name: /Get Started/i });
+  expect(getStartedLink).toBeInTheDocument();
 });
