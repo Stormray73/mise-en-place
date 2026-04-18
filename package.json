@@ -6,7 +6,7 @@
     "dev": "concurrently \"npm run dev:prisma\" \"npm run dev:next\"",
     "dev:next": "next dev",
     "dev:prisma": "prisma dev",
-    "build": "next build",
+    "build": "prisma db push && next build",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
