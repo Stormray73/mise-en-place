@@ -1,0 +1,30 @@
+{
+  "name": "Next.js & Gemini Workspace",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    // Adds common CLI tools and power-user shell features
+    "ghcr.io/devcontainers/features/common-utils:2": {},
+    // Adds PostgreSQL database server
+    "ghcr.io/devcontainers/features/postgres:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "google.gemini-code-assist", // The official VS Code extension
+        "Prisma.prisma" // Prisma extension for schema editing
+      ]
+    }
+  },
+  "forwardPorts": [3000, 5432],
+  "containerEnv": {
+    "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/postgres",
+    "AUTH_SECRET": "your-development-secret-key-change-in-production"
+  },
+  "postCreateCommand": "npm install && npx prisma db push",
+  "remoteUser": "node"
+}
