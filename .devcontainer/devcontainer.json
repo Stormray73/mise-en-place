@@ -5,9 +5,7 @@
   },
   "features": {
     // Adds common CLI tools and power-user shell features
-    "ghcr.io/devcontainers/features/common-utils:2": {},
-    // Adds PostgreSQL database server
-    "ghcr.io/devcontainers/features/postgres:1": {}
+    "ghcr.io/devcontainers/features/common-utils:2": {}
   },
   "customizations": {
     "vscode": {
@@ -25,6 +23,6 @@
     "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/postgres",
     "AUTH_SECRET": "your-development-secret-key-change-in-production"
   },
-  "postCreateCommand": "npm install && npx prisma db push",
+  "postCreateCommand": "sudo service postgresql start && sudo -u postgres psql -c \"ALTER USER postgres PASSWORD 'postgres';\" && npm install && npx prisma db push",
   "remoteUser": "node"
 }
