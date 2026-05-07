@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   allowedDevOrigins: [
-    "nextjs--mep--stormray73--snkh7hl1plq0m.pit-1.try.coder.app",
+    "nextjs--rocinante--stormray73--6vu1nsa91nhr0.pit-1.try.coder.app",
   ],
 };
 

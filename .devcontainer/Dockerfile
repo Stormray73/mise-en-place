@@ -16,3 +16,6 @@ RUN npm install -g vercel
 
 # Set the working directory
 WORKDIR /workspaces/mise-en-place
+
+# Install Playwright dependencies
+RUN npx playwright install-deps

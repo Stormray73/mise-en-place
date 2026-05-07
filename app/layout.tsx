@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
+import { SessionProvider } from "next-auth/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,8 +30,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-black text-white font-sans">
-        <Header />
-        <main className="flex-1 flex flex-col">{children}</main>
+        <SessionProvider>
+          <Header />
+          <main className="flex-1 flex flex-col">{children}</main>
+        </SessionProvider>
       </body>
     </html>
   );

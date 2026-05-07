@@ -35,12 +35,6 @@ export default async function Header() {
           ) : (
             <>
               <Link
-                href="/register"
-                className="text-sm font-medium text-zinc-400 transition-colors hover:text-white"
-              >
-                Register
-              </Link>
-              <Link
                 href="/login"
                 className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-zinc-200"
               >

@@ -15,7 +15,7 @@ export default function Home() {
         <div className="mt-12 flex flex-col gap-4 sm:flex-row">
           <a
             className="flex h-14 items-center justify-center rounded-full bg-white px-8 text-base font-semibold text-black transition-all hover:bg-zinc-200"
-            href="/register"
+            href="/login"
           >
             Get Started
           </a>
