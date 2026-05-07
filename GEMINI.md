@@ -24,4 +24,5 @@ Mise-en-place is a Next.js web application designed for chefs who want to stream
 - **TDD Mandatory:** All new features must be developed using Test-Driven Development.
 - **Strict Linting:** No linting errors are permitted in pushed code.
 - **Pre-push Hooks:** All tests and linters MUST pass locally before a push is allowed.
+- **Dependency Security:** If any dependencies are added, updated, or removed, `npm audit` MUST be run and pass (zero high/moderate vulnerabilities) before committing and pushing changes.
 - **Modular Context:** Keep documentation focused and split across the files linked above to minimize agent context overhead.
