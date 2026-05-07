@@ -17,60 +17,94 @@ Chefs need a highly flexible system that reflects real-world kitchens where sub-
 
 ## Proposed Solution: Architecture & Schema
 
-To support recursive recipes, we will use a polymorphic-like design or a unified "Item" model.
+To support recursive recipes, we will use a unified "Item" concept in the join table.
 **Draft Schema Concept:**
 
-- `Recipe`: Contains title, yield amount, yield unit, manual macros.
+- `Recipe`: Contains title, yield amount, yield unit, manual macros, and `userId` (relation to User).
 - `RecipeStep`: Belongs to Recipe. Contains instruction text and optional explicit `timerInSeconds`.
 - `Ingredient`: A base ingredient (e.g., "Flour"), linked to a USDA FoodData ID and base macros.
 - `RecipeComponent`: The join table. Links a parent `Recipe` to EITHER a base `Ingredient` OR a child `Recipe`. Contains quantity and unit.
 
 ## Implementation Steps (Stories)
 
+### Story 0: Secure USDA API Proxy
+
+As a developer, I want a secure way to access the USDA API so that my API key is not exposed on the client.
+
+- **AC 1:** Create a Next.js API Route (e.g., `/api/usda/search`) that proxies requests to the USDA FoodData Central API.
+- **AC 2:** Use the `USDA_API_KEY` environment variable on the server side.
+- **E2E Verification:**
+  1.  Call the proxy endpoint from a test script and verify it returns a successful response from USDA when the key is present.
+
+### Story 0.5: User Ownership & Tenancy
+
+As a chef, I want my recipes to be linked to my account so that only I can see and manage them.
+
+- **AC 1:** The `Recipe` model in `schema.prisma` is updated to include a `userId` field with a relation to the `User` model.
+- **AC 2:** All recipe creation logic automatically associates the new recipe with the currently authenticated user.
+- **AC 3:** Any list views (like a dashboard) only display recipes belonging to the logged-in user.
+- **E2E Verification:**
+  1.  Login as User A and create a recipe.
+  2.  Logout and login as User B.
+  3.  Verify that User B cannot see or edit User A's recipe.
+
 ### Story 1: Core Recipe & Recursive Schema Foundation
 
-As a chef, I want to create recipes and use other recipes as ingredients so that I can build complex dishes from sub-components (like sauces).
+As a chef, I want to create recipes and use other recipes as ingredients so that I can build complex dishes from sub-components.
 
-- **AC 1:** A user can create a Recipe with a title, description, total yield amount, and yield unit.
-- **AC 2:** A user can add a base Ingredient to a Recipe with a specific quantity and unit.
-- **AC 3:** A user can add an existing Recipe as an ingredient to a new Recipe, provided the child recipe has a defined total yield.
-- **AC 4:** Attempting to add a child Recipe that lacks a defined yield will display an error message.
+- **AC 1:** A user can create a Recipe with a title, yield amount, and yield unit.
+- **AC 2:** A user can add an existing Recipe as an ingredient to a new Recipe.
+- **AC 3:** Prevent circular dependencies (a recipe cannot contain itself).
+- **E2E Verification:**
+  1.  Login and navigate to the Recipe Creator.
+  2.  Create "Tomato Sauce" (Yield: 1L).
+  3.  Create "Marinara" and add 500ml of "Tomato Sauce" as an ingredient.
+  4.  Verify the Marinara recipe successfully saves and displays the nested component.
 
 ### Story 2: Robust Unit Conversion Engine
 
-As a chef, I want my ingredients to automatically convert between measurements so that they map correctly to USDA data and other recipes.
+As a chef, I want my ingredients to automatically convert between measurements so the math is handled for me.
 
-- **AC 1:** A utility function can successfully convert between standard volume units (tsp, tbsp, cup, ml, L).
-- **AC 2:** A utility function can successfully convert between standard mass units (oz, lb, g, kg).
-- **AC 3:** When a child Recipe is used as an ingredient, the system correctly calculates the ratio of the required quantity against the child Recipe's total yield (assuming compatible units).
+- **AC 1:** Utility function handles Mass (g, kg, oz, lb) and Volume (ml, L, tsp, tbsp, cup).
+- **AC 2:** System correctly calculates the ratio: `(Component Quantity) / (Child Recipe Total Yield)`.
+- **E2E Verification:**
+  1.  Create a recipe requiring 2 tbsp of a child recipe that yields 1 cup total.
+  2.  Verify the UI correctly calculates that this is 0.125x (1/8th) of the child recipe.
 
 ### Story 3: USDA Integration & Macro Calculation
 
-As a chef, I want to automatically calculate nutritional macros for my recipes based on USDA data, with the option to manually override them.
+As a chef, I want to automatically calculate nutritional macros based on USDA data.
 
-- **AC 1:** A backend service can fetch and map nutritional data from the USDA API using the provided API key.
-- **AC 2:** The total macros for a Recipe are automatically calculated by summing the converted macros of all base Ingredients and child Recipes.
-- **AC 3:** A user can input manual macro overrides on a Recipe, which take precedence over the calculated totals.
+- **AC 1:** Search interface allows selecting ingredients from the USDA FoodData Central API.
+- **AC 2:** Total macros for a Recipe are calculated by summing converted macros of all components.
+- **AC 3:** Manual macro overrides take precedence over calculated totals.
+- **E2E Verification:**
+  1.  Add "Olive Oil" to a recipe via the USDA search.
+  2.  Verify the "Nutrition Facts" panel on the recipe page reflects the data fetched from the API.
 
 ### Story 4: Active "Play" Mode & Timers
 
-As a chef, I want to activate a "Play" mode for a recipe that guides me step-by-step and tracks my cooking timers.
+As a chef, I want a "Play" mode that guides me step-by-step with active timers.
 
-- **AC 1:** A "Play" view displays one RecipeStep at a time, along with the ingredients required for that specific step.
-- **AC 2:** Steps with an explicit timer field display a startable countdown timer.
-- **AC 3:** When a user navigates to the next or previous step, any active timers from other steps continue to count down in the background (state persists across step navigation).
-- **AC 4:** (UI Enhancement) The step instruction text visually highlights mentioned times (e.g., "5 minutes") as a tooltip hint for setting timers.
+- **AC 1:** Stepper UI displays one step at a time with its required ingredients.
+- **AC 2:** Active timers persist in the background when navigating between steps.
+- **E2E Verification:**
+  1.  Enter "Play" mode for a recipe with a 5-minute timer on Step 1.
+  2.  Start the timer and navigate to Step 2.
+  3.  Verify the timer is still visible and counting down in the UI (e.g., in a persistent header).
 
-### Story 5: Recipe Editing
+### Story 5: Recipe Editing & Lifecycle
 
-As a chef, I want to edit my existing recipes so that I can refine them over time or correct mistakes.
+As a chef, I want to refine my recipes over time.
 
-- **AC 1:** A user can navigate to an edit view for any recipe they own.
-- **AC 2:** The user can add, remove, or modify ingredients, quantities, and steps.
-- **AC 3:** Saving the edits updates the recipe and automatically triggers a recalculation of its total macros.
+- **AC 1:** Edit view allows modifying ingredients, quantities, and steps.
+- **AC 2:** Edits trigger an immediate recalculation of total macros.
+- **E2E Verification:**
+  1.  Edit an existing recipe and double the quantity of an ingredient.
+  2.  Verify the total calories and macros for the recipe have doubled accordingly.
 
-## Verification & Testing
+## Verification & Testing Standards
 
-- **TDD Requirement:** All stories must be developed test-first using Vitest and React Testing Library.
-- **Mocking:** The USDA API must be mocked during tests to prevent rate-limiting and ensure deterministic test results.
-- **Complex Edge Case:** Write specific tests verifying the macro math when a child recipe (Yield: 4 cups) is used as an ingredient (Quantity: 2 tbsp) in a parent recipe.
+- **TDD Mandatory:** Write Vitest/RTL tests for all logic and components before implementation.
+- **E2E Coverage:** Every story must be verified by a Playwright test as defined above.
+- **Mocking:** USDA API and NextAuth sessions MUST be mocked for deterministic test runs.
