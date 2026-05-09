@@ -108,3 +108,32 @@ As a chef, I want to refine my recipes over time.
 - **TDD Mandatory:** Write Vitest/RTL tests for all logic and components before implementation.
 - **E2E Coverage:** Every story must be verified by a Playwright test as defined above.
 - **Mocking:** USDA API and NextAuth sessions MUST be mocked for deterministic test runs.
+
+## Execution Plan
+
+This feature will be implemented in four sequential phases to ensure a stable foundation before building complex UI interactions.
+
+### Phase 1: Foundation & Data Layer (Stories 0, 0.5, 1)
+
+- **USDA Proxy:** Implement `app/api/usda/search/route.ts` and verify with a simple E2E test.
+- **Schema Update:** Modify `prisma/schema.prisma` to include `Recipe`, `Ingredient`, `RecipeStep`, and `RecipeComponent`.
+- **Tenancy Logic:** Implement server-side logic to ensure `userId` is enforced on all Recipe operations.
+- **Recursive Integrity:** Implement the backend service to save recipes and prevent circular dependencies.
+
+### Phase 2: Core Logic & Services (Stories 2, 3)
+
+- **Unit Engine:** Build a standalone, heavily unit-tested utility for mass and volume conversions.
+- **Macro Aggregator:** Create a service that recursively sums macros from ingredients and child recipes.
+- **USDA Integration:** Connect the search UI to the proxy and map USDA fields to our internal `Ingredient` model.
+
+### Phase 3: UI & Cooking Experience (Stories 4, 5)
+
+- **Recipe Editor:** Build a dynamic form allowing users to add/remove steps and components (ingredients or child recipes).
+- **Interactive "Play" Mode:** Implement the stepper UI and persistent timer logic using a global state manager or persistent layout.
+- **Lifecycle Management:** Enable editing of existing recipes with immediate macro updates.
+
+### Phase 4: Hardening & Validation
+
+- **Full E2E Suite:** Ensure all 6 verification paths defined in the stories are passing.
+- **Performance:** Test recursion depth limits (e.g., 5 levels of nested recipes) to ensure calculation speed is acceptable.
+- **Security Audit:** Confirm `userId` cannot be spoofed to access other users' recipes.

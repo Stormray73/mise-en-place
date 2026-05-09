@@ -42,6 +42,7 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  recipes       Recipe[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -52,4 +53,48 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Recipe {
+  id          String   @id @default(cuid())
+  title       String
+  yieldAmount Float
+  yieldUnit   String
+  manualMacros Json? // To store manual macro overrides
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps       RecipeStep[]
+  components  RecipeComponent[] @relation("ParentRecipe")
+  parentComponents RecipeComponent[] @relation("ChildRecipe")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RecipeStep {
+  id             String  @id @default(cuid())
+  order          Int
+  instruction    String
+  timerInSeconds Int?
+  recipeId       String
+  recipe         Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+model Ingredient {
+  id           String   @id @default(cuid())
+  name         String
+  usdaId       String?  // USDA FoodData ID
+  baseMacros   Json?    // Macros from USDA
+  components   RecipeComponent[]
+}
+
+model RecipeComponent {
+  id            String      @id @default(cuid())
+  quantity      Float
+  unit          String
+  recipeId      String      // The parent recipe
+  recipe        Recipe      @relation(fields: [recipeId], references: [id], name: "ParentRecipe", onDelete: Cascade)
+  ingredientId  String?     // Link to base ingredient
+  ingredient    Ingredient? @relation(fields: [ingredientId], references: [id])
+  childRecipeId String?     // Link to sub-recipe
+  childRecipe   Recipe?     @relation("ChildRecipe", fields: [childRecipeId], references: [id])
 }
