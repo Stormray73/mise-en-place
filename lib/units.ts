@@ -42,6 +42,8 @@ export function canConvert(from: string, to: string): boolean {
 }
 
 export function convert(value: number, from: string, to: string): number {
+  if (from === to) return value;
+
   const fromUnit = UNITS[from];
   const toUnit = UNITS[to];
 

@@ -82,8 +82,9 @@ model RecipeStep {
 model Ingredient {
   id           String   @id @default(cuid())
   name         String
-  usdaId       String?  // USDA FoodData ID
+  usdaId       String?  @unique // USDA FoodData ID
   baseMacros   Json?    // Macros from USDA
+  baseAmount   Float?   // Base amount for macros (usually 100)
   components   RecipeComponent[]
 }
 
