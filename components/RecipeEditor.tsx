@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { saveRecipeAction } from "@/app/recipes/actions";
 import { useRouter } from "next/navigation";
 import { getUnits } from "@/lib/units";
@@ -36,6 +36,9 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
   const [yieldUnit, setYieldUnit] = useState(
     initialData?.yieldUnit || "servings",
   );
+  const [servings, setServings] = useState<number | undefined>(
+    initialData?.servings || undefined,
+  );
   const [steps, setSteps] = useState<RecipeSaveData["steps"]>(
     initialData?.steps || [],
   );
@@ -49,6 +52,43 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
     RecipeSearchResult[]
   >([]);
   const [isSearchingRecipes, setIsSearchingRecipes] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const usdaSearchRef = useRef<HTMLDivElement>(null);
+  const recipeSearchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        usdaSearchRef.current &&
+        !usdaSearchRef.current.contains(event.target as Node)
+      ) {
+        setSearchResults([]);
+      }
+      if (
+        recipeSearchRef.current &&
+        !recipeSearchRef.current.contains(event.target as Node)
+      ) {
+        setRecipeSearchResults([]);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setSearchResults([]);
+        setRecipeSearchResults([]);
+        setSearchQuery("");
+        setRecipeSearchQuery("");
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
@@ -120,9 +160,15 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
     setComponents([...components, newComponent]);
     setSearchQuery("");
     setSearchResults([]);
+    setError(null);
   };
 
   const addSubRecipe = (recipe: RecipeSearchResult) => {
+    if (recipe.id === initialData?.id) {
+      setError("Cannot add a recipe to itself.");
+      return;
+    }
+
     const newComponent: RecipeSaveData["components"][0] = {
       quantity: recipe.yieldAmount,
       unit: recipe.yieldUnit,
@@ -134,6 +180,7 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
     setComponents([...components, newComponent]);
     setRecipeSearchQuery("");
     setRecipeSearchResults([]);
+    setError(null);
   };
 
   const addStep = () => {
@@ -148,12 +195,24 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
   };
 
   const handleSave = async () => {
+    setError(null);
+
+    if (!title.trim()) {
+      setError("Recipe title is required.");
+      return;
+    }
+
+    const filteredSteps = steps
+      .filter((s) => s.instruction.trim() !== "")
+      .map((s, i) => ({ ...s, order: i + 1 }));
+
     const data: RecipeSaveData = {
       id: initialData?.id,
-      title,
+      title: title.trim(),
       yieldAmount: parseFloat(yieldAmount.toString()),
       yieldUnit,
-      steps,
+      servings: servings ? parseInt(servings.toString()) : null,
+      steps: filteredSteps,
       components: components.map((c) => ({
         ...c,
         ingredientId: c.ingredientId || null,
@@ -163,14 +222,31 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
     try {
       await saveRecipeAction(data);
       router.push("/dashboard");
-    } catch (error) {
-      console.error("Failed to save recipe:", error);
+    } catch (err: unknown) {
+      console.error("Failed to save recipe:", err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Failed to save recipe. Please try again.";
+      setError(message);
     }
   };
 
   return (
     <div className="space-y-8 p-6 bg-zinc-900 text-white rounded-lg border border-zinc-800">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {error && (
+        <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-md relative flex justify-between items-center">
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="text-xl leading-none"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="md:col-span-1">
           <label
             htmlFor="title"
@@ -208,12 +284,35 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
           >
             Yield Unit
           </label>
-          <input
+          <select
             id="yieldUnit"
             value={yieldUnit}
             onChange={(e) => setYieldUnit(e.target.value)}
             className="mt-1 block w-full bg-zinc-800 border border-zinc-700 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="e.g. L, servings, etc."
+          >
+            {getUnits().map((unit) => (
+              <option key={unit} value={unit}>
+                {unit}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="servings"
+            className="block text-sm font-medium text-zinc-400"
+          >
+            Servings
+          </label>
+          <input
+            id="servings"
+            type="number"
+            value={servings || ""}
+            onChange={(e) =>
+              setServings(e.target.value ? parseInt(e.target.value) : undefined)
+            }
+            className="mt-1 block w-full bg-zinc-800 border border-zinc-700 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="e.g. 4"
           />
         </div>
       </div>
@@ -224,7 +323,7 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative">
+          <div className="relative" ref={usdaSearchRef}>
             <label className="text-xs text-zinc-500 mb-1 block">
               Add USDA Ingredient
             </label>
@@ -253,7 +352,7 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
             )}
           </div>
 
-          <div className="relative">
+          <div className="relative" ref={recipeSearchRef}>
             <label className="text-xs text-zinc-500 mb-1 block">
               Add Sub-recipe
             </label>
@@ -321,24 +420,35 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
                     newComponents[i].unit = e.target.value;
                     setComponents(newComponents);
                   }}
-                  className="w-24 bg-zinc-700 border border-zinc-600 rounded-md p-1 text-center outline-none focus:ring-1 focus:ring-blue-500"
+                  className="bg-zinc-800 border border-zinc-700 rounded p-1 text-sm outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  {getUnits().map((unit) => (
-                    <option key={unit} value={unit}>
-                      {unit}
+                  {getUnits().map((u) => (
+                    <option key={u} value={u}>
+                      {u}
                     </option>
                   ))}
                 </select>
+                <input
+                  type="text"
+                  value={c.prepState || ""}
+                  onChange={(e) => {
+                    const newComponents = [...components];
+                    newComponents[i].prepState = e.target.value;
+                    setComponents(newComponents);
+                  }}
+                  className="w-24 bg-zinc-800 border border-zinc-700 rounded p-1 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                  placeholder="Prep (e.g. diced)"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setComponents(components.filter((_, idx) => idx !== i))
+                  }
+                  className="text-zinc-500 hover:text-red-500 transition-colors text-xl leading-none"
+                >
+                  &times;
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() =>
-                  setComponents(components.filter((_, idx) => idx !== i))
-                }
-                className="text-zinc-500 hover:text-red-500 transition-colors text-xl leading-none"
-              >
-                &times;
-              </button>
             </div>
           ))}
         </div>

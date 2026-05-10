@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { saveRecipe } from "@/lib/recipes";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { RecipeSaveData, Macros } from "@/types";
 import { Prisma } from "@prisma/client";
@@ -56,4 +57,28 @@ export async function saveRecipeAction(data: RecipeSaveData) {
 
   redirect(`/dashboard`); // Or to the new recipe page
   return recipe;
+}
+
+export async function deleteRecipeAction(id: string) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  // Verify ownership
+  const recipe = await prisma.recipe.findUnique({
+    where: { id },
+    select: { userId: true },
+  });
+
+  if (!recipe || recipe.userId !== session.user.id) {
+    throw new Error("Recipe not found or unauthorized");
+  }
+
+  await prisma.recipe.delete({
+    where: { id },
+  });
+
+  revalidatePath("/dashboard");
 }

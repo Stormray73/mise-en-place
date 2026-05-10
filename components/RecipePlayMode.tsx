@@ -7,9 +7,10 @@ import { Recipe, RecipeStep, RecipeComponent } from "@/types";
 
 interface RecipePlayModeProps {
   recipe: Recipe & { steps: RecipeStep[]; components: RecipeComponent[] };
+  scale?: number;
 }
 
-export function RecipePlayMode({ recipe }: RecipePlayModeProps) {
+export function RecipePlayMode({ recipe, scale = 1 }: RecipePlayModeProps) {
   const router = useRouter();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
@@ -76,6 +77,32 @@ export function RecipePlayMode({ recipe }: RecipePlayModeProps) {
     startInterval(stepId, endTime);
   };
 
+  const dismissTimer = (stepId: string) => {
+    setActiveTimers((prev) => {
+      const next = { ...prev };
+      delete next[stepId];
+      return next;
+    });
+
+    const currentSaved = JSON.parse(
+      localStorage.getItem(`timers_${recipe.id}`) || "{}",
+    );
+    delete currentSaved[stepId];
+    localStorage.setItem(`timers_${recipe.id}`, JSON.stringify(currentSaved));
+
+    if (timerIntervals.current[stepId]) {
+      clearInterval(timerIntervals.current[stepId]);
+      delete timerIntervals.current[stepId];
+    }
+  };
+
+  const clearAllTimers = () => {
+    setActiveTimers({});
+    localStorage.removeItem(`timers_${recipe.id}`);
+    Object.values(timerIntervals.current).forEach(clearInterval);
+    timerIntervals.current = {};
+  };
+
   useEffect(() => {
     // Start intervals for rehydrated timers
     const saved = localStorage.getItem(`timers_${recipe.id}`);
@@ -94,7 +121,6 @@ export function RecipePlayMode({ recipe }: RecipePlayModeProps) {
     }
 
     return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       Object.values(timerIntervals.current).forEach(clearInterval);
     };
   }, [recipe.id]);
@@ -128,7 +154,8 @@ export function RecipePlayMode({ recipe }: RecipePlayModeProps) {
                         "Sub-recipe"}
                     </span>
                     <span className="text-zinc-500">
-                      {c.quantity} {c.unit}
+                      {(c.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}
+                      {c.unit}
                     </span>
                   </li>
                 ))
@@ -143,7 +170,8 @@ export function RecipePlayMode({ recipe }: RecipePlayModeProps) {
                         "Sub-recipe"}
                     </span>
                     <span className="text-zinc-500">
-                      {c.quantity} {c.unit}
+                      {(c.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}
+                      {c.unit}
                     </span>
                   </li>
                 ))}
@@ -152,17 +180,41 @@ export function RecipePlayMode({ recipe }: RecipePlayModeProps) {
 
         {Object.keys(activeTimers).length > 0 && (
           <section className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
-            <h2 className="text-lg font-semibold mb-4 border-b border-zinc-800 pb-2">
-              Active Timers
-            </h2>
+            <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
+              <h2 className="text-lg font-semibold">Active Timers</h2>
+              <button
+                onClick={clearAllTimers}
+                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
             <div className="space-y-3">
               {Object.entries(activeTimers).map(([stepId, remaining]) => {
                 const step = steps.find((s) => s.id === stepId);
                 return (
                   <div
                     key={stepId}
-                    className={`p-3 rounded-md border ${remaining === 0 ? "bg-red-900/20 border-red-900" : "bg-blue-900/20 border-blue-900"}`}
+                    className={`p-3 rounded-md border group relative ${remaining === 0 ? "bg-red-900/20 border-red-900" : "bg-blue-900/20 border-blue-900"}`}
                   >
+                    <button
+                      onClick={() => dismissTimer(stepId)}
+                      className="absolute top-2 right-2 text-zinc-500 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
                     <div className="text-xs text-zinc-400 mb-1">
                       Step {step?.order}
                     </div>
@@ -174,6 +226,14 @@ export function RecipePlayMode({ recipe }: RecipePlayModeProps) {
                         </span>
                       )}
                     </div>
+                    {remaining === 0 && (
+                      <button
+                        onClick={() => dismissTimer(stepId)}
+                        className="mt-2 w-full py-1 bg-red-900/40 hover:bg-red-900/60 rounded text-xs font-bold transition-colors"
+                      >
+                        Dismiss
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -187,9 +247,18 @@ export function RecipePlayMode({ recipe }: RecipePlayModeProps) {
         {currentStep ? (
           <div className="bg-zinc-900 p-8 rounded-xl border border-zinc-800 shadow-2xl min-h-[400px] flex flex-col">
             <div className="flex justify-between items-center mb-6">
-              <span className="px-3 py-1 bg-blue-600 rounded-full text-xs font-bold uppercase tracking-wider">
-                Step {currentStep.order} of {steps.length}
-              </span>
+              <div className="flex gap-4 items-center">
+                <span className="px-3 py-1 bg-blue-600 rounded-full text-xs font-bold uppercase tracking-wider">
+                  Step {currentStep.order} of {steps.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/recipes/${recipe.id}`)}
+                  className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                >
+                  Exit Mode
+                </button>
+              </div>
               {currentStep.timerInSeconds && (
                 <button
                   type="button"
@@ -247,6 +316,7 @@ export function RecipePlayMode({ recipe }: RecipePlayModeProps) {
                   if (currentStepIndex < steps.length - 1) {
                     setCurrentStepIndex((prev) => prev + 1);
                   } else {
+                    clearAllTimers();
                     router.push(`/recipes/${recipe.id}`);
                   }
                 }}

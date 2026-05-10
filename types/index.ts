@@ -18,6 +18,7 @@ export interface Recipe {
   title: string;
   yieldAmount: number;
   yieldUnit: string;
+  servings?: number | null;
   userId: string;
   manualMacros?: unknown; // JSON from Prisma
   steps?: RecipeStep[];
@@ -38,6 +39,7 @@ export interface RecipeComponent {
   id: string;
   quantity: number;
   unit: string;
+  prepState?: string | null;
   recipeId: string;
   ingredientId?: string | null;
   ingredient?: Ingredient | null;
@@ -50,6 +52,7 @@ export interface RecipeSaveData {
   title: string;
   yieldAmount: number;
   yieldUnit: string;
+  servings?: number | null;
   steps: {
     id?: string;
     order: number;
@@ -60,6 +63,7 @@ export interface RecipeSaveData {
     id?: string;
     quantity: number;
     unit: string;
+    prepState?: string | null;
     ingredientId?: string | null;
     childRecipeId?: string | null;
     // For UI preview
