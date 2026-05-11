@@ -3,13 +3,18 @@ import { auth } from "@/auth";
 import { RecipePlayMode } from "@/components/RecipePlayMode";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { Recipe, RecipeStep, RecipeComponent } from "@/types";
 
 export default async function PlayRecipePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ scale?: string }>;
 }) {
   const { id } = await params;
+  const { scale: scaleStr } = await searchParams;
+  const scale = scaleStr ? parseFloat(scaleStr) : 1;
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
@@ -46,13 +51,21 @@ export default async function PlayRecipePage({
             <p className="text-zinc-500">Cooking Mode</p>
           </div>
           <Link
-            href="/dashboard"
+            href={`/recipes/${id}?scale=${scale}`}
             className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors text-sm"
           >
             Exit
           </Link>
         </div>
-        <RecipePlayMode recipe={recipe} />
+        <RecipePlayMode
+          recipe={
+            recipe as Recipe & {
+              steps: RecipeStep[];
+              components: RecipeComponent[];
+            }
+          }
+          scale={scale}
+        />
       </div>
     </main>
   );

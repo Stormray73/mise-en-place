@@ -203,6 +203,7 @@ export default function MealCalendarClient({
                   <div
                     key={meal.id}
                     className="bg-zinc-800/50 rounded p-2 border border-zinc-700"
+                    data-testid={`meal-slot-${meal.id}`}
                   >
                     <div className="flex justify-between items-center mb-2">
                       <div className="flex items-center gap-2">
@@ -233,6 +234,7 @@ export default function MealCalendarClient({
                         <div
                           key={pr.id}
                           className={`flex flex-col gap-1 p-1 rounded group border ${pr.isLeftoverSource ? "border-amber-500/50 bg-amber-500/5" : pr.sourcePlannedRecipeId ? "border-green-500/50 bg-green-500/5 opacity-80" : "bg-zinc-700/30 border-transparent"}`}
+                          data-testid={`planned-recipe-${pr.id}`}
                         >
                           <div className="flex justify-between items-center text-sm">
                             <Link
@@ -277,6 +279,7 @@ export default function MealCalendarClient({
                                 step="0.5"
                                 min="0.5"
                                 value={pr.scale}
+                                data-testid={`scale-input-${pr.id}`}
                                 onChange={(e) =>
                                   updatePlannedRecipeAction(pr.id, {
                                     scale: parseFloat(e.target.value) || 1.0,

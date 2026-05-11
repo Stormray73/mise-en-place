@@ -55,6 +55,8 @@ export async function saveRecipeAction(data: RecipeSaveData) {
 
   const recipe = await saveRecipe(data.id || null, recipeData);
 
+  revalidatePath("/recipes");
+  revalidatePath("/dashboard");
   redirect(`/dashboard`); // Or to the new recipe page
   return recipe;
 }
@@ -80,5 +82,6 @@ export async function deleteRecipeAction(id: string) {
     where: { id },
   });
 
+  revalidatePath("/recipes");
   revalidatePath("/dashboard");
 }

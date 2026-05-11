@@ -1,24 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from "@testing-library/react";
-import Dashboard from "@/app/dashboard/page";
+import DashboardHub from "@/app/dashboard/page";
 import { expect, test, vi } from "vitest";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import type { Session } from "next-auth";
-import { prisma } from "@/lib/prisma";
 
 // Mock auth
 vi.mock("@/auth", () => ({
   auth: vi.fn(),
 }));
 
-// Mock prisma
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    recipe: {
-      findMany: vi.fn().mockResolvedValue([]),
-    },
-  },
+// Mock meal-plans
+vi.mock("@/lib/meal-plans", () => ({
+  getWeeklyMealPlan: vi.fn().mockResolvedValue([]),
+  getPrepAheadData: vi.fn().mockResolvedValue([]),
 }));
 
 // Mock next/navigation
@@ -37,12 +33,11 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-test("Dashboard redirects to login if no session", async () => {
-  // Use any to bypass NextAuth's complex function overloads in the mock
+test("Dashboard Hub redirects to login if no session", async () => {
   vi.mocked(auth as any).mockResolvedValue(null as unknown as Session);
 
   try {
-    await Dashboard({ searchParams: Promise.resolve({}) });
+    await DashboardHub();
   } catch (e: unknown) {
     if (e instanceof Error) {
       expect(e.message).toBe("NEXT_REDIRECT");
@@ -53,56 +48,68 @@ test("Dashboard redirects to login if no session", async () => {
   }
 });
 
-test("Dashboard renders welcome message if session exists", async () => {
-  // Use any to bypass NextAuth's complex function overloads in the mock
+test("Dashboard Hub renders title and welcome message", async () => {
   vi.mocked(auth as any).mockResolvedValue({
     user: { id: "user1", name: "Chef Gordon" },
     expires: "2026-01-01",
   } as Session);
 
-  const DashboardComponent = await Dashboard({
-    searchParams: Promise.resolve({}),
-  });
+  const DashboardComponent = await DashboardHub();
   render(DashboardComponent);
 
-  expect(screen.getByText(/Welcome, Chef Gordon!/i)).toBeInTheDocument();
+  expect(screen.getByText(/Kitchen Command Center/i)).toBeInTheDocument();
+  expect(screen.getByText(/Chef Chef Gordon/i)).toBeInTheDocument();
 });
 
-test("Dashboard renders search bar", async () => {
+test("Dashboard Hub shows empty state when no meals planned", async () => {
   vi.mocked(auth as any).mockResolvedValue({
     user: { id: "user1", name: "Chef Gordon" },
     expires: "2026-01-01",
   } as Session);
 
-  const DashboardComponent = await Dashboard({
-    searchParams: Promise.resolve({}),
-  });
+  const { getWeeklyMealPlan } = await import("@/lib/meal-plans");
+  vi.mocked(getWeeklyMealPlan).mockResolvedValue([]);
+
+  const DashboardComponent = await DashboardHub();
   render(DashboardComponent);
 
-  expect(screen.getByPlaceholderText(/Search recipes.../i)).toBeInTheDocument();
+  expect(screen.getByText(/Nothing planned for today/i)).toBeInTheDocument();
+  expect(
+    screen.getByRole("link", { name: /Start planning!/i }),
+  ).toBeInTheDocument();
 });
 
-test("Dashboard filters recipes when query is provided", async () => {
+test("Dashboard Hub shows today's meals", async () => {
   vi.mocked(auth as any).mockResolvedValue({
     user: { id: "user1", name: "Chef Gordon" },
     expires: "2026-01-01",
   } as Session);
 
-  const mockRecipes = [
-    { id: "1", title: "Pasta", yieldAmount: 1, yieldUnit: "serving" },
-  ];
-  vi.mocked(prisma.recipe.findMany).mockResolvedValue(mockRecipes as any);
-
-  await Dashboard({ searchParams: Promise.resolve({ q: "Pasta" }) });
-
-  expect(prisma.recipe.findMany).toHaveBeenCalledWith(
-    expect.objectContaining({
-      where: expect.objectContaining({
-        title: {
-          contains: "Pasta",
-          mode: "insensitive",
+  const today = new Date();
+  const mockMeals = [
+    {
+      id: "m1",
+      date: today,
+      slot: "Dinner",
+      macros: { calories: 500, protein: 20, fat: 15, carbs: 60 },
+      plannedRecipes: [
+        {
+          id: "pr1",
+          recipeId: "r1",
+          scale: 2,
+          recipe: { title: "Pasta" },
         },
-      }),
-    }),
-  );
+      ],
+    },
+  ];
+
+  const { getWeeklyMealPlan } = await import("@/lib/meal-plans");
+  vi.mocked(getWeeklyMealPlan).mockResolvedValue(mockMeals as any);
+
+  const DashboardComponent = await DashboardHub();
+  render(DashboardComponent);
+
+  expect(screen.getByText(/Pasta/i)).toBeInTheDocument();
+  expect(screen.getByText(/Scale: 2x/i)).toBeInTheDocument();
+  expect(screen.getByText(/500 kcal/i)).toBeInTheDocument();
 });

@@ -18,6 +18,7 @@ export async function createMealAction(date: Date, slot: string) {
   const mealPlan = await mealPlanLib.getMealPlan(userId);
   const meal = await mealPlanLib.createMeal(mealPlan.id, date, slot);
   revalidatePath("/meal-planner");
+  revalidatePath("/dashboard");
   return meal;
 }
 
@@ -44,6 +45,7 @@ export async function addRecipeToMealAction(
     prepState,
   );
   revalidatePath("/meal-planner");
+  revalidatePath("/dashboard");
   return plannedRecipe;
 }
 
@@ -59,6 +61,7 @@ export async function deleteMealAction(mealId: string) {
 
   await mealPlanLib.deleteMeal(mealId);
   revalidatePath("/meal-planner");
+  revalidatePath("/dashboard");
 }
 
 export async function updatePlannedRecipeAction(
@@ -75,7 +78,10 @@ export async function updatePlannedRecipeAction(
   }
 
   const updated = await mealPlanLib.updatePlannedRecipe(plannedRecipeId, data);
+
   revalidatePath("/meal-planner");
+  revalidatePath("/dashboard");
+
   return updated;
 }
 
@@ -91,6 +97,7 @@ export async function removeRecipeFromMealAction(plannedRecipeId: string) {
 
   await mealPlanLib.removeRecipeFromMeal(plannedRecipeId);
   revalidatePath("/meal-planner");
+  revalidatePath("/dashboard");
 }
 
 export async function setLeftoverSourceAction(
@@ -108,6 +115,7 @@ export async function setLeftoverSourceAction(
 
   await mealPlanLib.setLeftoverSource(plannedRecipeId, isSource);
   revalidatePath("/meal-planner");
+  revalidatePath("/dashboard");
 }
 
 export async function linkLeftoverConsumptionAction(
@@ -150,6 +158,7 @@ export async function linkLeftoverConsumptionAction(
     sourcePlannedRecipeId,
   );
   revalidatePath("/meal-planner");
+  revalidatePath("/dashboard");
 }
 
 export async function getPrepAheadDataAction(startDate: Date, endDate: Date) {
@@ -170,6 +179,7 @@ export async function togglePrepCompletionAction(
     completed,
   );
   revalidatePath("/meal-planner");
+  revalidatePath("/dashboard");
 }
 
 export async function cloneMealAction(mealId: string, targetDate: Date) {
@@ -184,4 +194,5 @@ export async function cloneMealAction(mealId: string, targetDate: Date) {
 
   await mealPlanLib.cloneMeal(mealId, targetDate);
   revalidatePath("/meal-planner");
+  revalidatePath("/dashboard");
 }

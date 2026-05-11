@@ -21,7 +21,7 @@ export default async function Header() {
           </Link>
         </div>
 
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-6">
           {session?.user ? (
             <>
               <Link
@@ -29,6 +29,30 @@ export default async function Header() {
                 className="text-sm font-medium text-zinc-400 transition-colors hover:text-white"
               >
                 Dashboard
+              </Link>
+              <Link
+                href="/recipes"
+                className="text-sm font-medium text-zinc-400 transition-colors hover:text-white"
+              >
+                My Recipes
+              </Link>
+              <Link
+                href="/meal-planner"
+                className="text-sm font-medium text-zinc-400 transition-colors hover:text-white"
+              >
+                Meal Plan
+              </Link>
+              <Link
+                href="/pantry"
+                className="text-sm font-medium text-zinc-400 transition-colors hover:text-white opacity-50 cursor-not-allowed"
+              >
+                My Pantry
+              </Link>
+              <Link
+                href="/grocery-list"
+                className="text-sm font-medium text-zinc-400 transition-colors hover:text-white opacity-50 cursor-not-allowed"
+              >
+                Grocery List
               </Link>
               <LogoutButton />
             </>

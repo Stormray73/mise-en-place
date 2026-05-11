@@ -1,121 +1,145 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getWeeklyMealPlan, getPrepAheadData } from "@/lib/meal-plans";
 import Link from "next/link";
-import SearchBar from "@/components/SearchBar";
-import DeleteButton from "@/components/DeleteButton";
+import DashboardClient from "./DashboardClient";
 
-export default async function Dashboard({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
+export const dynamic = "force-dynamic";
+
+export default async function DashboardHub() {
   const session = await auth();
-  const { q } = await searchParams;
 
-  if (!session) {
+  if (!session?.user?.id) {
     redirect("/login");
   }
 
-  const recipes = await prisma.recipe.findMany({
-    where: {
-      userId: session.user?.id,
-      title: q
-        ? {
-            contains: q,
-            mode: "insensitive",
-          }
-        : undefined,
-    },
-    orderBy: { updatedAt: "desc" },
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Fetch today's meals
+  const meals = await getWeeklyMealPlan(session.user.id, today);
+  const todaysMeals = meals.filter((meal) => {
+    const mealDate = new Date(meal.date);
+    return mealDate.toDateString() === today.toDateString();
   });
+
+  // Fetch immediate prep (next 24 hours)
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const prepData = await getPrepAheadData(session.user.id, today, tomorrow);
+  const immediatePrep = prepData.filter((item) => !item.completed).slice(0, 3);
 
   return (
     <div className="max-w-7xl mx-auto p-8">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-zinc-400">Welcome, {session.user?.name}!</p>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">
+            Kitchen Command Center
+          </h1>
+          <p className="text-zinc-400 mt-1">
+            Ready to cook, Chef {session.user?.name}?
+          </p>
         </div>
-
-        <div className="flex-1 w-full flex justify-center">
-          <SearchBar />
-        </div>
-
-        <div className="flex-1 flex justify-end">
+        <div className="flex gap-4">
           <Link
-            href="/recipes/new"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-bold transition-colors whitespace-nowrap"
+            href="/recipes"
+            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-md font-bold transition-colors"
           >
-            + New Recipe
+            My Recipes →
+          </Link>
+          <Link
+            href="/meal-planner"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-bold transition-colors"
+          >
+            Open Planner
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {recipes.length === 0 ? (
-          <div className="col-span-full bg-zinc-900 border border-zinc-800 p-8 rounded-lg text-center text-zinc-500">
-            {q
-              ? `No recipes found matching "${q}"`
-              : "No recipes yet. Create your first one!"}
-          </div>
-        ) : (
-          recipes.map((recipe) => (
-            <div
-              key={recipe.id}
-              className="group relative bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-600 transition-all aspect-square flex flex-col"
-            >
-              <Link
-                href={`/recipes/${recipe.id}`}
-                className="flex-1 p-6 flex flex-col justify-between"
-              >
-                <div>
-                  <h3 className="text-xl font-bold group-hover:text-blue-400 transition-colors line-clamp-2">
-                    {recipe.title}
-                  </h3>
-                  <p className="text-sm text-zinc-500 mt-2">
-                    {recipe.yieldAmount} {recipe.yieldUnit}
-                  </p>
-                </div>
-                <div className="text-xs text-zinc-600">
-                  Last updated {new Date(recipe.updatedAt).toLocaleDateString()}
-                </div>
-              </Link>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        {/* Left/Center Columns: Today's Schedule */}
+        <div className="lg:col-span-2 space-y-8 order-2 lg:order-1">
+          <section>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+              Today&apos;s Meals
+            </h2>
 
-              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {todaysMeals.length === 0 ? (
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center text-zinc-500">
+                Nothing planned for today.{" "}
                 <Link
-                  href={`/recipes/${recipe.id}/edit`}
-                  className="p-2 text-zinc-500 hover:text-white transition-colors"
-                  title="Edit Recipe"
+                  href="/meal-planner"
+                  className="text-blue-500 hover:underline"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                  Start planning!
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {todaysMeals.map((meal) => (
+                  <div
+                    key={meal.id}
+                    className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden p-6"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                </Link>
-                <DeleteButton id={recipe.id} />
+                    <h3 className="text-xs font-bold text-blue-400 uppercase mb-4">
+                      {meal.slot}
+                    </h3>
+                    <div className="space-y-4">
+                      {meal.plannedRecipes.map((pr) => (
+                        <div
+                          key={pr.id}
+                          className="flex justify-between items-center"
+                        >
+                          <div>
+                            <Link
+                              href={`/recipes/${pr.recipeId}?scale=${pr.scale}`}
+                              className="font-bold hover:text-blue-400 transition-colors"
+                              data-testid={`recipe-link-${pr.id}`}
+                            >
+                              {pr.recipe.title}
+                            </Link>
+                            <p
+                              className="text-xs text-zinc-500"
+                              data-testid={`recipe-scale-${pr.id}`}
+                            >
+                              Scale: {pr.scale}x
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Link
+                              href={`/recipes/${pr.recipeId}/play?scale=${pr.scale}`}
+                              className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-xs font-bold transition-colors"
+                            >
+                              Cook it!
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {meal.macros.calories > 0 && (
+                      <div className="mt-6 pt-4 border-t border-zinc-800 flex gap-4 text-[10px] text-zinc-500 font-mono">
+                        <span>{Math.round(meal.macros.calories)} kcal</span>
+                        <span>{Math.round(meal.macros.protein)}g P</span>
+                        <span>{Math.round(meal.macros.fat)}g F</span>
+                        <span>{Math.round(meal.macros.carbs)}g C</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
+            )}
+          </section>
+        </div>
 
-              <div className="px-6 py-4 bg-zinc-950/50 border-t border-zinc-800 flex justify-between items-center">
-                <Link
-                  href={`/recipes/${recipe.id}/play`}
-                  className="text-sm font-bold text-blue-500 hover:text-blue-400 transition-colors"
-                >
-                  Cook it! →
-                </Link>
-              </div>
-            </div>
-          ))
-        )}
+        {/* Right Column: Kitchen Status */}
+        <div className="space-y-8 order-3 lg:order-2">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+            Kitchen Status
+          </h2>
+          <DashboardClient immediatePrep={immediatePrep} />
+        </div>
       </div>
     </div>
   );

@@ -85,6 +85,7 @@ export async function getWeeklyMealPlan(userId: string, startDate: Date) {
       for (const pr of meal.plannedRecipes) {
         const recipeMacros = await calculateMacros(pr.recipe);
         mealMacros.calories += recipeMacros.calories * pr.scale;
+
         mealMacros.protein += recipeMacros.protein * pr.scale;
         mealMacros.fat += recipeMacros.fat * pr.scale;
         mealMacros.carbs += recipeMacros.carbs * pr.scale;

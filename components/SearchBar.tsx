@@ -1,11 +1,12 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition } from "react";
 
 export default function SearchBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
   function handleSearch(term: string) {
@@ -17,7 +18,7 @@ export default function SearchBar() {
     }
 
     startTransition(() => {
-      router.replace(`/dashboard?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     });
   }
 
