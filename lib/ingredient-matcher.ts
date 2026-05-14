@@ -18,11 +18,13 @@ export function getRelevantIngredients(
   const lowerInstruction = instruction.toLowerCase();
 
   return components.filter((comp) => {
-    const name = (
-      comp.ingredient?.name ||
-      comp.childRecipe?.title ||
-      ""
-    ).toLowerCase();
+    const name =
+      (comp.type === "ingredient"
+        ? comp.ingredient?.name
+        : comp.childRecipe?.title || ""
+      )?.toLowerCase() || "";
+
+    if (!name) return false;
 
     // 1. Direct match (Full name contained in instruction)
     if (lowerInstruction.includes(name)) return true;

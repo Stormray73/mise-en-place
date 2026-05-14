@@ -32,6 +32,8 @@ const mockRecipe: Recipe & {
   steps: [{ id: "s1", order: 1, instruction: "Boil water", recipeId: "r1" }],
   components: [
     {
+      type: "ingredient",
+      ingredientId: "i1",
       id: "c1",
       quantity: 500,
       unit: "g",

@@ -13,15 +13,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -35,18 +34,18 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  recipes       Recipe[]
-  mealPlans     MealPlan[]
+  id              String           @id @default(cuid())
+  name            String?
+  email           String?          @unique
+  emailVerified   DateTime?
+  image           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  accounts        Account[]
+  mealPlans       MealPlan[]
   prepCompletions PrepCompletion[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  recipes         Recipe[]
+  sessions        Session[]
 }
 
 model VerificationToken {
@@ -58,99 +57,98 @@ model VerificationToken {
 }
 
 model Recipe {
-  id          String   @id @default(cuid())
-  title       String
-  yieldAmount Float
-  yieldUnit   String
-  servings    Int?
-  manualMacros Json? // To store manual macro overrides
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  steps       RecipeStep[]
-  components  RecipeComponent[] @relation("ParentRecipe")
+  id               String            @id @default(cuid())
+  title            String
+  yieldAmount      Float
+  yieldUnit        String
+  manualMacros     Json?
+  userId           String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  servings         Int?
+  plannedRecipes   PlannedRecipe[]
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   parentComponents RecipeComponent[] @relation("ChildRecipe")
-  plannedRecipes PlannedRecipe[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  components       RecipeComponent[] @relation("ParentRecipe")
+  steps            RecipeStep[]
 }
 
 model RecipeStep {
-  id             String  @id @default(cuid())
+  id             String @id @default(cuid())
   order          Int
   instruction    String
   timerInSeconds Int?
   recipeId       String
-  recipe         Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipe         Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
 
 model Ingredient {
-  id           String   @id @default(cuid())
-  name         String
-  usdaId       String?  @unique // USDA FoodData ID
-  baseMacros   Json?    // Macros from USDA
-  baseAmount   Float?   // Base amount for macros (usually 100)
-  components   RecipeComponent[]
+  id         String            @id @default(cuid())
+  name       String
+  usdaId     String?           @unique
+  baseMacros Json?
+  baseAmount Float?
+  components RecipeComponent[]
 }
 
 model RecipeComponent {
   id            String      @id @default(cuid())
   quantity      Float
   unit          String
-  prepState     String?     // e.g., "diced", "minced"
-  recipeId      String      // The parent recipe
-  recipe        Recipe      @relation(fields: [recipeId], references: [id], name: "ParentRecipe", onDelete: Cascade)
-  ingredientId  String?     // Link to base ingredient
-  ingredient    Ingredient? @relation(fields: [ingredientId], references: [id])
-  childRecipeId String?     // Link to sub-recipe
+  recipeId      String
+  ingredientId  String?
+  childRecipeId String?
+  prepState     String?
   childRecipe   Recipe?     @relation("ChildRecipe", fields: [childRecipeId], references: [id])
+  ingredient    Ingredient? @relation(fields: [ingredientId], references: [id])
+  recipe        Recipe      @relation("ParentRecipe", fields: [recipeId], references: [id], onDelete: Cascade)
 }
 
 model MealPlan {
   id        String   @id @default(cuid())
   name      String?
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  meals     Meal[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  meals     Meal[]
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Meal {
   id             String          @id @default(cuid())
-  date           DateTime        // Local date
-  slot           String          // e.g., "Breakfast", "Lunch", "Dinner"
+  date           DateTime
+  slot           String
   mealPlanId     String
-  mealPlan       MealPlan        @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
-  plannedRecipes PlannedRecipe[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  mealPlan       MealPlan        @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  plannedRecipes PlannedRecipe[]
 }
 
 model PlannedRecipe {
-  id                   String            @id @default(cuid())
-  mealId               String
-  meal                 Meal              @relation(fields: [mealId], references: [id], onDelete: Cascade)
-  recipeId             String
-  recipe               Recipe            @relation(fields: [recipeId], references: [id])
-  scale                Float             @default(1.0)
-  prepState            String?           // Override prep state
-  isLeftoverSource     Boolean           @default(false)
+  id                    String           @id @default(cuid())
+  mealId                String
+  recipeId              String
+  scale                 Float            @default(1.0)
+  prepState             String?
+  isLeftoverSource      Boolean          @default(false)
   sourcePlannedRecipeId String?
-  sourcePlannedRecipe  PlannedRecipe?    @relation("LeftoverRelation", fields: [sourcePlannedRecipeId], references: [id])
-  consumedLeftovers    PlannedRecipe[]   @relation("LeftoverRelation")
-  prepCompletions      PrepCompletion[]
+  meal                  Meal             @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  recipe                Recipe           @relation(fields: [recipeId], references: [id])
+  sourcePlannedRecipe   PlannedRecipe?   @relation("LeftoverRelation", fields: [sourcePlannedRecipeId], references: [id])
+  consumedLeftovers     PlannedRecipe[]  @relation("LeftoverRelation")
+  prepCompletions       PrepCompletion[]
 }
 
 model PrepCompletion {
-  id              String        @id @default(cuid())
+  id              String         @id @default(cuid())
   plannedRecipeId String?
-  plannedRecipe   PlannedRecipe? @relation(fields: [plannedRecipeId], references: [id], onDelete: Cascade)
   ingredientId    String?
   childRecipeId   String?
-  completed       Boolean       @default(false)
+  completed       Boolean        @default(false)
   userId          String
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  plannedRecipe   PlannedRecipe? @relation(fields: [plannedRecipeId], references: [id], onDelete: Cascade)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-

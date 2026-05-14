@@ -33,14 +33,18 @@ export default async function DashboardHub() {
     <div className="max-w-7xl mx-auto p-8">
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">
-            Kitchen Command Center
-          </h1>
+          <h1 className="text-4xl font-extrabold tracking-tight">Dashboard</h1>
           <p className="text-zinc-400 mt-1">
             Ready to cook, Chef {session.user?.name}?
           </p>
         </div>
         <div className="flex gap-4">
+          <Link
+            href="/recipes/new"
+            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-md font-bold transition-colors"
+          >
+            + New Recipe
+          </Link>
           <Link
             href="/recipes"
             className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-md font-bold transition-colors"

@@ -1,8 +1,13 @@
+/**
+ * @file MealCalendarClient.tsx
+ * @responsibility The main client-side component for the meal calendar, managing state and layout.
+ * @dependencies MealSlot, AddMealModal, AddRecipeModal, CloneMealModal, actions, useRouter, usePathname, React
+ */
+
 "use client";
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
 import {
   createMealAction,
   addRecipeToMealAction,
@@ -13,35 +18,14 @@ import {
   updatePlannedRecipeAction,
   cloneMealAction,
 } from "./actions";
+import MealSlot, { MealWithRecipes } from "@/components/MealSlot";
+import AddMealModal from "@/components/AddMealModal";
+import AddRecipeModal from "@/components/AddRecipeModal";
+import CloneMealModal from "@/components/CloneMealModal";
 
 interface RecipeOption {
   id: string;
   title: string;
-}
-
-interface PlannedRecipeWithRecipe {
-  id: string;
-  recipeId: string;
-  recipe: {
-    title: string;
-  };
-  scale: number;
-  prepState?: string | null;
-  isLeftoverSource: boolean;
-  sourcePlannedRecipeId?: string | null;
-}
-
-interface MealWithRecipes {
-  id: string;
-  date: string | Date;
-  slot: string;
-  plannedRecipes: PlannedRecipeWithRecipe[];
-  macros: {
-    calories: number;
-    protein: number;
-    fat: number;
-    carbs: number;
-  };
 }
 
 interface MealCalendarClientProps {
@@ -49,8 +33,6 @@ interface MealCalendarClientProps {
   startDate: string;
   allRecipes: RecipeOption[];
 }
-
-const DEFAULT_SLOTS = ["Breakfast", "Lunch", "Dinner"];
 
 export default function MealCalendarClient({
   initialMeals,
@@ -68,7 +50,6 @@ export default function MealCalendarClient({
   const [isCloningMeal, setIsCloningMeal] = useState<{ mealId: string } | null>(
     null,
   );
-  const [customSlot, setCustomSlot] = useState("");
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(start);
@@ -98,12 +79,19 @@ export default function MealCalendarClient({
   const handleAddMeal = async (date: Date, slot: string) => {
     await createMealAction(date, slot);
     setIsAddingMeal(null);
-    setCustomSlot("");
   };
 
   const handleAddRecipe = async (mealId: string, recipeId: string) => {
     await addRecipeToMealAction(mealId, recipeId);
     setIsAddingRecipe(null);
+  };
+
+  const handleDeleteMeal = async (mealId: string) => {
+    await deleteMealAction(mealId);
+  };
+
+  const handleRemoveRecipe = async (id: string) => {
+    await removeRecipeFromMealAction(id);
   };
 
   const handleCloneMeal = async (mealId: string, targetDate: Date) => {
@@ -130,6 +118,16 @@ export default function MealCalendarClient({
     newDate.setDate(newDate.getDate() + weeks * 7);
     router.push(`${pathname}?date=${newDate.toISOString().split("T")[0]}`);
   };
+
+  const leftoverSourceOptions = initialMeals
+    .flatMap((m) => m.plannedRecipes)
+    .filter((pr) => pr.isLeftoverSource)
+    .map((pr) => {
+      const meal = initialMeals.find((m) =>
+        m.plannedRecipes.some((p) => p.id === pr.id),
+      );
+      return { id: pr.id, date: meal?.date || "" };
+    });
 
   return (
     <div className="space-y-6">
@@ -200,156 +198,18 @@ export default function MealCalendarClient({
 
               <div className="flex-1 p-2 space-y-3">
                 {getMealsForDate(day).map((meal) => (
-                  <div
+                  <MealSlot
                     key={meal.id}
-                    className="bg-zinc-800/50 rounded p-2 border border-zinc-700"
-                    data-testid={`meal-slot-${meal.id}`}
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-blue-400 uppercase">
-                          {meal.slot}
-                        </span>
-                        <span className="text-[10px] font-mono text-zinc-500">
-                          {Math.round(meal.macros.calories)} kcal
-                        </span>
-                        <button
-                          onClick={() => setIsCloningMeal({ mealId: meal.id })}
-                          className="text-[9px] text-zinc-600 hover:text-zinc-400 uppercase font-bold"
-                          title="Duplicate Meal"
-                        >
-                          Clone
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => deleteMealAction(meal.id)}
-                        className="text-zinc-500 hover:text-red-500"
-                      >
-                        &times;
-                      </button>
-                    </div>
-
-                    <div className="space-y-1">
-                      {meal.plannedRecipes.map((pr) => (
-                        <div
-                          key={pr.id}
-                          className={`flex flex-col gap-1 p-1 rounded group border ${pr.isLeftoverSource ? "border-amber-500/50 bg-amber-500/5" : pr.sourcePlannedRecipeId ? "border-green-500/50 bg-green-500/5 opacity-80" : "bg-zinc-700/30 border-transparent"}`}
-                          data-testid={`planned-recipe-${pr.id}`}
-                        >
-                          <div className="flex justify-between items-center text-sm">
-                            <Link
-                              href={`/recipes/${pr.recipeId}?scale=${pr.scale}`}
-                              className="truncate hover:text-blue-400 transition-colors"
-                              title={pr.recipe.title}
-                            >
-                              {pr.recipe.title}
-                            </Link>
-                            <button
-                              onClick={() => removeRecipeFromMealAction(pr.id)}
-                              className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-500"
-                            >
-                              &times;
-                            </button>
-                          </div>
-
-                          <div className="flex gap-2 items-center">
-                            <button
-                              onClick={() =>
-                                handleToggleLeftoverSource(
-                                  pr.id,
-                                  !pr.isLeftoverSource,
-                                )
-                              }
-                              className={`text-[9px] px-1 rounded border transition-colors ${pr.isLeftoverSource ? "bg-amber-600 border-amber-500 text-white" : "border-zinc-600 text-zinc-500 hover:border-amber-500"}`}
-                              title={
-                                pr.isLeftoverSource
-                                  ? "Produces Leftovers"
-                                  : "Mark as Leftover Source"
-                              }
-                            >
-                              LS
-                            </button>
-
-                            <div className="flex items-center gap-1">
-                              <span className="text-[8px] text-zinc-600">
-                                x
-                              </span>
-                              <input
-                                type="number"
-                                step="0.5"
-                                min="0.5"
-                                value={pr.scale}
-                                data-testid={`scale-input-${pr.id}`}
-                                onChange={(e) =>
-                                  updatePlannedRecipeAction(pr.id, {
-                                    scale: parseFloat(e.target.value) || 1.0,
-                                  })
-                                }
-                                className="bg-transparent border-b border-zinc-700 text-[9px] w-6 outline-none text-zinc-400 focus:border-blue-500"
-                              />
-                            </div>
-
-                            <input
-                              type="text"
-                              value={pr.prepState || ""}
-                              placeholder="Prep override..."
-                              onChange={(e) =>
-                                updatePlannedRecipeAction(pr.id, {
-                                  prepState: e.target.value,
-                                })
-                              }
-                              className="bg-transparent border-b border-zinc-700 text-[9px] flex-1 outline-none text-zinc-400 focus:border-blue-500 min-w-0"
-                            />
-
-                            {!pr.isLeftoverSource && (
-                              <select
-                                className={`text-[9px] bg-transparent border rounded outline-none max-w-[60px] ${pr.sourcePlannedRecipeId ? "border-green-500 text-green-400" : "border-zinc-600 text-zinc-500"}`}
-                                value={pr.sourcePlannedRecipeId || ""}
-                                onChange={(e) =>
-                                  handleLinkLeftover(
-                                    pr.id,
-                                    e.target.value || null,
-                                  )
-                                }
-                              >
-                                <option value="">Fresh</option>
-                                {initialMeals
-                                  .flatMap((m) => m.plannedRecipes)
-                                  .filter(
-                                    (otherPr) =>
-                                      otherPr.isLeftoverSource &&
-                                      otherPr.id !== pr.id,
-                                  )
-                                  .map((source) => {
-                                    const sourceMeal = initialMeals.find((m) =>
-                                      m.plannedRecipes.some(
-                                        (p) => p.id === source.id,
-                                      ),
-                                    );
-                                    return sourceMeal ? (
-                                      <option key={source.id} value={source.id}>
-                                        From{" "}
-                                        {new Date(
-                                          sourceMeal.date,
-                                        ).toLocaleDateString(undefined, {
-                                          weekday: "short",
-                                        })}
-                                      </option>
-                                    ) : null;
-                                  })}
-                              </select>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      <button
-                        onClick={() => setIsAddingRecipe({ mealId: meal.id })}
-                        className="w-full text-left text-[10px] text-zinc-500 hover:text-zinc-300 py-1"
-                      >
-                        + Add Recipe
-                      </button>
-                    </div>
-                  </div>
+                    meal={meal}
+                    onDeleteMeal={handleDeleteMeal}
+                    onCloneMeal={(mealId) => setIsCloningMeal({ mealId })}
+                    onAddRecipe={(mealId) => setIsAddingRecipe({ mealId })}
+                    onRemoveRecipe={handleRemoveRecipe}
+                    onToggleLeftoverSource={handleToggleLeftoverSource}
+                    onUpdatePlannedRecipe={updatePlannedRecipeAction}
+                    onLinkLeftover={handleLinkLeftover}
+                    leftoverSourceOptions={leftoverSourceOptions}
+                  />
                 ))}
 
                 <button
@@ -364,115 +224,30 @@ export default function MealCalendarClient({
         })}
       </div>
 
-      {/* Add Meal Modal */}
       {isAddingMeal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl max-w-md w-full shadow-2xl">
-            <h3 className="text-xl font-bold mb-4">Add Meal Slot</h3>
-            <p className="text-zinc-400 text-sm mb-6">
-              {isAddingMeal.date.toLocaleDateString(undefined, {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              {DEFAULT_SLOTS.map((slot) => (
-                <button
-                  key={slot}
-                  onClick={() => handleAddMeal(isAddingMeal.date, slot)}
-                  className="py-3 bg-zinc-800 hover:bg-blue-600 rounded-md font-bold transition-colors"
-                >
-                  {slot}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input
-                value={customSlot}
-                onChange={(e) => setCustomSlot(e.target.value)}
-                placeholder="Custom Slot..."
-                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-md px-4 py-2"
-              />
-              <button
-                onClick={() => handleAddMeal(isAddingMeal.date, customSlot)}
-                disabled={!customSlot}
-                className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-md disabled:opacity-50"
-              >
-                Add
-              </button>
-            </div>
-            <button
-              onClick={() => setIsAddingMeal(null)}
-              className="mt-6 w-full py-2 text-zinc-500 hover:text-zinc-300 text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+        <AddMealModal
+          date={isAddingMeal.date}
+          onClose={() => setIsAddingMeal(null)}
+          onAdd={handleAddMeal}
+        />
       )}
 
-      {/* Add Recipe Modal */}
       {isAddingRecipe && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl max-w-md w-full shadow-2xl max-h-[80vh] flex flex-col">
-            <h3 className="text-xl font-bold mb-4">Add Recipe to Meal</h3>
-            <div className="flex-1 overflow-y-auto space-y-2 mb-6">
-              {allRecipes.map((recipe) => (
-                <button
-                  key={recipe.id}
-                  onClick={() =>
-                    handleAddRecipe(isAddingRecipe.mealId, recipe.id)
-                  }
-                  className="w-full text-left p-3 hover:bg-zinc-800 border border-zinc-800 rounded-md transition-colors"
-                >
-                  {recipe.title}
-                </button>
-              ))}
-              {allRecipes.length === 0 && (
-                <p className="text-zinc-500 text-center py-4">
-                  No recipes found.
-                </p>
-              )}
-            </div>
-            <button
-              onClick={() => setIsAddingRecipe(null)}
-              className="w-full py-2 text-zinc-500 hover:text-zinc-300 text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+        <AddRecipeModal
+          mealId={isAddingRecipe.mealId}
+          allRecipes={allRecipes}
+          onClose={() => setIsAddingRecipe(null)}
+          onAdd={handleAddRecipe}
+        />
       )}
 
-      {/* Clone Meal Modal */}
       {isCloningMeal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl max-w-md w-full shadow-2xl">
-            <h3 className="text-xl font-bold mb-4">Clone Meal to Date</h3>
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              {days.map((day) => (
-                <button
-                  key={day.toISOString()}
-                  onClick={() => handleCloneMeal(isCloningMeal.mealId, day)}
-                  className="py-3 bg-zinc-800 hover:bg-blue-600 rounded-md text-xs font-bold transition-colors"
-                >
-                  {day.toLocaleDateString(undefined, {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setIsCloningMeal(null)}
-              className="w-full py-2 text-zinc-500 hover:text-zinc-300 text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+        <CloneMealModal
+          mealId={isCloningMeal.mealId}
+          days={days}
+          onClose={() => setIsCloningMeal(null)}
+          onClone={handleCloneMeal}
+        />
       )}
     </div>
   );

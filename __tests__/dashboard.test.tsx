@@ -57,7 +57,7 @@ test("Dashboard Hub renders title and welcome message", async () => {
   const DashboardComponent = await DashboardHub();
   render(DashboardComponent);
 
-  expect(screen.getByText(/Kitchen Command Center/i)).toBeInTheDocument();
+  expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
   expect(screen.getByText(/Chef Chef Gordon/i)).toBeInTheDocument();
 });
 

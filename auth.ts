@@ -9,26 +9,31 @@ const providers = [];
 if (process.env.MOCK_AUTH === "true") {
   providers.push(
     Credentials({
+      id: "credentials",
       name: "Mock Auth",
-      credentials: {},
+      credentials: {
+        username: { label: "Username", type: "text" },
+      },
       async authorize() {
-        // Return a mock user for testing.
-        // This only executes if MOCK_AUTH=true is set in the environment.
-        const user = {
-          id: "test-user-id",
-          name: "Test Chef",
-          email: "test@example.com",
-          image: "https://via.placeholder.com/150",
-        };
+        try {
+          const user = {
+            id: "test-user-id",
+            name: "Test Chef",
+            email: "test@example.com",
+            image: "https://via.placeholder.com/150",
+          };
 
-        // Ensure user exists in DB for foreign key relations
-        await prisma.user.upsert({
-          where: { id: user.id },
-          update: { name: user.name, email: user.email },
-          create: user,
-        });
+          await prisma.user.upsert({
+            where: { id: user.id },
+            update: { name: user.name, email: user.email },
+            create: user,
+          });
 
-        return user;
+          return user;
+        } catch (error) {
+          console.error("Mock Auth Error:", error);
+          return null;
+        }
       },
     }),
   );

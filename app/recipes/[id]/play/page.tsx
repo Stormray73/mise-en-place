@@ -42,6 +42,14 @@ export default async function PlayRecipePage({
   // We allow playing any recipe, but you must be logged in.
   // (In a real app, maybe only your recipes or public recipes)
 
+  const recipeWithTypes = {
+    ...recipe,
+    components: recipe.components.map((c) => ({
+      ...c,
+      type: c.ingredientId ? "ingredient" : ("sub-recipe" as const),
+    })),
+  };
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="max-w-4xl mx-auto p-6">
@@ -59,7 +67,7 @@ export default async function PlayRecipePage({
         </div>
         <RecipePlayMode
           recipe={
-            recipe as Recipe & {
+            recipeWithTypes as Recipe & {
               steps: RecipeStep[];
               components: RecipeComponent[];
             }

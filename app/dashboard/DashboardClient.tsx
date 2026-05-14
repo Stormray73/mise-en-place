@@ -1,17 +1,16 @@
+/**
+ * @file DashboardClient.tsx
+ * @responsibility Main client-side component for the user dashboard, displaying timers and prep items.
+ * @dependencies React, Link, Card, types
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { PrepItem } from "@/types";
 
-interface PrepItem {
-  id: string;
-  type: "ingredient" | "recipe";
-  name: string;
-  quantity: number;
-  unit: string;
-  prepState?: string;
-  completed: boolean;
-}
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 
 interface ActiveTimer {
   recipeId: string;
@@ -79,14 +78,12 @@ export default function DashboardClient({
     <div className="space-y-8">
       {/* Active Timers Card */}
       {activeTimers.length > 0 && (
-        <section className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 bg-zinc-800/50 border-b border-zinc-800 flex justify-between items-center">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400">
-              Active Timers
-            </h2>
+        <Card>
+          <CardHeader>
+            <CardTitle>Active Timers</CardTitle>
             <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
-          </div>
-          <div className="p-4 space-y-4">
+          </CardHeader>
+          <CardContent className="space-y-4">
             {activeTimers.map((timer) => (
               <div
                 key={`${timer.recipeId}-${timer.stepId}`}
@@ -117,21 +114,16 @@ export default function DashboardClient({
                 </div>
               </div>
             ))}
-          </div>
-        </section>
+          </CardContent>
+        </Card>
       )}
 
       {/* Immediate Prep Card */}
-      <section
-        className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden"
-        data-testid="immediate-prep-section"
-      >
-        <div className="px-4 py-3 bg-zinc-800/50 border-b border-zinc-800">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400">
-            Immediate Prep
-          </h2>
-        </div>
-        <div className="p-4">
+      <Card data-testid="immediate-prep-section">
+        <CardHeader>
+          <CardTitle>Immediate Prep</CardTitle>
+        </CardHeader>
+        <CardContent>
           {immediatePrep.length === 0 ? (
             <p className="text-zinc-500 text-sm italic">All caught up!</p>
           ) : (
@@ -172,8 +164,8 @@ export default function DashboardClient({
               See full prep list →
             </Link>
           </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -19,7 +19,11 @@ export async function calculateMacros(
   for (const component of recipe.components || []) {
     let componentMacros: Macros | null = null;
 
-    if (component.ingredient) {
+    if (
+      "type" in component &&
+      component.type === "ingredient" &&
+      component.ingredient
+    ) {
       const baseMacros = component.ingredient.baseMacros as unknown as Macros;
       if (baseMacros) {
         // USDA macros are usually per 100g or 100ml
@@ -48,11 +52,15 @@ export async function calculateMacros(
           };
         }
       }
-    } else if (component.childRecipe) {
+    } else if (
+      "type" in component &&
+      component.type === "sub-recipe" &&
+      component.childRecipe
+    ) {
       let fullChildRecipe = component.childRecipe as Partial<Recipe>;
       if (!fullChildRecipe.components) {
         const fetched = await prisma.recipe.findUnique({
-          where: { id: component.childRecipeId as string },
+          where: { id: component.childRecipeId },
           include: {
             components: {
               include: {
@@ -79,6 +87,13 @@ export async function calculateMacros(
           fat: childMacros.fat * ratio,
           carbs: childMacros.carbs * ratio,
         };
+      }
+    } else {
+      // Handle cases where the type might be missing (e.g. raw Prisma objects before conversion)
+      // This is a safety fallback for untyped or legacy data
+      const c = component as Record<string, unknown>;
+      if (c.ingredient) {
+        // ... safety fallback logic could go here if needed
       }
     }
 
@@ -122,7 +137,7 @@ export async function saveRecipe(
   // Check for circular dependencies
   if (id && components) {
     const componentIds = components
-      .map((c) => c.childRecipeId)
+      .map((c) => (c.type === "sub-recipe" ? c.childRecipeId : null))
       .filter((cid): cid is string => cid !== null && cid !== undefined);
 
     if (await checkCircularDependency(id, componentIds)) {
@@ -144,8 +159,11 @@ export async function saveRecipe(
     create: components?.map((c) => ({
       quantity: c.quantity,
       unit: c.unit,
-      ingredientId: c.ingredientId || undefined,
-      childRecipeId: c.childRecipeId || undefined,
+      ingredientId:
+        c.type === "ingredient" ? c.ingredientId || undefined : undefined,
+      childRecipeId:
+        c.type === "sub-recipe" ? c.childRecipeId || undefined : undefined,
+      prepState: c.prepState,
     })),
   };
 

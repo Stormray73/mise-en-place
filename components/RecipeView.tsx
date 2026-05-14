@@ -1,8 +1,18 @@
+/**
+ * FILE: components/RecipeView.tsx
+ * DESCRIPTION: Static display component for recipes, featuring scaling and macro calculations.
+ * STANDARDS: TDD, Clean UI.
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Recipe, Macros, RecipeStep, RecipeComponent } from "@/types";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+
 interface RecipeViewProps {
   recipe: Recipe & {
     steps: RecipeStep[];
@@ -51,7 +61,7 @@ export default function RecipeView({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
       {/* Left Column: Nutrition & Ingredients */}
       <div className="lg:col-span-1 space-y-12">
-        <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-sm">
+        <Card className="p-6">
           <div className="flex flex-col gap-4 mb-6">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <svg
@@ -71,26 +81,20 @@ export default function RecipeView({
             </h2>
             {recipe.servings && recipe.servings > 1 ? (
               <div className="flex bg-zinc-800 p-1 rounded-lg w-fit">
-                <button
+                <Button
+                  variant={!showPerServing ? "active" : "ghost"}
+                  size="sm"
                   onClick={() => setShowPerServing(false)}
-                  className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
-                    !showPerServing
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-zinc-400 hover:text-zinc-200"
-                  }`}
                 >
                   Full Recipe
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant={showPerServing ? "active" : "ghost"}
+                  size="sm"
                   onClick={() => setShowPerServing(true)}
-                  className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
-                    showPerServing
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-zinc-400 hover:text-zinc-200"
-                  }`}
                 >
                   Per Serving
-                </button>
+                </Button>
               </div>
             ) : !recipe.servings ? (
               <p className="text-[10px] text-zinc-500 bg-zinc-800/30 p-2 rounded border border-zinc-800/50">
@@ -140,7 +144,7 @@ export default function RecipeView({
               ? "Currently showing values per serving."
               : `Currently showing values for ${scale}x scale.`}
           </p>
-        </section>
+        </Card>
 
         <section>
           <div className="flex justify-between items-center mb-6 pb-2 border-b border-zinc-800">
@@ -149,14 +153,14 @@ export default function RecipeView({
               <label htmlFor="scale" className="text-sm text-zinc-500">
                 Scale:
               </label>
-              <input
+              <Input
                 id="scale"
                 type="number"
                 step="0.1"
                 min="0.1"
                 value={scale}
                 onChange={(e) => setScale(parseFloat(e.target.value) || 1)}
-                className="w-16 bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-20"
               />
             </div>
           </div>
@@ -165,7 +169,9 @@ export default function RecipeView({
               <li key={comp.id} className="flex justify-between items-start">
                 <div>
                   <span className="font-medium text-zinc-200">
-                    {comp.ingredient?.name || comp.childRecipe?.title}
+                    {comp.type === "ingredient"
+                      ? comp.ingredient?.name
+                      : comp.childRecipe?.title}
                   </span>
                   <p className="text-sm text-zinc-500">
                     {(comp.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}

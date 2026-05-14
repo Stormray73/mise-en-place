@@ -1,3 +1,9 @@
+/**
+ * FILE: app/meal-planner/PrepAheadDashboard.tsx
+ * DESCRIPTION: Client component for aggregating upcoming ingredient preparation needs.
+ * STANDARDS: TDD, Agentic Ergonomics.
+ */
+
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
@@ -34,7 +40,11 @@ export default function PrepAheadDashboard({
           new Date(startDate),
           new Date(endDate),
         );
-        setData(result);
+        if (result.success) {
+          setData(result.data);
+        } else {
+          console.error("Failed to fetch prep data:", result.error);
+        }
       } catch (error) {
         console.error("Failed to fetch prep data:", error);
       } finally {
@@ -61,7 +71,9 @@ export default function PrepAheadDashboard({
           new Date(startDate),
           new Date(endDate),
         );
-        setData(result);
+        if (result.success) {
+          setData(result.data);
+        }
       } finally {
         setIsLoading(false);
       }

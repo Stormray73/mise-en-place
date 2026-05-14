@@ -80,7 +80,8 @@ describe("RecipeEditor", () => {
 
     fireEvent.click(screen.getByText("Apple, fresh"));
 
-    expect(screen.getByDisplayValue("Apple, fresh")).toBeInTheDocument();
+    // After selection, it should appear in the ComponentList
+    expect(screen.getByText("Apple, fresh")).toBeInTheDocument();
     const quantityInputs = screen.getAllByPlaceholderText(/Qty/i);
     expect(quantityInputs.length).toBe(1);
   });

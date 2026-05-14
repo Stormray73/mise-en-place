@@ -1,3 +1,9 @@
+/**
+ * FILE: app/recipes/[id]/page.tsx
+ * DESCRIPTION: Server component for the recipe detail view.
+ * STANDARDS: TDD, Clean Architecture.
+ */
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { notFound, redirect } from "next/navigation";
@@ -40,7 +46,15 @@ export default async function RecipeDetailPage({
     notFound();
   }
 
-  const macros = await calculateMacros(recipe);
+  const recipeWithTypes = {
+    ...recipe,
+    components: recipe.components.map((c) => ({
+      ...c,
+      type: c.ingredientId ? "ingredient" : "sub-recipe",
+    })),
+  };
+
+  const macros = await calculateMacros(recipeWithTypes as Partial<Recipe>);
 
   return (
     <main className="max-w-7xl mx-auto p-8">
@@ -76,7 +90,7 @@ export default async function RecipeDetailPage({
 
       <RecipeView
         recipe={
-          recipe as Recipe & {
+          recipeWithTypes as Recipe & {
             steps: RecipeStep[];
             components: RecipeComponent[];
           }

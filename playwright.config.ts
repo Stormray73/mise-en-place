@@ -30,13 +30,6 @@ export default defineConfig({
     {
       name: "setup",
       testMatch: /.*\.setup\.ts/,
-      use: {
-        env: {
-          MOCK_AUTH: "true",
-          AUTH_URL: "http://localhost:3000",
-          NEXTAUTH_URL: "http://localhost:3000",
-        },
-      },
     },
     {
       name: "chromium",
@@ -44,11 +37,6 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         // Use prepared auth state.
         storageState: "playwright/.auth/user.json",
-        env: {
-          MOCK_AUTH: "true",
-          AUTH_URL: "http://localhost:3000",
-          NEXTAUTH_URL: "http://localhost:3000",
-        },
       },
       dependencies: ["setup"],
     },
@@ -56,15 +44,16 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "npm run dev:next",
+    command: "npx next dev",
     url: "http://localhost:3000",
     reuseExistingServer: false,
     stdout: "pipe",
     stderr: "pipe",
     env: {
       MOCK_AUTH: "true",
-      AUTH_URL: "http://localhost:3000",
-      NEXTAUTH_URL: "http://localhost:3000",
+      AUTH_SECRET: process.env.AUTH_SECRET || "any-secret-for-tests",
+      AUTH_TRUST_HOST: "true",
+      AUTH_URL: "http://localhost:3000/api/auth",
     },
   },
 });

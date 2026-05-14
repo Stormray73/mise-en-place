@@ -1,6 +1,13 @@
+/**
+ * FILE: lib/meal-plans.ts
+ * DESCRIPTION: Logic for meal plan management and prep-ahead aggregation.
+ * STANDARDS: TDD, Clean Architecture.
+ */
+
 import { prisma } from "./prisma";
 import { convert, canConvert } from "./units";
 import { calculateMacros } from "./recipes";
+import { Recipe } from "@/types";
 
 export async function getMealPlan(userId: string) {
   let mealPlan = await prisma.mealPlan.findFirst({
@@ -83,7 +90,16 @@ export async function getWeeklyMealPlan(userId: string, startDate: Date) {
       const mealMacros = { calories: 0, protein: 0, fat: 0, carbs: 0 };
 
       for (const pr of meal.plannedRecipes) {
-        const recipeMacros = await calculateMacros(pr.recipe);
+        const recipeWithTypes = {
+          ...pr.recipe,
+          components: pr.recipe.components.map((c) => ({
+            ...c,
+            type: c.ingredientId ? "ingredient" : ("sub-recipe" as const),
+          })),
+        };
+        const recipeMacros = await calculateMacros(
+          recipeWithTypes as Partial<Recipe>,
+        );
         mealMacros.calories += recipeMacros.calories * pr.scale;
 
         mealMacros.protein += recipeMacros.protein * pr.scale;
@@ -168,7 +184,7 @@ async function aggregateRecipe(
   if (!recipe) return;
 
   for (const component of recipe.components) {
-    if (component.ingredient) {
+    if (component.ingredientId && component.ingredient) {
       const ingredient = component.ingredient;
       const key = `${ingredient.id}_${component.prepState || "raw"}`;
 

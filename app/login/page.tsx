@@ -1,4 +1,5 @@
 import { signIn } from "@/auth";
+import { loginAction } from "./actions";
 
 export default function LoginPage() {
   return (
@@ -45,12 +46,7 @@ export default function LoginPage() {
           </form>
 
           {process.env.MOCK_AUTH === "true" && (
-            <form
-              action={async () => {
-                "use server";
-                await signIn("credentials", { redirectTo: "/dashboard" });
-              }}
-            >
+            <form action={loginAction}>
               <button
                 type="submit"
                 className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-zinc-700"

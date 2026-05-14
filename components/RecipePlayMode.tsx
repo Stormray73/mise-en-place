@@ -1,3 +1,9 @@
+/**
+ * FILE: components/RecipePlayMode.tsx
+ * DESCRIPTION: Interactive cooking mode with step-by-step instructions and timers.
+ * STANDARDS: TDD, Client-side persistence.
+ */
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -149,9 +155,9 @@ export function RecipePlayMode({ recipe, scale = 1 }: RecipePlayModeProps) {
                     className="flex justify-between text-sm animate-in fade-in duration-500"
                   >
                     <span>
-                      {c.ingredient?.name ||
-                        c.childRecipe?.title ||
-                        "Sub-recipe"}
+                      {c.type === "ingredient"
+                        ? c.ingredient?.name
+                        : c.childRecipe?.title || "Sub-recipe"}
                     </span>
                     <span className="text-zinc-500">
                       {(c.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}
@@ -165,9 +171,9 @@ export function RecipePlayMode({ recipe, scale = 1 }: RecipePlayModeProps) {
                     className="flex justify-between text-sm opacity-50"
                   >
                     <span>
-                      {c.ingredient?.name ||
-                        c.childRecipe?.title ||
-                        "Sub-recipe"}
+                      {c.type === "ingredient"
+                        ? c.ingredient?.name
+                        : c.childRecipe?.title || "Sub-recipe"}
                     </span>
                     <span className="text-zinc-500">
                       {(c.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}

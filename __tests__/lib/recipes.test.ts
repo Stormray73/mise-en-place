@@ -29,6 +29,8 @@ describe("Recipe Logic", () => {
       const recipe: Partial<Recipe> = {
         components: [
           {
+            type: "ingredient",
+            ingredientId: "i1",
             id: "1",
             recipeId: "r1",
             quantity: 200,
@@ -60,6 +62,8 @@ describe("Recipe Logic", () => {
         yieldUnit: "portion",
         components: [
           {
+            type: "ingredient",
+            ingredientId: "i2",
             id: "2",
             recipeId: "sub1",
             quantity: 100,
@@ -76,12 +80,13 @@ describe("Recipe Logic", () => {
       const mainRecipe: Partial<Recipe> = {
         components: [
           {
+            type: "sub-recipe",
+            childRecipeId: "sub1",
             id: "3",
             recipeId: "main1",
             quantity: 2,
             unit: "portion",
             childRecipe: subRecipe as Recipe,
-            childRecipeId: "sub1",
           },
         ],
       };
@@ -95,7 +100,7 @@ describe("Recipe Logic", () => {
     it("should detect circular dependencies", async () => {
       const recipeB = {
         id: "B",
-        components: [{ childRecipeId: "A" }],
+        components: [{ type: "sub-recipe", childRecipeId: "A" }],
       };
 
       (prisma.recipe.findUnique as Mock).mockResolvedValue(recipeB);
@@ -104,7 +109,14 @@ describe("Recipe Logic", () => {
         title: "Recipe A",
         yieldAmount: 1,
         yieldUnit: "portion",
-        components: [{ childRecipeId: "B", quantity: 1, unit: "portion" }],
+        components: [
+          {
+            type: "sub-recipe",
+            childRecipeId: "B",
+            quantity: 1,
+            unit: "portion",
+          },
+        ],
         steps: [],
         userId: "user1",
       };

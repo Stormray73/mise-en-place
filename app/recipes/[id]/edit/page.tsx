@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { RecipeEditor } from "@/components/RecipeEditor";
+import { RecipeSaveData } from "@/types";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -38,6 +39,14 @@ export default async function EditRecipePage({
     redirect("/dashboard");
   }
 
+  const recipeWithTypes = {
+    ...recipe,
+    components: recipe.components.map((c) => ({
+      ...c,
+      type: c.ingredientId ? "ingredient" : ("sub-recipe" as const),
+    })),
+  };
+
   return (
     <main className="max-w-4xl mx-auto p-6">
       <div className="flex items-center justify-between mb-8">
@@ -49,7 +58,9 @@ export default async function EditRecipePage({
           &larr; Back to Dashboard
         </Link>
       </div>
-      <RecipeEditor initialData={recipe} />
+      <RecipeEditor
+        initialData={recipeWithTypes as unknown as RecipeSaveData}
+      />
     </main>
   );
 }
