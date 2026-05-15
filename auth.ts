@@ -23,12 +23,6 @@ if (process.env.MOCK_AUTH === "true") {
             image: "https://via.placeholder.com/150",
           };
 
-          await prisma.user.upsert({
-            where: { id: user.id },
-            update: { name: user.name, email: user.email },
-            create: user,
-          });
-
           return user;
         } catch (error) {
           console.error("Mock Auth Error:", error);

@@ -6,9 +6,6 @@ export const dynamic = "force-dynamic";
 
 export default async function Header() {
   const session = await auth();
-  console.log(
-    `Header session: user=${!!session?.user}, email=${session?.user?.email}`,
-  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/50 backdrop-blur-md">
@@ -16,7 +13,19 @@ export default async function Header() {
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white">
-              <span className="text-xl font-bold text-black">M</span>
+              <svg
+                className="h-5 w-5 text-black"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                />
+              </svg>
             </div>
             <span className="text-xl font-bold tracking-tight text-white sm:inline-block">
               Mise-en-place
@@ -24,8 +33,8 @@ export default async function Header() {
           </Link>
         </div>
 
-        <nav className="flex items-center gap-6">
-          {session?.user ? (
+        <nav className="flex items-center gap-4 sm:gap-6">
+          {session ? (
             <>
               <Link
                 href="/dashboard"
@@ -37,7 +46,7 @@ export default async function Header() {
                 href="/recipes"
                 className="text-sm font-medium text-zinc-400 transition-colors hover:text-white"
               >
-                My Recipes
+                Recipes
               </Link>
               <Link
                 href="/meal-planner"

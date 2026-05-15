@@ -10,6 +10,10 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/recipes/r1",
 }));
 
+vi.mock("@/app/dashboard/pantry/actions", () => ({
+  checkRecipeStockAction: vi.fn().mockResolvedValue([]),
+}));
+
 const mockMacros: Macros = {
   calories: 1000,
   protein: 50,
