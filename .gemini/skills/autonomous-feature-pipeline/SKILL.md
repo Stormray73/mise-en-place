@@ -14,13 +14,10 @@ This skill acts as a high-level orchestrator to move a feature from "Story" to "
 1. **Activate `feature-implementer`**: Implement the feature, unit tests, and E2E tests following the story requirements.
 2. **Modular Docs**: Ensure `GEMINI.md` files are created/updated in all touched directories.
 
-### Phase 2: Static Analysis & Unit Verification
+### Phase 2: Unit Verification
 
-1. **Linter Check**: Run `npm run lint`.
-   - If fails: Use `eslint --fix`. If issues persist, fix manually.
-2. **Type Check**: Run `npx tsc --noEmit`. Fix any type errors.
-3. **Unit Regression**: Run `npm run test -- <path_to_domain>`. All unit tests must pass.
-4. **Loop**: Repeat Phase 2 until all static and unit checks pass.
+1. **Unit Regression**: Run `npm run test -- <path_to_domain>`. All unit tests must pass.
+2. **Logic Fixes**: If unit tests fail, fix the implementation and re-run until green.
 
 ### Phase 3: Fresh-Eye Peer Review
 
@@ -37,12 +34,15 @@ This skill acts as a high-level orchestrator to move a feature from "Story" to "
 2. **Apply Fixes**: Address all critical/major issues identified.
 3. **Re-verify**: Return to Phase 2 to ensure no regressions were introduced.
 
-### Phase 5: Final Validation & Delivery
+### Phase 5: Final Validation & Stability
 
 1. **Full Regression**: Run the entire domain E2E suite (`npx playwright test <path_to_domain>`).
 2. **Stability Check**: Ensure the new E2E spec passes 3 times consecutively.
-3. **Documentation Sync**: Perform a final pass on all local `GEMINI.md` files to ensure they match the post-fix implementation.
-4. **Handoff**: Report to the user that the feature is "Push-Ready".
+3. **Static Analysis (Push-Ready Check)**:
+   - **Linter**: Run `npm run lint`. If fails, use `eslint --fix` or fix manually.
+   - **Type Check**: Run `npx tsc --noEmit`. Fix any type errors.
+4. **Documentation Sync**: Perform a final pass on all local `GEMINI.md` files to ensure they match the post-fix implementation.
+5. **Handoff**: Report to the user that the feature is "Push-Ready".
 
 ## Rules & Constraints
 
