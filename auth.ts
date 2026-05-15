@@ -46,7 +46,12 @@ if (process.env.MOCK_AUTH === "true") {
   );
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const {
+  handlers,
+  auth: internalAuth,
+  signIn,
+  signOut,
+} = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers,
   session: { strategy: "jwt" },
@@ -55,6 +60,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
+      if (process.env.MOCK_AUTH === "true") return true;
+
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith("/dashboard");
       if (isOnDashboard) {
@@ -71,3 +78,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+export const auth = async (...args: Parameters<typeof internalAuth>) => {
+  // @ts-expect-error - Auth.js v5 type mismatch in beta
+  const session = await internalAuth(...args);
+  if (!session && process.env.MOCK_AUTH === "true") {
+    return {
+      user: {
+        id: "test-user-id",
+        name: "Test Chef",
+        email: "test@example.com",
+        image: "https://via.placeholder.com/150",
+      },
+      expires: new Date(Date.now() + 3600 * 1000).toISOString(),
+    };
+  }
+  return session;
+};

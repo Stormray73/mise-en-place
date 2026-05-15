@@ -100,10 +100,15 @@ export function Autocomplete<T>({
         </div>
       )}
       {results.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl max-h-60 overflow-auto">
+        <div
+          role="listbox"
+          className="absolute z-50 w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl max-h-60 overflow-auto"
+        >
           {results.map((item) => (
             <button
               key={keyExtractor(item)}
+              role="option"
+              aria-selected={false}
               type="button"
               onClick={() => handleSelect(item)}
               className="w-full text-left px-4 py-2 hover:bg-zinc-700 transition-colors border-b border-zinc-700 last:border-0"

@@ -10,6 +10,9 @@ import { useState, useEffect, useRef } from "react";
 import { getRelevantIngredients } from "@/lib/ingredient-matcher";
 import { useRouter } from "next/navigation";
 import { Recipe, RecipeStep, RecipeComponent } from "@/types";
+import { deductRecipeIngredientsAction } from "@/app/recipes/actions";
+import Modal from "./ui/Modal";
+import { Button } from "./ui/Button";
 
 interface RecipePlayModeProps {
   recipe: Recipe & { steps: RecipeStep[]; components: RecipeComponent[] };
@@ -19,6 +22,7 @@ interface RecipePlayModeProps {
 export function RecipePlayMode({ recipe, scale = 1 }: RecipePlayModeProps) {
   const router = useRouter();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [showDeductModal, setShowDeductModal] = useState(false);
 
   // Initialize state from localStorage to avoid setState in useEffect
   const [activeTimers, setActiveTimers] = useState<{ [key: string]: number }>(
@@ -318,12 +322,11 @@ export function RecipePlayMode({ recipe, scale = 1 }: RecipePlayModeProps) {
               </button>
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   if (currentStepIndex < steps.length - 1) {
                     setCurrentStepIndex((prev) => prev + 1);
                   } else {
-                    clearAllTimers();
-                    router.push(`/recipes/${recipe.id}`);
+                    setShowDeductModal(true);
                   }
                 }}
                 className="px-8 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-bold transition-colors"
@@ -353,6 +356,43 @@ export function RecipePlayMode({ recipe, scale = 1 }: RecipePlayModeProps) {
           />
         </div>
       </div>
+
+      {showDeductModal && (
+        <Modal
+          title="Recipe Complete!"
+          onClose={() => {
+            clearAllTimers();
+            router.push(`/recipes/${recipe.id}`);
+          }}
+        >
+          <div className="space-y-4">
+            <p>
+              Great job! Would you like to deduct the ingredients used from your
+              pantry?
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  clearAllTimers();
+                  router.push(`/recipes/${recipe.id}`);
+                }}
+              >
+                No, skip
+              </Button>
+              <Button
+                onClick={async () => {
+                  await deductRecipeIngredientsAction(recipe.id, scale);
+                  clearAllTimers();
+                  router.push(`/recipes/${recipe.id}`);
+                }}
+              >
+                Yes, deduct stock
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

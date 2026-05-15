@@ -6,6 +6,9 @@ export const dynamic = "force-dynamic";
 
 export default async function Header() {
   const session = await auth();
+  console.log(
+    `Header session: user=${!!session?.user}, email=${session?.user?.email}`,
+  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/50 backdrop-blur-md">
@@ -43,16 +46,16 @@ export default async function Header() {
                 Meal Plan
               </Link>
               <Link
-                href="/pantry"
-                className="text-sm font-medium text-zinc-400 transition-colors hover:text-white opacity-50 cursor-not-allowed"
+                href="/dashboard/pantry"
+                className="text-sm font-medium text-zinc-400 transition-colors hover:text-white"
               >
-                My Pantry
+                Pantry
               </Link>
               <Link
-                href="/grocery-list"
-                className="text-sm font-medium text-zinc-400 transition-colors hover:text-white opacity-50 cursor-not-allowed"
+                href="/dashboard/shopping-list"
+                className="text-sm font-medium text-zinc-400 transition-colors hover:text-white"
               >
-                Grocery List
+                Shopping List
               </Link>
               <LogoutButton />
             </>

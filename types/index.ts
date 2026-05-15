@@ -19,6 +19,7 @@ export interface RecipeSaveData {
           usdaId?: string | null;
           baseMacros?: Macros | null;
           baseAmount?: number | null;
+          foodPortions?: unknown | null;
         } | null;
       }
     | {
@@ -45,11 +46,19 @@ export interface USDANutrient {
   value: number;
 }
 
+export interface USDAFoodPortion {
+  gramWeight: number;
+  modifier: string;
+  amount: number;
+  measureUnitName: string;
+}
+
 export interface USDAFood {
   fdcId: number;
   description: string;
   foodCategory: string;
   foodNutrients: USDANutrient[];
+  foodPortions?: USDAFoodPortion[];
 }
 
 export interface RecipeSearchResult {
@@ -72,6 +81,7 @@ export interface Ingredient {
   usdaId?: string | null;
   baseMacros?: unknown; // JSON from Prisma
   baseAmount?: number | null;
+  foodPortions?: unknown; // JSON from Prisma
 }
 
 export interface Recipe {

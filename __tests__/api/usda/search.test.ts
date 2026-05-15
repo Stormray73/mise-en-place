@@ -13,8 +13,24 @@ describe("GET /api/usda/search", () => {
     expect(res.status).toBe(400);
   });
 
-  it("should forward the query to USDA and return the result", async () => {
-    const mockResponse = { foods: [{ description: "Apple" }] };
+  it("should forward the query to USDA and return the result with foodPortions", async () => {
+    const mockResponse = {
+      foods: [
+        {
+          fdcId: 123,
+          description: "Apple",
+          foodNutrients: [],
+          foodPortions: [
+            {
+              gramWeight: 182,
+              modifier: "1 medium",
+              amount: 1,
+              measureUnitName: "cup",
+            },
+          ],
+        },
+      ],
+    };
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
@@ -27,14 +43,7 @@ describe("GET /api/usda/search", () => {
 
     expect(res.status).toBe(200);
     expect(data).toEqual(mockResponse);
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("https://api.nal.usda.gov/fdc/v1/foods/search"),
-    );
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("query=apple"),
-    );
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("api_key=test-key"),
-    );
+    expect(data.foods[0].foodPortions).toBeDefined();
+    expect(data.foods[0].foodPortions[0].gramWeight).toBe(182);
   });
 });

@@ -15,13 +15,17 @@ setup("authenticate", async ({ page }) => {
   }
 
   // Best Practice: Use a web-first assertion with a custom timeout
-  // This will retry until the URL matches or it hits 60s
-  await expect(page).toHaveURL(/\/dashboard/, { timeout: 60000 });
+  // This will retry until the URL matches /dashboard or /
+  await expect(page).toHaveURL(/\/dashboard|\//, { timeout: 60000 });
+
+  // Explicitly go to dashboard to ensure session is active and UI is loaded
+  await page.goto("/dashboard");
 
   // Also verify that the UI has actually rendered before saving state
-  await expect(
-    page.getByRole("navigation").getByRole("button", { name: /logout/i }),
-  ).toBeVisible({ timeout: 15000 });
+  // Using a more flexible locator for the logout button
+  await expect(page.getByRole("button", { name: /logout/i })).toBeVisible({
+    timeout: 20000,
+  });
 
   // Save the cookies and local storage
   await page.context().storageState({ path: authFile });

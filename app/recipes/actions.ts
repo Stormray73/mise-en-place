@@ -11,7 +11,33 @@ import { saveRecipe } from "@/lib/recipes";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { RecipeSaveData, Macros, Recipe, ActionResult } from "@/types";
-import { Prisma } from "@prisma/client";
+import { upsertIngredient } from "@/lib/ingredients";
+import { deductRecipeIngredients } from "@/lib/pantry";
+
+export async function deductRecipeIngredientsAction(
+  recipeId: string,
+  scale: number,
+): Promise<ActionResult<void>> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await deductRecipeIngredients(session.user.id, recipeId, scale);
+
+    revalidatePath("/dashboard/pantry");
+    return { success: true, data: undefined };
+  } catch (error) {
+    console.error("Deduct recipe ingredients error:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
+    };
+  }
+}
 
 export async function saveRecipeAction(
   data: RecipeSaveData,
@@ -33,22 +59,12 @@ export async function saveRecipeAction(
           !comp.ingredientId
         ) {
           // Upsert ingredient
-          const baseMacros = comp.ingredient.baseMacros as unknown as Macros;
-          const baseAmount = comp.ingredient.baseAmount as unknown as number;
-
-          const ingredient = await prisma.ingredient.upsert({
-            where: { usdaId: comp.ingredient.usdaId as string },
-            update: {
-              name: comp.ingredient.name,
-              baseMacros: baseMacros as unknown as Prisma.InputJsonValue,
-              baseAmount: baseAmount,
-            },
-            create: {
-              name: comp.ingredient.name,
-              usdaId: comp.ingredient.usdaId,
-              baseMacros: baseMacros as unknown as Prisma.InputJsonValue,
-              baseAmount: baseAmount,
-            },
+          const ingredient = await upsertIngredient({
+            name: comp.ingredient.name,
+            usdaId: comp.ingredient.usdaId as string,
+            baseMacros: comp.ingredient.baseMacros as unknown as Macros,
+            baseAmount: comp.ingredient.baseAmount as unknown as number,
+            foodPortions: comp.ingredient.foodPortions,
           });
           return {
             ...comp,

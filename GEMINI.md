@@ -7,6 +7,7 @@ Mise-en-place is a Next.js web application designed for chefs who want to stream
 ## Documentation Index
 
 - [Core Features](./docs/FEATURES.md): Detailed functionality breakdown.
+- [Upcoming Roadmap](./docs/upcoming-stories/): Planned features and user stories.
 - [Testing & Quality Standards](./docs/TESTING.md): TDD rules, linting, and Husky enforcement.
 - [Architecture & Deployment](./docs/ARCHITECTURE.md): Tech stack and CI/CD strategy.
 - [Agentic Ergonomics](./docs/AGENT_ERGONOMICS.md): Standards for AI navigation efficiency.

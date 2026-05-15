@@ -16,18 +16,19 @@ This skill enables the primary agent to delegate the implementation of an entire
    - A instruction to act as an "Orchestration Agent".
    - Reference the instructions in `references/orchestrator-prompt.md` within this skill.
 4. **Monitor & Wait**: The sub-agent will operate autonomously. Wait for it to report success and a summary of work before continuing.
+5. **Primary Validation**: Once the sub-agent completes the implementation and unit/integration tests, **you (the primary agent) MUST execute the full E2E test suite** to ensure overall system integrity and functional parity.
 
 ## Prompt Template
 
 When invoking the sub-agent, use a prompt similar to this:
 
 ```text
-You are the Orchestration Agent for the 'mise-en-place' project. 
+You are the Orchestration Agent for the 'mise-en-place' project.
 Your task is to implement all features described in: [PATH_TO_DOC_FILE]
 
-Please follow the "Orchestration Sub-Agent Instructions" found in the 'orchestrate-agents' skill references. 
+Please follow the "Orchestration Sub-Agent Instructions" found in the 'orchestrate-agents' skill references.
 
-Execute the implementation using TDD, ensure all tests (including E2E) pass, and report back with a summary of implemented features and test results once complete.
+Execute the implementation using TDD and ensure all unit and integration tests pass. Do NOT run E2E tests (Playwright/Cypress); these will be handled by the primary agent to prevent timeouts. Report back with a summary of implemented features and test results once complete.
 ```
 
 ## When to Use

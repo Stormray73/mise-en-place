@@ -46,6 +46,7 @@ model User {
   prepCompletions PrepCompletion[]
   recipes         Recipe[]
   sessions        Session[]
+  pantryItems     PantryItem[]
 }
 
 model VerificationToken {
@@ -83,12 +84,28 @@ model RecipeStep {
 }
 
 model Ingredient {
-  id         String            @id @default(cuid())
-  name       String
-  usdaId     String?           @unique
-  baseMacros Json?
-  baseAmount Float?
-  components RecipeComponent[]
+  id           String            @id @default(cuid())
+  name         String
+  usdaId       String?           @unique
+  baseMacros   Json?
+  baseAmount   Float?
+  foodPortions Json?
+  components   RecipeComponent[]
+  pantryItems  PantryItem[]
+}
+
+model PantryItem {
+  id               String     @id @default(cuid())
+  userId           String
+  ingredientId     String
+  quantity         Float
+  unit             String
+  locationTags     String[]
+  restockThreshold Float      @default(0)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  ingredient       Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model RecipeComponent {

@@ -12,6 +12,7 @@ import { Recipe, Macros, RecipeStep, RecipeComponent } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { checkRecipeStockAction } from "@/app/dashboard/pantry/actions";
 
 interface RecipeViewProps {
   recipe: Recipe & {
@@ -31,6 +32,7 @@ export default function RecipeView({
   const pathname = usePathname();
   const [scale, setScale] = useState(initialScale);
   const [showPerServing, setShowPerServing] = useState(false);
+  const [stockStatus, setStockStatus] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -40,7 +42,25 @@ export default function RecipeView({
       params.delete("scale");
     }
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [scale, router, pathname]);
+
+    // Check stock status when scale changes
+    const checkStock = async () => {
+      const results = await checkRecipeStockAction(
+        recipe.components.map((c) => ({
+          ingredientId: c.ingredientId,
+          quantity: c.quantity,
+          unit: c.unit,
+        })),
+        scale,
+      );
+      const status: Record<string, boolean> = {};
+      results.forEach((res, i) => {
+        status[recipe.components[i].id] = res.hasStock;
+      });
+      setStockStatus(status);
+    };
+    checkStock();
+  }, [scale, router, pathname, recipe.components]);
 
   const scaledMacros =
     showPerServing && recipe.servings
@@ -168,11 +188,18 @@ export default function RecipeView({
             {recipe.components.map((comp) => (
               <li key={comp.id} className="flex justify-between items-start">
                 <div>
-                  <span className="font-medium text-zinc-200">
-                    {comp.type === "ingredient"
-                      ? comp.ingredient?.name
-                      : comp.childRecipe?.title}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-zinc-200">
+                      {comp.type === "ingredient"
+                        ? comp.ingredient?.name
+                        : comp.childRecipe?.title}
+                    </span>
+                    {comp.ingredientId && stockStatus[comp.id] === false && (
+                      <span className="text-[10px] bg-red-900/50 text-red-400 px-1.5 py-0.5 rounded border border-red-900 font-bold uppercase">
+                        Low Stock
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-zinc-500">
                     {(comp.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}
                     {comp.unit}

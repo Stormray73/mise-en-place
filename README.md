@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mise-en-place: The Chef's One-Stop-Shop
 
-## Getting Started
+Mise-en-place is a professional-grade web application for chefs to manage recipes, plan meals, monitor pantry inventory, and generate shopping lists.
 
-First, run the development server:
+## 🚀 Getting Started
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. **Install Dependencies:**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+   ```bash
+   npm install
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. **Environment Setup:**
+   Copy `.env.example` to `.env` and fill in your database and OAuth credentials.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. **Run Development Server:**
 
-## Learn More
+   ```bash
+   npm run dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+4. **Open Application:**
+   Visit [http://localhost:3000](http://localhost:3000).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📖 Documentation & Roadmap
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+For detailed information on the project architecture, testing standards, and our upcoming feature roadmap, please refer to:
 
-## Deploy on Vercel
+- **[GEMINI.md](./GEMINI.md)**: The central documentation hub.
+- **[Roadmap](./docs/upcoming-stories/)**: Our upcoming feature stories and implementation plans.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠 Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework:** Next.js (App Router)
+- **Language:** TypeScript
+- **ORM:** Prisma (Postgres)
+- **Testing:** Vitest + Playwright
+- **Deployment:** Vercel
+
+---
+
+_Built for chefs, by chefs._

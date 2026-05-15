@@ -30,18 +30,43 @@ const UNITS: Record<string, UnitInfo> = {
   gal: { name: "gallon", category: "volume", baseRatio: 3785.411784 },
 };
 
+export interface USDAFoodPortion {
+  gramWeight: number;
+  modifier: string;
+  amount: number;
+  measureUnitName: string;
+}
+
 export function getUnits() {
   return Object.keys(UNITS);
 }
 
-export function canConvert(from: string, to: string): boolean {
+export function canConvert(
+  from: string,
+  to: string,
+  portions?: USDAFoodPortion[],
+): boolean {
   const fromUnit = UNITS[from];
   const toUnit = UNITS[to];
   if (!fromUnit || !toUnit) return false;
-  return fromUnit.category === toUnit.category;
+  if (fromUnit.category === toUnit.category) return true;
+
+  // Cross-category conversion requires density data (portions)
+  if (!portions || portions.length === 0) return false;
+
+  // We check if any portion provides a link between mass and volume
+  // In USDA data, gramWeight is always mass (g).
+  // measureUnitName is usually the volume unit or a common unit (e.g., 'cup', 'tbsp', 'piece').
+  // If measureUnitName matches one of our volume units, we can convert.
+  return portions.some((p) => UNITS[p.measureUnitName]?.category === "volume");
 }
 
-export function convert(value: number, from: string, to: string): number {
+export function convert(
+  value: number,
+  from: string,
+  to: string,
+  portions?: USDAFoodPortion[],
+): number {
   if (from === to) return value;
 
   const fromUnit = UNITS[from];
@@ -50,10 +75,44 @@ export function convert(value: number, from: string, to: string): number {
   if (!fromUnit) throw new Error(`Unknown unit: ${from}`);
   if (!toUnit) throw new Error(`Unknown unit: ${to}`);
 
-  if (fromUnit.category !== toUnit.category) {
+  if (fromUnit.category === toUnit.category) {
+    const valueInBase = value * fromUnit.baseRatio;
+    return valueInBase / toUnit.baseRatio;
+  }
+
+  // Cross-category conversion
+  if (!portions || portions.length === 0) {
     throw new Error(`Incompatible units: cannot convert ${from} to ${to}`);
   }
 
-  const valueInBase = value * fromUnit.baseRatio;
-  return valueInBase / toUnit.baseRatio;
+  // Find a portion that uses a volume unit we know
+  const volumePortion = portions.find(
+    (p) => UNITS[p.measureUnitName]?.category === "volume",
+  );
+
+  if (!volumePortion) {
+    throw new Error(
+      `Incompatible units: no density data available for ${from} to ${to}`,
+    );
+  }
+
+  // gramWeight is the mass in grams for 'amount' of 'measureUnitName'
+  // Density = (gramWeight) / (amount * measureUnitName.baseRatio)  [g/ml]
+  const portionVolumeMl =
+    volumePortion.amount * UNITS[volumePortion.measureUnitName].baseRatio;
+  const density = volumePortion.gramWeight / portionVolumeMl; // g/ml
+
+  if (fromUnit.category === "volume" && toUnit.category === "mass") {
+    // Volume -> ml -> g -> Mass
+    const valueMl = value * fromUnit.baseRatio;
+    const valueG = valueMl * density;
+    return valueG / toUnit.baseRatio;
+  } else if (fromUnit.category === "mass" && toUnit.category === "volume") {
+    // Mass -> g -> ml -> Volume
+    const valueG = value * fromUnit.baseRatio;
+    const valueMl = valueG / density;
+    return valueMl / toUnit.baseRatio;
+  }
+
+  throw new Error(`Incompatible units: cannot convert ${from} to ${to}`);
 }
