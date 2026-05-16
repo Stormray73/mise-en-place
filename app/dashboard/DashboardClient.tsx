@@ -11,6 +11,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PrepItem } from "@/types";
 import { updatePlannedRecipeAction } from "@/app/meal-planner/actions";
+import { ShoppingListItem } from "@/lib/shopping-list";
+import ShoppingListWidget from "@/components/ShoppingListWidget";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 
@@ -24,8 +26,10 @@ interface ActiveTimer {
 
 export default function DashboardClient({
   immediatePrep,
+  shoppingList,
 }: {
   immediatePrep: PrepItem[];
+  shoppingList: ShoppingListItem[];
 }) {
   const router = useRouter();
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
@@ -193,6 +197,8 @@ export default function DashboardClient({
           </div>
         </CardContent>
       </Card>
+
+      <ShoppingListWidget items={shoppingList} />
     </div>
   );
 }

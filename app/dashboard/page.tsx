@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getWeeklyMealPlan, getPrepAheadData } from "@/lib/meal-plans";
+import { generateShoppingList } from "@/lib/shopping-list";
 import Link from "next/link";
 import DashboardClient from "./DashboardClient";
 
@@ -28,6 +29,15 @@ export default async function DashboardHub() {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const prepData = await getPrepAheadData(session.user.id, today, tomorrow);
   const immediatePrep = prepData.filter((item) => !item.completed).slice(0, 3);
+
+  // Fetch shopping list (next 7 days)
+  const endOfWeek = new Date(today);
+  endOfWeek.setDate(endOfWeek.getDate() + 7);
+  const shoppingList = await generateShoppingList(
+    session.user.id,
+    today,
+    endOfWeek,
+  );
 
   return (
     <div className="max-w-7xl mx-auto p-8">
@@ -162,7 +172,10 @@ export default async function DashboardHub() {
             <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
             Kitchen Status
           </h2>
-          <DashboardClient immediatePrep={immediatePrep} />
+          <DashboardClient
+            immediatePrep={immediatePrep}
+            shoppingList={shoppingList}
+          />
         </div>
       </div>
     </div>

@@ -3,7 +3,8 @@ import { getIngredientStock } from "./pantry";
 import { convert, canConvert, USDAFoodPortion } from "./units";
 
 export interface ShoppingListItem {
-  ingredientId: string;
+  id?: string; // For manual items
+  ingredientId?: string;
   name: string;
   requiredQuantity: number;
   availableQuantity: number;
@@ -18,8 +19,6 @@ export async function generateShoppingList(
   endDate: Date,
 ): Promise<ShoppingListItem[]> {
   // 1. Get all meal plan ingredients in range
-  // We use getWeeklyMealPlan but we might need a more flexible one or just call it multiple times
-  // Actually, let's just query meals directly for simplicity here
   const meals = await prisma.meal.findMany({
     where: {
       mealPlan: { userId },
@@ -49,6 +48,8 @@ export async function generateShoppingList(
 
   for (const meal of meals) {
     for (const pr of meal.plannedRecipes) {
+      if (pr.excludeFromPrep) continue; // Respect Story 12 exclusions
+
       for (const component of pr.recipe.components) {
         if (component.ingredientId && component.ingredient) {
           const key = component.ingredientId;
@@ -73,8 +74,6 @@ export async function generateShoppingList(
                 portions,
               );
             } else {
-              // Different unit category, add as separate item or log?
-              // For shopping list, we'll just keep the first unit for now
               console.warn(
                 `Unit mismatch for ${component.ingredient.name} in shopping list`,
               );
@@ -123,8 +122,6 @@ export async function generateShoppingList(
   }
 
   // 4. Add items below restock threshold
-
-  // Aggregate threshold items
   const thresholdNeeds: Record<
     string,
     { name: string; deficit: number; unit: string }
@@ -138,12 +135,9 @@ export async function generateShoppingList(
         if (!thresholdNeeds[item.ingredientId]) {
           thresholdNeeds[item.ingredientId] = {
             name: item.ingredient.name,
-            deficit: convert(deficit, item.unit, item.unit, stock.portions), // Deficit in item's unit
+            deficit: convert(deficit, item.unit, item.unit, stock.portions),
             unit: item.unit,
           };
-        } else {
-          // Already processing this ingredient, maybe aggregate thresholds?
-          // Usually one ingredient has one threshold if we are careful, but let's be safe.
         }
       }
     }
@@ -155,7 +149,7 @@ export async function generateShoppingList(
         ingredientId,
         name: threshold.name,
         requiredQuantity: 0,
-        availableQuantity: 0, // Not accurately tracked here, but neededQuantity is what matters
+        availableQuantity: 0,
         neededQuantity: threshold.deficit,
         unit: threshold.unit,
         reason: "low-stock",
@@ -163,5 +157,49 @@ export async function generateShoppingList(
     }
   }
 
-  return Object.values(shoppingList);
+  // 5. Add manual items
+  const manualItems = await prisma.manualShoppingItem.findMany({
+    where: { userId },
+  });
+
+  const results = Object.values(shoppingList);
+
+  for (const item of manualItems) {
+    results.push({
+      id: item.id,
+      name: item.name,
+      requiredQuantity: item.quantity,
+      availableQuantity: 0,
+      neededQuantity: item.quantity,
+      unit: item.unit || "ea",
+      reason: "manual",
+    });
+  }
+
+  return results;
+}
+
+export async function addManualShoppingItem(
+  userId: string,
+  name: string,
+  quantity: number = 1,
+  unit?: string,
+) {
+  return prisma.manualShoppingItem.create({
+    data: {
+      userId,
+      name,
+      quantity,
+      unit,
+    },
+  });
+}
+
+export async function deleteManualShoppingItem(id: string, userId: string) {
+  return prisma.manualShoppingItem.deleteMany({
+    where: {
+      id,
+      userId,
+    },
+  });
 }

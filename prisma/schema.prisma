@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -34,9 +34,9 @@ model Session {
 }
 
 model User {
-  id              String           @id @default(cuid())
+  id              String               @id @default(cuid())
   name            String?
-  email           String?          @unique
+  email           String?              @unique
   emailVerified   DateTime?
   image           String?
   accounts        Account[]
@@ -47,8 +47,9 @@ model User {
   ingredients     Ingredient[]
   tags            Tag[]
   mealPlan        MealPlan?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  manualShopping  ManualShoppingItem[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 }
 
 model VerificationToken {
@@ -186,4 +187,15 @@ model PrepCompletion {
   updatedAt       DateTime       @updatedAt
   plannedRecipe   PlannedRecipe? @relation(fields: [plannedRecipeId], references: [id], onDelete: Cascade)
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ManualShoppingItem {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  quantity  Float    @default(1.0)
+  unit      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
