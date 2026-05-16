@@ -32,15 +32,27 @@ The goal of v1.0 is to refine the existing feature set into a rock-solid experie
 - **Quick Access:** Integrate shopping list with direct-add capabilities into the dashboard.
 - **Documentation:** [v1/DASHBOARD_ENHANCEMENTS.md](docs/upcoming-stories/v1/DASHBOARD_ENHANCEMENTS.md)
 
+### 5. Core LLM & Image Integration
+
+- **Storage:** Cloudflare R2 for generous free tier image hosting.
+- **Parsing:** Unified import (URL, Text, PDF, .docx, Image) via GPT-4o Mini.
+- **Review:** All AI imports drop users into the Edit form for validation.
+- **Documentation:** [v1/LLM_AND_IMAGES.md](docs/upcoming-stories/v1/LLM_AND_IMAGES.md)
+
+### 6. User Tiers & Admin Portal
+
+- **Monetization:** Free vs. Pro tiers with recipe and AI usage limits.
+- **Admin:** Manual tier override portal for early adopters and admins.
+- **Documentation:** [v1/USER_TIERS.md](docs/upcoming-stories/v1/USER_TIERS.md)
+
 ---
 
 ## v2.0: Stretch Features (Lower Priority)
 
 Major overhauls and community features deferred until after v1.0.
 
-- **Advanced Import:** OCR and multi-format parsing. [v2/ADVANCED_IMPORT.md](docs/upcoming-stories/v2/ADVANCED_IMPORT.md)
+- **Affiliate Marketing:** "Shop this Recipe" integration for monetization. [v2/AFFILIATE_MARKETING.md](docs/upcoming-stories/v2/AFFILIATE_MARKETING.md)
 - **Community Sharing:** Public links and discovery database. [v2/COMMUNITY_SHARING.md](docs/upcoming-stories/v2/COMMUNITY_SHARING.md)
-- **Recipe Personalization:** Favorites, tags (completed), and beyond. [v2/RECIPE_PERSONALIZATION.md](docs/upcoming-stories/v2/RECIPE_PERSONALIZATION.md)
 - **Ingredient Mastery Phase 2:** Crowdsourcing and verification. [v2/INGREDIENT_MASTERY.md](docs/upcoming-stories/v2/INGREDIENT_MASTERY.md)
 
 ---
