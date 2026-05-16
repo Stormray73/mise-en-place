@@ -47,6 +47,7 @@ model User {
   recipes         Recipe[]
   sessions        Session[]
   pantryItems     PantryItem[]
+  ingredients     Ingredient[]
 }
 
 model VerificationToken {
@@ -90,8 +91,10 @@ model Ingredient {
   baseMacros   Json?
   baseAmount   Float?
   foodPortions Json?
+  userId       String?
   components   RecipeComponent[]
   pantryItems  PantryItem[]
+  user         User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
 model PantryItem {

@@ -16,6 +16,7 @@ interface AutocompleteProps<T> {
   keyExtractor: (item: T) => string | number;
   minChars?: number;
   className?: string;
+  footerAction?: (query: string) => React.ReactNode;
 }
 
 export function Autocomplete<T>({
@@ -27,6 +28,7 @@ export function Autocomplete<T>({
   keyExtractor,
   minChars = 2,
   className = "",
+  footerAction,
 }: AutocompleteProps<T>) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<T[]>([]);
@@ -84,6 +86,9 @@ export function Autocomplete<T>({
     setResults([]);
   };
 
+  const showDropdown =
+    query.length >= minChars && (results.length > 0 || footerAction);
+
   return (
     <div className={`relative ${className}`} ref={containerRef}>
       {label && (
@@ -99,7 +104,7 @@ export function Autocomplete<T>({
           Searching...
         </div>
       )}
-      {results.length > 0 && (
+      {showDropdown && (
         <div
           role="listbox"
           className="absolute z-50 w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl max-h-60 overflow-auto"
@@ -116,6 +121,11 @@ export function Autocomplete<T>({
               {renderItem(item)}
             </button>
           ))}
+          {footerAction && (
+            <div className="border-t border-zinc-700 bg-zinc-800 sticky bottom-0">
+              {footerAction(query)}
+            </div>
+          )}
         </div>
       )}
     </div>

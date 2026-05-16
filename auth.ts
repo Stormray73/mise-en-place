@@ -73,9 +73,11 @@ export const {
   },
 });
 
-export const auth = async (...args: Parameters<typeof internalAuth>) => {
-  // @ts-expect-error - Auth.js v5 type mismatch in beta
-  const session = await internalAuth(...args);
+import { Session } from "next-auth";
+
+export const auth = async (...args: unknown[]): Promise<Session | null> => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const session = await (internalAuth as any)(...args);
   if (!session && process.env.MOCK_AUTH === "true") {
     return {
       user: {

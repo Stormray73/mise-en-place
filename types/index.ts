@@ -54,11 +54,13 @@ export interface USDAFoodPortion {
 }
 
 export interface USDAFood {
-  fdcId: number;
+  fdcId: number | string;
   description: string;
   foodCategory: string;
   foodNutrients: USDANutrient[];
   foodPortions?: USDAFoodPortion[];
+  userId?: string | null;
+  baseAmount?: number | null;
 }
 
 export interface RecipeSearchResult {

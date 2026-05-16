@@ -18,7 +18,7 @@ export async function addToPantryAction(data: {
     name?: string;
     description?: string;
     usdaId?: string;
-    fdcId?: number;
+    fdcId?: number | string;
     baseMacros?: Macros;
     baseAmount?: number;
     foodPortions?: USDAFoodPortion[];
@@ -36,7 +36,7 @@ export async function addToPantryAction(data: {
 
   if (!ingredientId && data.ingredient) {
     const ingredient = await upsertIngredient({
-      name: data.ingredient.name || data.ingredient.description,
+      name: (data.ingredient.name || data.ingredient.description) as string,
       usdaId: data.ingredient.usdaId || data.ingredient.fdcId?.toString(),
       baseMacros: data.ingredient.baseMacros,
       baseAmount: data.ingredient.baseAmount,
