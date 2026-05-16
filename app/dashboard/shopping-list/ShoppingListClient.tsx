@@ -192,11 +192,11 @@ export default function ShoppingListClient({
                 variant={
                   item.ingredientId && purchasedIds.has(item.ingredientId)
                     ? "ghost"
-                    : "default"
+                    : "primary"
                 }
                 onClick={() => handlePurchase(item)}
                 disabled={
-                  item.ingredientId && purchasedIds.has(item.ingredientId)
+                  !!item.ingredientId && purchasedIds.has(item.ingredientId)
                 }
               >
                 {item.ingredientId && purchasedIds.has(item.ingredientId)

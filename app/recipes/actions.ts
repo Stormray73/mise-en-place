@@ -10,7 +10,13 @@ import { auth } from "@/auth";
 import { saveRecipe } from "@/lib/recipes";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { RecipeSaveData, Macros, Recipe, ActionResult } from "@/types";
+import {
+  RecipeSaveData,
+  Macros,
+  Recipe,
+  ActionResult,
+  USDAFoodPortion,
+} from "@/types";
 import { upsertIngredient } from "@/lib/ingredients";
 import { deductRecipeIngredients } from "@/lib/pantry";
 import { scrapeRecipe } from "@/lib/scraper";
@@ -151,7 +157,8 @@ export async function saveRecipeAction(
             usdaId: comp.ingredient.usdaId as string,
             baseMacros: comp.ingredient.baseMacros as unknown as Macros,
             baseAmount: comp.ingredient.baseAmount as unknown as number,
-            foodPortions: comp.ingredient.foodPortions,
+            foodPortions: comp.ingredient
+              .foodPortions as unknown as USDAFoodPortion[],
           });
           return {
             ...comp,

@@ -49,7 +49,8 @@ export default async function MealPlannerPage({
       />
 
       <MealCalendarClient
-        initialMeals={meals}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        initialMeals={meals as any}
         startDate={startDate.toISOString()}
         allRecipes={allRecipes}
       />

@@ -40,17 +40,22 @@ export async function scrapeRecipe(url: string): Promise<RecipeSaveData> {
             const found = findRecipe(item);
             if (found) return found;
           }
-        } else if (obj && typeof obj === "object") {
+        } else if (obj && typeof obj === "object" && obj !== null) {
           const record = obj as Record<string, unknown>;
+          const type = record["@type"];
           if (
-            record["@type"] === "Recipe" ||
-            (Array.isArray(record["@type"]) &&
-              (record["@type"] as string[]).includes("Recipe"))
+            typeof type === "string" &&
+            (type === "Recipe" || type.includes("Recipe"))
           ) {
             return record as unknown as LDRecipe;
           }
-          if (record["@graph"] && Array.isArray(record["@graph"])) {
-            return findRecipe(record["@graph"]);
+          if (Array.isArray(type) && type.includes("Recipe")) {
+            return record as unknown as LDRecipe;
+          }
+
+          const graph = record["@graph"];
+          if (graph && Array.isArray(graph)) {
+            return findRecipe(graph);
           }
         }
         return null;
@@ -71,37 +76,43 @@ export async function scrapeRecipe(url: string): Promise<RecipeSaveData> {
   }
 
   // Map JSON-LD to RecipeSaveData
-  const title = recipeData.name || "Imported Recipe";
+  const title = (recipeData as LDRecipe).name || "Imported Recipe";
 
   // Parse yield and servings
   let yieldAmount = 1;
   let yieldUnit = "portion";
-  if (recipeData.recipeYield) {
-    const yieldStr = Array.isArray(recipeData.recipeYield)
-      ? recipeData.recipeYield[0]
-      : recipeData.recipeYield;
-    const match = yieldStr.toString().match(/(\d+)/);
-    if (match) {
-      yieldAmount = parseFloat(match[1]);
-    }
-    // Try to extract unit
-    const unitMatch = yieldStr.toString().match(/[a-zA-Z]+/);
-    if (unitMatch) {
-      yieldUnit = unitMatch[0].toLowerCase();
+  if ((recipeData as LDRecipe).recipeYield) {
+    const yieldStr = Array.isArray((recipeData as LDRecipe).recipeYield)
+      ? (recipeData as LDRecipe).recipeYield?.[0]
+      : (recipeData as LDRecipe).recipeYield;
+    if (yieldStr) {
+      const match = yieldStr.toString().match(/(\d+)/);
+      if (match) {
+        yieldAmount = parseFloat(match[1]);
+      }
+      // Try to extract unit
+      const unitMatch = yieldStr.toString().match(/[a-zA-Z]+/);
+      if (unitMatch) {
+        yieldUnit = unitMatch[0].toLowerCase();
+      }
     }
   }
 
-  const servings = recipeData.recipeYield ? yieldAmount : undefined;
+  const servings = (recipeData as LDRecipe).recipeYield
+    ? yieldAmount
+    : undefined;
 
   // Map ingredients
-  const ingredients: string[] = Array.isArray(recipeData.recipeIngredient)
-    ? recipeData.recipeIngredient
+  const ingredients: string[] = Array.isArray(
+    (recipeData as LDRecipe).recipeIngredient,
+  )
+    ? ((recipeData as LDRecipe).recipeIngredient as string[])
     : [];
 
   // Map instructions
   let steps: { order: number; instruction: string }[] = [];
-  if (Array.isArray(recipeData.recipeInstructions)) {
-    steps = recipeData.recipeInstructions
+  if (Array.isArray((recipeData as LDRecipe).recipeInstructions)) {
+    steps = ((recipeData as LDRecipe).recipeInstructions as unknown[])
       .map((step: unknown, index: number) => {
         if (typeof step === "string") {
           return { order: index + 1, instruction: step };
@@ -128,7 +139,12 @@ export async function scrapeRecipe(url: string): Promise<RecipeSaveData> {
         return null;
       })
       .flat()
-      .filter((s): s is { order: number; instruction: string } => s !== null)
+      .filter(
+        (s: unknown): s is { order: number; instruction: string } =>
+          s !== null &&
+          typeof s === "object" &&
+          "instruction" in (s as Record<string, unknown>),
+      )
       .map((s, i) => ({ ...s, order: i + 1 }));
   }
 
@@ -139,12 +155,13 @@ export async function scrapeRecipe(url: string): Promise<RecipeSaveData> {
     servings,
     steps: steps,
     components: ingredients.map((ing) => ({
-      type: "ingredient",
-      quantity: 1, // Placeholder, needs parser or manual adjustment
+      type: "ingredient" as const,
+      quantity: 1, // Placeholder
       unit: "ea", // Placeholder
+      ingredientId: null,
       ingredient: {
         name: ing,
       },
     })),
-  } as RecipeSaveData;
+  };
 }

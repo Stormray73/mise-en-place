@@ -19,9 +19,9 @@ export async function addToPantryAction(data: {
     description?: string;
     usdaId?: string;
     fdcId?: number | string;
-    baseMacros?: Macros;
-    baseAmount?: number;
-    foodPortions?: USDAFoodPortion[];
+    baseMacros?: Macros | null;
+    baseAmount?: number | null;
+    foodPortions?: USDAFoodPortion[] | null;
   };
   ingredientId?: string;
   quantity: number;
@@ -40,9 +40,13 @@ export async function addToPantryAction(data: {
     const ingredient = await upsertIngredient({
       name: (data.ingredient.name || data.ingredient.description) as string,
       usdaId: data.ingredient.usdaId || data.ingredient.fdcId?.toString(),
-      baseMacros: data.ingredient.baseMacros,
-      baseAmount: data.ingredient.baseAmount,
-      foodPortions: data.ingredient.foodPortions,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      baseMacros: data.ingredient.baseMacros as any,
+      baseAmount: (data.ingredient.baseAmount === null
+        ? undefined
+        : data.ingredient.baseAmount) as number | undefined,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      foodPortions: data.ingredient.foodPortions as any,
     });
     ingredientId = ingredient.id;
   }
@@ -95,10 +99,11 @@ export async function decrementPantryItemAction(
 ) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
+  const userId = session.user.id;
 
   // Fetch item first to get current quantity
   // (We could optimize this with a custom prisma update but this is safer)
-  const pantry = await getPantry(session.user.id);
+  const pantry = await getPantry(userId);
   const item = pantry.find((i) => i.id === itemId);
   if (!item) throw new Error("Item not found");
 
@@ -114,6 +119,7 @@ export async function checkRecipeStockAction(
 ) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
+  const userId = session.user.id;
 
   const { checkStock } = await import("@/lib/pantry");
 
@@ -121,7 +127,7 @@ export async function checkRecipeStockAction(
     components.map(async (c) => {
       if (!c.ingredientId) return { hasStock: true };
       const hasStock = await checkStock(
-        session.user.id,
+        userId,
         c.ingredientId,
         c.quantity * scale,
         c.unit,

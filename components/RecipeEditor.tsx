@@ -60,7 +60,7 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
         setSteps(result.data.steps);
         setComponents(result.data.components);
         setImportUrl("");
-      } else {
+      } else if (!result.success) {
         setError(result.error);
       }
     } catch {

@@ -40,6 +40,9 @@ const mockMeals = [
     id: "m1",
     date: "2026-05-10T00:00:00Z",
     slot: "Dinner",
+    mealPlanId: "mp1",
+    createdAt: new Date(),
+    updatedAt: new Date(),
     plannedRecipes: [
       {
         id: "pr1",
@@ -74,7 +77,8 @@ describe("MealCalendarClient", () => {
   test("renders existing meals and recipes", () => {
     render(
       <MealCalendarClient
-        initialMeals={mockMeals}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        initialMeals={mockMeals as any}
         startDate={mockStartDate}
         allRecipes={mockAllRecipes}
       />,
@@ -104,7 +108,8 @@ describe("MealCalendarClient", () => {
   test("can open add recipe modal", () => {
     render(
       <MealCalendarClient
-        initialMeals={mockMeals}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        initialMeals={mockMeals as any}
         startDate={mockStartDate}
         allRecipes={mockAllRecipes}
       />,
@@ -132,7 +137,8 @@ describe("MealCalendarClient", () => {
   test("updates planned recipe scale", () => {
     render(
       <MealCalendarClient
-        initialMeals={mockMeals}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        initialMeals={mockMeals as any}
         startDate={mockStartDate}
         allRecipes={mockAllRecipes}
       />,

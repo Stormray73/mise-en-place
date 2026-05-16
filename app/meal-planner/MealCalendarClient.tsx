@@ -23,7 +23,7 @@ import {
   cloneMealAction,
   reorderMealAction,
 } from "@/app/meal-planner/actions";
-import { Meal, Recipe } from "@/types";
+import { Meal, Recipe, PlannedRecipe } from "@/types";
 import {
   DndContext,
   closestCenter,

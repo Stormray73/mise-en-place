@@ -39,7 +39,8 @@ describe("Recipe Scraper", () => {
     expect(result.steps).toHaveLength(2);
     expect(result.steps[0].instruction).toBe("Boil water");
     expect(result.components).toHaveLength(2);
-    expect(result.components[0].ingredient.name).toBe("Pasta");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((result.components[0] as any).ingredient.name).toBe("Pasta");
   });
 
   it("should handle nested @graph JSON-LD", async () => {

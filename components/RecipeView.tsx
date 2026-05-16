@@ -45,17 +45,23 @@ export default function RecipeView({
 
     // Check stock status when scale changes
     const checkStock = async () => {
+      const ingredientComponents = recipe.components.filter(
+        (c): c is Extract<RecipeComponent, { type: "ingredient" }> =>
+          c.type === "ingredient",
+      );
+
       const results = await checkRecipeStockAction(
-        recipe.components.map((c) => ({
+        ingredientComponents.map((c) => ({
           ingredientId: c.ingredientId,
           quantity: c.quantity,
           unit: c.unit,
         })),
         scale,
       );
+
       const status: Record<string, boolean> = {};
       results.forEach((res, i) => {
-        status[recipe.components[i].id] = res.hasStock;
+        status[ingredientComponents[i].id] = res.hasStock;
       });
       setStockStatus(status);
     };
@@ -194,11 +200,12 @@ export default function RecipeView({
                         ? comp.ingredient?.name
                         : comp.childRecipe?.title}
                     </span>
-                    {comp.ingredientId && stockStatus[comp.id] === false && (
-                      <span className="text-[10px] bg-red-900/50 text-red-400 px-1.5 py-0.5 rounded border border-red-900 font-bold uppercase">
-                        Low Stock
-                      </span>
-                    )}
+                    {comp.type === "ingredient" &&
+                      stockStatus[comp.id] === false && (
+                        <span className="text-[10px] bg-red-900/50 text-red-400 px-1.5 py-0.5 rounded border border-red-900 font-bold uppercase">
+                          Low Stock
+                        </span>
+                      )}
                   </div>
                   <p className="text-sm text-zinc-500">
                     {(comp.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}

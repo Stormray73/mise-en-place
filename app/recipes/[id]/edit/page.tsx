@@ -45,10 +45,30 @@ export default async function EditRecipePage({
     isFavorite: recipe.isFavorite,
     tags: recipe.tags.map((t) => t.name),
     servings: recipe.servings || undefined,
-    components: recipe.components.map((c) => ({
-      ...c,
-      type: c.ingredientId ? "ingredient" : ("sub-recipe" as const),
-    })),
+    components: recipe.components.map((c) => {
+      if (c.ingredientId && c.ingredient) {
+        return {
+          ...c,
+          type: "ingredient" as const,
+          ingredientId: c.ingredientId,
+          ingredient: {
+            ...c.ingredient,
+            name: c.ingredient.name,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            baseMacros: c.ingredient.baseMacros as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            foodPortions: c.ingredient.foodPortions as any,
+          },
+        };
+      } else {
+        return {
+          ...c,
+          type: "sub-recipe" as const,
+          childRecipeId: c.childRecipeId,
+          childRecipe: c.childRecipe,
+        };
+      }
+    }),
   };
 
   return (

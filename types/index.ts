@@ -154,6 +154,7 @@ export interface PlannedRecipe {
   prepState?: string | null;
   isLeftoverSource: boolean;
   sourcePlannedRecipeId?: string | null;
+  excludeFromPrep: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

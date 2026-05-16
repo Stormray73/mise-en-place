@@ -30,6 +30,7 @@ const mockRecipe: Recipe & {
   yieldAmount: 10,
   yieldUnit: "cup",
   servings: 5,
+  isFavorite: false,
   userId: "u1",
   createdAt: new Date(),
   updatedAt: new Date(),
