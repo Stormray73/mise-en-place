@@ -13,7 +13,17 @@ This document serves as the central registry for bugs and regressions. It is des
 
 ## Active Bugs
 
-_No active bugs at this time._
+### BUG-037: Meal Planner Preset Delay
+
+**Status:** Active
+**Description:** There is a significant delay (at least a second) with no UI feedback when clicking meal presets (Breakfast, Lunch, Dinner) in the Meal Planner, making it appear as though the click didn't register.
+**Reproduction:** Go to Meal Planner, click "Breakfast" or other preset. Observe delay before modal/action triggers.
+
+### BUG-038: Duplicate Meal Presets
+
+**Status:** Active
+**Description:** Users can currently create multiple instances of the same preset (e.g., two "Breakfast" slots) on the same day.
+**Requirement:** Prevent duplicate presets for the same day.
 
 ---
 

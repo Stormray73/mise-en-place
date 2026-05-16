@@ -1,61 +1,53 @@
 # Product Roadmap
 
-This document outlines the priority implementation order for cherry-picked features.
+This document outlines the priority implementation order for features and polish items, split into v1.0 (Core Stability) and v2.0 (Stretch Goals).
 
 ---
 
-## 1. Custom Ingredients (Story 3)
+## v1.0: Core Polish & Stability (High Priority)
 
-_Status: Completed_
+The goal of v1.0 is to refine the existing feature set into a rock-solid experience.
 
-### Story 3.1: Inline Custom Ingredient Creation
+### 1. UI/UX Polish & Refinement
 
-- [x] AC 1: `IngredientSearch` includes an "Add Custom Ingredient" action when searching.
-- [x] AC 2: A modal allows entry of Name, Base Amount, Unit, and Macros (Calories, Protein, Fat, Carbs).
-- [x] AC 3: New ingredients are saved to the database and linked to the user's ID.
-- [x] AC 4: The new ingredient is automatically selected and added to the current recipe.
+- **Calendar UI:** Widen days, improve visibility of delete buttons, and switch Week navigation button positions.
+- **Interaction:** Add meal edit buttons and remove unnecessary modal buttons.
+- **Documentation:** [v1/UI_UX_POLISH.md](docs/upcoming-stories/v1/UI_UX_POLISH.md)
 
-### Story 3.2: Custom Ingredient Search & Inline Edit
+### 2. Advanced Scheduling & Ordering
 
-- [x] AC 1: Search results merge USDA data with the user's custom ingredients.
-- [x] AC 2: Custom ingredients in the dropdown display an "Edit" icon.
-- [x] AC 3: Clicking the Edit icon opens the `CustomIngredientModal` with pre-filled data.
-- [x] AC 4: Updates to the ingredient reflect immediately in the search and any active recipe components.
+- **Ordering:** Logic to sort meals by time of day (Breakfast > Lunch > Dinner).
+- **Flexibility:** Drag-and-drop custom meals and exclude recipes from prep-ahead.
+- **Documentation:** [v1/ADVANCED_SCHEDULING.md](docs/upcoming-stories/v1/ADVANCED_SCHEDULING.md)
 
-### Story 3.3: Custom Ingredient Dashboard Management
+### 3. Pantry & Shopping v2.0
 
-- [x] AC 1: A "My Ingredients" section exists in the Pantry dashboard (`app/dashboard/pantry`).
-- [x] AC 2: Displays a list of all user-created ingredients.
-- [x] AC 3: Users can Edit or Delete ingredients from this view.
-- [x] AC 4: Deletion requires confirmation and warns if the ingredient is currently used in recipes.
+- **Bulk Tracking:** Support for "X packages of Y" format (e.g., 12x 12oz tins).
+- **Location Management:** Dropdown-based location management via modal.
+- **Flexibility:** Manual entry for non-recipe items (e.g., paper towels).
+- **Documentation:** [v1/PANTRY_AND_SHOPPING_v2.md](docs/upcoming-stories/v1/PANTRY_AND_SHOPPING_v2.md)
 
----
+### 4. Dashboard Enhancements
 
-## 2. Favorites & Custom Tags (Story 2)
-
-_Status: Completed_
-
-- [x] Users can toggle a "Favorite" star on any recipe.
-- [x] Users can create and assign custom text tags (e.g., "Quick", "Vegan", "Spicy") to recipes.
-- [x] The Recipe Store includes filters for "Favorites" and specific "Tags".
-- [x] Tag suggestions appear as the user types when adding tags to a recipe.
+- **Quick Access:** Integrate shopping list with direct-add capabilities into the dashboard.
+- **Documentation:** [v1/DASHBOARD_ENHANCEMENTS.md](docs/upcoming-stories/v1/DASHBOARD_ENHANCEMENTS.md)
 
 ---
 
-## 3. Web Scraping Import (Story 5)
+## v2.0: Stretch Features (Lower Priority)
 
-_Status: Completed_
+Major overhauls and community features deferred until after v1.0.
 
-- [x] Users can paste a URL to import a recipe.
-- [x] The system extracts title, ingredients, steps, and servings from the page.
-- [x] If macros are present on the page, they are imported; otherwise, the USDA API is used to calculate them.
+- **Advanced Import:** OCR and multi-format parsing. [v2/ADVANCED_IMPORT.md](docs/upcoming-stories/v2/ADVANCED_IMPORT.md)
+- **Community Sharing:** Public links and discovery database. [v2/COMMUNITY_SHARING.md](docs/upcoming-stories/v2/COMMUNITY_SHARING.md)
+- **Recipe Personalization:** Favorites, tags (completed), and beyond. [v2/RECIPE_PERSONALIZATION.md](docs/upcoming-stories/v2/RECIPE_PERSONALIZATION.md)
+- **Ingredient Mastery Phase 2:** Crowdsourcing and verification. [v2/INGREDIENT_MASTERY.md](docs/upcoming-stories/v2/INGREDIENT_MASTERY.md)
 
 ---
 
-## 4. Dashboard & Landing Page (Story 11)
+## Completed Features
 
-_Status: Completed_
-
-- [x] Dashboard: Remove extraneous navigation buttons; focus on "Quick Actions" (Add Recipe, Plan Meal).
-- [x] Landing Page: Showcase a demo workflow, key features (Recipe Store, Planner, Pantry), and screenshots.
-- [x] Landing Page: Clear "Sign Up with Google" CTA.
+- **Custom Ingredients:** Inline creation and management (Story 3).
+- **Favorites & Tags:** Organization system (Story 2).
+- **Web Scraping Import:** URL-based extraction (Story 5).
+- **Dashboard Hub:** Quick actions and responsive grid (Story 11).
