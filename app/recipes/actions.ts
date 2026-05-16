@@ -13,6 +13,29 @@ import { prisma } from "@/lib/prisma";
 import { RecipeSaveData, Macros, Recipe, ActionResult } from "@/types";
 import { upsertIngredient } from "@/lib/ingredients";
 import { deductRecipeIngredients } from "@/lib/pantry";
+import { scrapeRecipe } from "@/lib/scraper";
+
+export async function scrapeRecipeAction(
+  url: string,
+): Promise<ActionResult<RecipeSaveData>> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const recipeData = await scrapeRecipe(url);
+    return { success: true, data: recipeData };
+  } catch (error) {
+    console.error("Scrape recipe error:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
+    };
+  }
+}
 
 export async function deductRecipeIngredientsAction(
   recipeId: string,

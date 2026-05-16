@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { saveRecipeAction, getTagsAction } from "@/app/recipes/actions";
+import {
+  saveRecipeAction,
+  getTagsAction,
+  scrapeRecipeAction,
+} from "@/app/recipes/actions";
 import { useRouter } from "next/navigation";
 import { getUnits } from "@/lib/units";
 import { RecipeSaveData, Macros, USDAFood, RecipeSearchResult } from "@/types";
@@ -38,7 +42,33 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
   const [components, setComponents] = useState<RecipeSaveData["components"]>(
     initialData?.components || [],
   );
+  const [importUrl, setImportUrl] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleImport = async () => {
+    if (!importUrl) return;
+    setIsImporting(true);
+    setError(null);
+    try {
+      const result = await scrapeRecipeAction(importUrl);
+      if (result.success && result.data) {
+        setTitle(result.data.title);
+        setYieldAmount(result.data.yieldAmount);
+        setYieldUnit(result.data.yieldUnit);
+        setServings(result.data.servings || undefined);
+        setSteps(result.data.steps);
+        setComponents(result.data.components);
+        setImportUrl("");
+      } else {
+        setError(result.error);
+      }
+    } catch {
+      setError("Failed to import recipe from URL.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   const addIngredient = (food: USDAFood) => {
     const energy =
@@ -160,6 +190,31 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
           </button>
         </div>
       )}
+
+      <div className="mb-8 p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
+        <label className="block text-sm font-medium text-zinc-400 mb-2">
+          Import from URL
+        </label>
+        <div className="flex gap-2">
+          <Input
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            placeholder="https://example.com/recipe"
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleImport}
+            disabled={isImporting || !importUrl}
+          >
+            {isImporting ? "Importing..." : "Import"}
+          </Button>
+        </div>
+        <p className="mt-2 text-[10px] text-zinc-500">
+          Supports websites with Schema.org (JSON-LD) recipe metadata.
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="md:col-span-2">
