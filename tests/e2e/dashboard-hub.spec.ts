@@ -19,8 +19,8 @@ test.describe("Dashboard Hub (Kitchen Command Center)", () => {
 
     // 2. Navigate to My Recipes
     await page
-      .getByRole("link", { name: /My Recipes/i })
-      .first()
+      .getByRole("navigation")
+      .getByRole("link", { name: /Recipes/i })
       .click();
     await expect(page).toHaveURL(/\/recipes/);
 
@@ -65,19 +65,14 @@ test.describe("Dashboard Hub (Kitchen Command Center)", () => {
 
     // 2. Add to Meal Planner
     await page.goto("/meal-planner");
-    await page
-      .getByRole("button", { name: /\+ Add Meal/i })
-      .first()
-      .click();
+    const todaySlot = page.getByTestId("day-today");
+    await todaySlot.getByRole("button", { name: /\+ Add Meal/i }).click();
     await page.getByRole("button", { name: "Dinner" }).click();
-    await page
-      .getByRole("button", { name: /\+ Add Recipe/i })
-      .first()
-      .click();
+    await todaySlot.getByRole("button", { name: /\+ Add Recipe/i }).click();
     await page.getByRole("button", { name: uniqueTitle }).first().click();
 
     // Find the container for our unique recipe and extract plannedRecipeId
-    const plannedRecipeContainer = page
+    const plannedRecipeContainer = todaySlot
       .locator('div[data-testid^="planned-recipe-"]')
       .filter({ hasText: uniqueTitle })
       .last();

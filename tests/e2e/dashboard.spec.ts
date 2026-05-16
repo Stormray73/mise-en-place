@@ -13,7 +13,7 @@ test.describe("Dashboard Access", () => {
     await expect(
       page.getByRole("heading", { name: /dashboard/i }),
     ).toBeVisible();
-    await expect(page.getByText(/welcome,/i)).toBeVisible();
+    await expect(page.getByText(/ready to cook/i)).toBeVisible();
 
     // Check for the logout button
     await expect(

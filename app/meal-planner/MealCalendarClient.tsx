@@ -169,9 +169,11 @@ export default function MealCalendarClient({
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
         {days.map((day, i) => {
           const dailyMacros = getDailyMacros(day);
+          const isToday = day.toDateString() === new Date().toDateString();
           return (
             <div
               key={i}
+              data-testid={isToday ? "day-today" : undefined}
               className="bg-zinc-900 border border-zinc-800 rounded-lg flex flex-col min-h-[400px]"
             >
               <div className="p-3 border-b border-zinc-800 bg-zinc-950/50 rounded-t-lg flex justify-between items-start">

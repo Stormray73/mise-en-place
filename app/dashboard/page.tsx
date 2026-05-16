@@ -31,31 +31,51 @@ export default async function DashboardHub() {
 
   return (
     <div className="max-w-7xl mx-auto p-8">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-12">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight">Dashboard</h1>
           <p className="text-zinc-400 mt-1">
             Ready to cook, Chef {session.user?.name}?
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4">
           <Link
             href="/recipes/new"
-            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-md font-bold transition-colors"
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-600/20"
           >
-            + New Recipe
-          </Link>
-          <Link
-            href="/recipes"
-            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-md font-bold transition-colors"
-          >
-            My Recipes →
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Add Recipe
           </Link>
           <Link
             href="/meal-planner"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-bold transition-colors"
+            className="flex items-center gap-2 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
           >
-            Open Planner
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            Plan Meal
           </Link>
         </div>
       </div>
