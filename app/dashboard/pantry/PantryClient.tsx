@@ -14,8 +14,13 @@ interface PantryItem {
   id: string;
   quantity: number;
   unit: string;
-  locationTags: string[];
+  locationId?: string | null;
+  location?: {
+    name: string;
+  } | null;
   restockThreshold: number;
+  packageQuantity?: number | null;
+  packageSize?: number | null;
   ingredient: {
     name: string;
   };
@@ -57,7 +62,7 @@ export default function PantryClient({ initialPantry }: PantryClientProps) {
               <div>
                 <h3 className="font-bold text-lg">{item.ingredient.name}</h3>
                 <div className="text-zinc-400 text-sm">
-                  {item.locationTags.join(", ") || "No location"}
+                  {item.location?.name || "Uncategorized"}
                 </div>
               </div>
               <Button
@@ -71,9 +76,9 @@ export default function PantryClient({ initialPantry }: PantryClientProps) {
             </div>
 
             <div className="flex justify-between items-end">
-              <div>
+              <div className="space-y-1">
                 <div
-                  className={`text-2xl font-mono ${
+                  className={`text-2xl font-mono font-bold ${
                     item.quantity <= item.restockThreshold
                       ? "text-orange-500"
                       : "text-green-500"
@@ -81,7 +86,13 @@ export default function PantryClient({ initialPantry }: PantryClientProps) {
                 >
                   {item.quantity} {item.unit}
                 </div>
-                <div className="text-xs text-zinc-500">
+                {item.packageQuantity && item.packageSize && (
+                  <div className="text-xs text-zinc-400 font-medium">
+                    {item.packageQuantity.toFixed(1)} x {item.packageSize}{" "}
+                    {item.unit} (Packages)
+                  </div>
+                )}
+                <div className="text-[10px] text-zinc-500 uppercase tracking-tighter">
                   Threshold: {item.restockThreshold} {item.unit}
                 </div>
               </div>

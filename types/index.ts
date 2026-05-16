@@ -158,6 +158,12 @@ export interface PlannedRecipe {
   updatedAt: Date;
 }
 
+export interface PantryLocation {
+  id: string;
+  name: string;
+  userId: string;
+}
+
 export interface PrepItem {
   id: string;
   type: "ingredient" | "recipe";

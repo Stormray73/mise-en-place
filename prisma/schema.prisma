@@ -48,6 +48,7 @@ model User {
   tags            Tag[]
   mealPlan        MealPlan?
   manualShopping  ManualShoppingItem[]
+  pantryLocations PantryLocation[]
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
 }
@@ -112,17 +113,30 @@ model Ingredient {
 }
 
 model PantryItem {
-  id               String     @id @default(cuid())
+  id               String          @id @default(cuid())
   userId           String
   ingredientId     String
   quantity         Float
   unit             String
-  locationTags     String[]
-  restockThreshold Float      @default(0)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-  ingredient       Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  locationId       String?
+  restockThreshold Float           @default(0)
+  packageQuantity  Float?          @default(1)
+  packageSize      Float?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  ingredient       Ingredient      @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location         PantryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+}
+
+model PantryLocation {
+  id          String       @id @default(cuid())
+  userId      String
+  name        String
+  pantryItems PantryItem[]
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([name, userId])
 }
 
 model RecipeComponent {
@@ -190,12 +204,13 @@ model PrepCompletion {
 }
 
 model ManualShoppingItem {
-  id        String   @id @default(cuid())
-  userId    String
-  name      String
-  quantity  Float    @default(1.0)
-  unit      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  quantity    Float    @default(1.0)
+  unit        String?
+  isRecurring Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -6,6 +6,7 @@ export async function getPantry(userId: string) {
     where: { userId },
     include: {
       ingredient: true,
+      location: true,
     },
     orderBy: {
       updatedAt: "desc",
@@ -18,8 +19,10 @@ export async function addToPantry(
   ingredientId: string,
   quantity: number,
   unit: string,
-  locationTags: string[] = [],
+  locationId?: string,
   restockThreshold: number = 0,
+  packageQuantity?: number,
+  packageSize?: number,
 ) {
   return prisma.pantryItem.create({
     data: {
@@ -27,8 +30,10 @@ export async function addToPantry(
       ingredientId,
       quantity,
       unit,
-      locationTags,
+      locationId,
       restockThreshold,
+      packageQuantity,
+      packageSize,
     },
   });
 }
@@ -38,8 +43,10 @@ export async function updatePantryItem(
   data: {
     quantity?: number;
     unit?: string;
-    locationTags?: string[];
+    locationId?: string;
     restockThreshold?: number;
+    packageQuantity?: number;
+    packageSize?: number;
   },
 ) {
   return prisma.pantryItem.update({
@@ -71,7 +78,6 @@ export async function getIngredientStock(userId: string, ingredientId: string) {
     if (canConvert(item.unit, baseUnit, portions)) {
       totalQuantity += convert(item.quantity, item.unit, baseUnit, portions);
     } else {
-      // If we can't convert, we skip but maybe we should log a warning
       console.warn(
         `Cannot convert ${item.unit} to ${baseUnit} for ingredient ${ingredientId}`,
       );
@@ -113,22 +119,35 @@ export async function deductFromPantry(
     );
 
     if (item.quantity >= deductionInItemUnit) {
+      const newQuantity = item.quantity - deductionInItemUnit;
+
+      // Update packageQuantity if bulk format is used
+      let newPackageQuantity = item.packageQuantity;
+      if (item.packageSize && item.packageQuantity) {
+        newPackageQuantity = newQuantity / item.packageSize;
+      }
+
       await prisma.pantryItem.update({
         where: { id: item.id },
-        data: { quantity: item.quantity - deductionInItemUnit },
+        data: {
+          quantity: newQuantity,
+          packageQuantity: newPackageQuantity,
+        },
       });
       remainingToDeduct = 0;
     } else {
       await prisma.pantryItem.update({
         where: { id: item.id },
-        data: { quantity: 0 },
+        data: {
+          quantity: 0,
+          packageQuantity: 0,
+        },
       });
       remainingToDeduct -= convert(item.quantity, item.unit, unit, portions);
     }
   }
 
   if (remainingToDeduct > 0) {
-    // We floored at 0 as per requirements
     console.warn(
       `Inventory discrepancy: wanted to deduct ${quantityToDeduct} ${unit} but only partially successful. ${remainingToDeduct} ${unit} remaining.`,
     );
@@ -185,7 +204,5 @@ export async function deductRecipeIngredients(
         component.unit,
       );
     }
-    // Note: We might want to recursively deduct sub-recipes too if they are not already deducted.
-    // For now, let's keep it simple as per Story 4.
   }
 }

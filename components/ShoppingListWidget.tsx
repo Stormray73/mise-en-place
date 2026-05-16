@@ -22,14 +22,22 @@ export default function ShoppingListWidget({ items }: ShoppingListWidgetProps) {
   const [newItemName, setNewItemName] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
+  const [isRecurring, setIsRecurring] = useState(false);
+
   const handleQuickAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemName.trim() || isAdding) return;
 
     setIsAdding(true);
-    const res = await addManualShoppingItemAction(newItemName.trim());
+    const res = await addManualShoppingItemAction(
+      newItemName.trim(),
+      1,
+      undefined,
+      isRecurring,
+    );
     if (res.success) {
       setNewItemName("");
+      setIsRecurring(false);
     } else {
       alert(res.error || "Failed to add item");
     }
@@ -46,22 +54,39 @@ export default function ShoppingListWidget({ items }: ShoppingListWidgetProps) {
       <CardContent>
         <div className="space-y-4">
           {/* Quick Add Form */}
-          <form onSubmit={handleQuickAdd} className="flex gap-2">
-            <Input
-              value={newItemName}
-              onChange={(e) => setNewItemName(e.target.value)}
-              placeholder="Quick add item..."
-              className="h-8 text-sm"
-              disabled={isAdding}
-            />
-            <Button
-              type="submit"
-              size="sm"
-              disabled={isAdding || !newItemName.trim()}
-              className="h-8 px-3"
-            >
-              {isAdding ? "..." : "+"}
-            </Button>
+          <form onSubmit={handleQuickAdd} className="space-y-2">
+            <div className="flex gap-2">
+              <Input
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                placeholder="Quick add item..."
+                className="h-8 text-sm"
+                disabled={isAdding}
+              />
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isAdding || !newItemName.trim()}
+                className="h-8 px-3"
+              >
+                {isAdding ? "..." : "+"}
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isRecurring-widget"
+                checked={isRecurring}
+                onChange={(e) => setIsRecurring(e.target.checked)}
+                className="w-3 h-3 rounded border-zinc-700 bg-zinc-900 text-blue-600"
+              />
+              <label
+                htmlFor="isRecurring-widget"
+                className="text-[10px] text-zinc-500 uppercase font-bold cursor-pointer"
+              >
+                Recurring
+              </label>
+            </div>
           </form>
 
           {/* Items List */}

@@ -26,8 +26,10 @@ export async function addToPantryAction(data: {
   ingredientId?: string;
   quantity: number;
   unit: string;
-  locationTags?: string[];
+  locationId?: string;
   restockThreshold?: number;
+  packageQuantity?: number;
+  packageSize?: number;
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
@@ -52,8 +54,10 @@ export async function addToPantryAction(data: {
     ingredientId,
     data.quantity,
     data.unit,
-    data.locationTags || [],
+    data.locationId,
     data.restockThreshold || 0,
+    data.packageQuantity,
+    data.packageSize,
   );
 
   revalidatePath("/dashboard/pantry");
@@ -64,8 +68,10 @@ export async function updatePantryItemAction(
   data: {
     quantity?: number;
     unit?: string;
-    locationTags?: string[];
+    locationId?: string;
     restockThreshold?: number;
+    packageQuantity?: number;
+    packageSize?: number;
   },
 ) {
   const session = await auth();

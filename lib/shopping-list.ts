@@ -184,6 +184,7 @@ export async function addManualShoppingItem(
   name: string,
   quantity: number = 1,
   unit?: string,
+  isRecurring: boolean = false,
 ) {
   return prisma.manualShoppingItem.create({
     data: {
@@ -191,6 +192,7 @@ export async function addManualShoppingItem(
       name,
       quantity,
       unit,
+      isRecurring,
     },
   });
 }

@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "./ui/Modal";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
 import { Select } from "./ui/Select";
 import { Autocomplete } from "./ui/Autocomplete";
-import { USDAFood } from "@/types";
+import { USDAFood, PantryLocation } from "@/types";
+import { getLocationsAction } from "@/app/dashboard/pantry/location-actions";
+import ManageLocationsModal from "./ManageLocationsModal";
 
 interface AddPantryItemModalProps {
   onClose: () => void;
@@ -14,8 +16,10 @@ interface AddPantryItemModalProps {
     ingredient: USDAFood;
     quantity: number;
     unit: string;
-    locationTags: string[];
+    locationId?: string;
     restockThreshold: number;
+    packageQuantity?: number;
+    packageSize?: number;
   }) => Promise<void>;
 }
 
@@ -26,9 +30,25 @@ export default function AddPantryItemModal({
   const [selectedFood, setSelectedFood] = useState<USDAFood | null>(null);
   const [quantity, setQuantity] = useState("1");
   const [unit, setUnit] = useState("g");
-  const [location, setLocation] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [threshold, setThreshold] = useState("0");
+  const [packageQty, setPackageQty] = useState("1");
+  const [packageSize, setPackageSize] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [locations, setLocations] = useState<PantryLocation[]>([]);
+  const [showManageLocations, setShowManageLocations] = useState(false);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const res = await getLocationsAction();
+      if (res.success && res.data) {
+        setLocations(res.data);
+      }
+    };
+
+    fetchLocations();
+  }, []);
 
   const searchUSDA = async (query: string) => {
     const res = await fetch(`/api/usda/search?q=${encodeURIComponent(query)}`);
@@ -46,8 +66,10 @@ export default function AddPantryItemModal({
         ingredient: selectedFood,
         quantity: parseFloat(quantity),
         unit,
-        locationTags: location ? [location] : [],
+        locationId: locationId || undefined,
         restockThreshold: parseFloat(threshold),
+        packageQuantity: parseFloat(packageQty) || 1,
+        packageSize: packageSize ? parseFloat(packageSize) : undefined,
       });
       onClose();
     } catch (error) {
@@ -56,6 +78,20 @@ export default function AddPantryItemModal({
       setIsSubmitting(false);
     }
   };
+
+  if (showManageLocations) {
+    return (
+      <ManageLocationsModal
+        onClose={async () => {
+          setShowManageLocations(false);
+          const res = await getLocationsAction();
+          if (res.success && res.data) {
+            setLocations(res.data);
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <Modal title="Add Pantry Item" onClose={onClose}>
@@ -81,9 +117,36 @@ export default function AddPantryItemModal({
           </div>
         )}
 
+        <div className="border-t border-zinc-800 pt-4 mt-4">
+          <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">
+            Format & Quantity
+          </h4>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Packages"
+              type="number"
+              step="any"
+              value={packageQty}
+              onChange={(e) => setPackageQty(e.target.value)}
+              placeholder="e.g. 12"
+            />
+            <Input
+              label="Size per Package"
+              type="number"
+              step="any"
+              value={packageSize}
+              onChange={(e) => setPackageSize(e.target.value)}
+              placeholder="e.g. 12"
+            />
+          </div>
+          <p className="text-[10px] text-zinc-500 mt-1 italic">
+            Example: 12 (Packages) x 12 (Size) = 144 Total units.
+          </p>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <Input
-            label="Quantity"
+            label="Total Quantity"
             type="number"
             step="any"
             value={quantity}
@@ -104,16 +167,37 @@ export default function AddPantryItemModal({
               { label: "Cup", value: "cup" },
               { label: "Tablespoon (tbsp)", value: "tbsp" },
               { label: "Teaspoon (tsp)", value: "tsp" },
+              { label: "Each (ea)", value: "ea" },
             ]}
           />
         </div>
 
-        <Input
-          label="Location (e.g., Fridge, Pantry)"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="Main Pantry"
-        />
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-zinc-400">
+            Location
+          </label>
+          <div className="flex gap-2">
+            <Select
+              value={locationId}
+              onChange={(e) => setLocationId(e.target.value)}
+              className="flex-1"
+            >
+              <option value="">Uncategorized</option>
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}
+                </option>
+              ))}
+            </Select>
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => setShowManageLocations(true)}
+            >
+              Manage
+            </Button>
+          </div>
+        </div>
 
         <Input
           label="Restock Threshold"
