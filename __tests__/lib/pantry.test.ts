@@ -75,11 +75,11 @@ describe("Pantry Utility", () => {
 
       expect(prisma.pantryItem.update).toHaveBeenCalledWith({
         where: { id: "1" },
-        data: { quantity: 0 },
+        data: { quantity: 0, packageQuantity: 0 },
       });
       expect(prisma.pantryItem.update).toHaveBeenCalledWith({
         where: { id: "2" },
-        data: { quantity: 700 },
+        data: { quantity: 700, packageQuantity: undefined },
       });
     });
   });

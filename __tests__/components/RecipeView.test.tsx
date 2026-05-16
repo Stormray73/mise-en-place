@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import RecipeView from "@/components/RecipeView";
 import { expect, test, describe, vi } from "vitest";
 import { Recipe, Macros, RecipeStep, RecipeComponent } from "@/types";
@@ -48,7 +48,7 @@ const mockRecipe: Recipe & {
 };
 
 describe("RecipeView", () => {
-  test("toggles between full recipe and per serving macros", () => {
+  test("toggles between full recipe and per serving macros", async () => {
     render(<RecipeView recipe={mockRecipe} macros={mockMacros} />);
 
     // Default: Full Recipe
@@ -62,12 +62,16 @@ describe("RecipeView", () => {
 
     // Switch to Per Serving
     fireEvent.click(perServingBtn);
-    expect(screen.getByText("200")).toBeInTheDocument(); // 1000 / 5
-    expect(screen.getByText("10g")).toBeInTheDocument(); // 50 / 5
+    await waitFor(() => {
+      expect(screen.getByText("200")).toBeInTheDocument(); // 1000 / 5
+      expect(screen.getByText("10g")).toBeInTheDocument(); // 50 / 5
+    });
 
     // Switch back
     fireEvent.click(fullRecipeBtn);
-    expect(screen.getByText("1000")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("1000")).toBeInTheDocument();
+    });
   });
 
   test("shows a helpful tip if servings metadata is missing", () => {
@@ -84,7 +88,7 @@ describe("RecipeView", () => {
     ).toBeInTheDocument();
   });
 
-  test("scales ingredient quantities correctly", () => {
+  test("scales ingredient quantities correctly", async () => {
     render(<RecipeView recipe={mockRecipe} macros={mockMacros} />);
 
     expect(screen.getByText("500 g")).toBeInTheDocument();
@@ -92,6 +96,8 @@ describe("RecipeView", () => {
     const scaleInput = screen.getByLabelText(/Scale:/i);
     fireEvent.change(scaleInput, { target: { value: "2" } });
 
-    expect(screen.getByText("1000 g")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("1000 g")).toBeInTheDocument();
+    });
   });
 });

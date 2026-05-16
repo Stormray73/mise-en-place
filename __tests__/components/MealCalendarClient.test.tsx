@@ -18,14 +18,15 @@ vi.mock("@/auth", () => ({
 
 // Mock the server actions
 vi.mock("@/app/meal-planner/actions", () => ({
-  createMealAction: vi.fn(),
-  addRecipeToMealAction: vi.fn(),
-  deleteMealAction: vi.fn(),
-  updatePlannedRecipeAction: vi.fn(),
-  removeRecipeFromMealAction: vi.fn(),
-  setLeftoverSourceAction: vi.fn(),
-  linkLeftoverConsumptionAction: vi.fn(),
-  cloneMealAction: vi.fn(),
+  createMealAction: vi.fn().mockResolvedValue({ success: true }),
+  addRecipeToMealAction: vi.fn().mockResolvedValue({ success: true }),
+  deleteMealAction: vi.fn().mockResolvedValue({ success: true }),
+  updatePlannedRecipeAction: vi.fn().mockResolvedValue({ success: true }),
+  removeRecipeFromMealAction: vi.fn().mockResolvedValue({ success: true }),
+  setLeftoverSourceAction: vi.fn().mockResolvedValue({ success: true }),
+  linkLeftoverConsumptionAction: vi.fn().mockResolvedValue({ success: true }),
+  cloneMealAction: vi.fn().mockResolvedValue({ success: true }),
+  reorderMealAction: vi.fn().mockResolvedValue({ success: true }),
 }));
 
 const mockStartDate = new Date("2026-05-10T00:00:00Z").toISOString(); // A Sunday
@@ -117,13 +118,14 @@ describe("MealCalendarClient", () => {
   test("can open clone meal modal", () => {
     render(
       <MealCalendarClient
-        initialMeals={mockMeals}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        initialMeals={mockMeals as any}
         startDate={mockStartDate}
         allRecipes={mockAllRecipes}
       />,
     );
 
-    fireEvent.click(screen.getByTitle("Duplicate Meal"));
+    fireEvent.click(screen.getByTitle("Clone Meal"));
     expect(screen.getByText("Clone Meal to Date")).toBeInTheDocument();
   });
 
