@@ -18,6 +18,9 @@ vi.mock("@/lib/prisma", () => ({
     recipe: {
       findMany: vi.fn().mockResolvedValue([]),
     },
+    tag: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
   },
 }));
 
@@ -89,7 +92,13 @@ test("Recipes page filters recipes when query is provided", async () => {
   } as Session);
 
   const mockRecipes = [
-    { id: "1", title: "Pasta", yieldAmount: 1, yieldUnit: "serving" },
+    {
+      id: "1",
+      title: "Pasta",
+      yieldAmount: 1,
+      yieldUnit: "serving",
+      tags: [],
+    },
   ];
   vi.mocked(prisma.recipe.findMany).mockResolvedValue(mockRecipes as any);
 

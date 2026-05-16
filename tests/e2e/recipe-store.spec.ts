@@ -10,7 +10,7 @@ test.describe("Recipe Store User Journeys", () => {
   test("Story 1: Create a new recipe with USDA ingredients", async ({
     page,
   }) => {
-    await page.getByRole("link", { name: /\+ new recipe/i }).click();
+    await page.getByRole("link", { name: /Add Recipe/i }).click();
 
     // Verify redirected to new recipe page
     await expect(page).toHaveURL(/\/recipes\/new/);
@@ -22,7 +22,11 @@ test.describe("Recipe Store User Journeys", () => {
 
     // Search and add ingredient
     await page.getByPlaceholder(/search ingredients/i).fill("Tomato");
-    await page.getByRole("button", { name: /tomatoes, red, ripe/i }).click();
+    await page
+      .locator("button")
+      .filter({ hasText: /tomatoes, red, ripe/i })
+      .first()
+      .click();
 
     // Verify ingredient added
     await expect(page.getByText(/Tomatoes, red, ripe/i)).toBeVisible();
@@ -57,7 +61,9 @@ test.describe("Recipe Store User Journeys", () => {
     await expect(page).toHaveURL(/\/play/);
 
     // Verify some content is present (step or order)
-    await expect(page.getByText(/1/)).toBeVisible();
+    await expect(page.getByText(/Step 1 of/i).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // Check for timer button (if present in UI)
     const startTimerBtn = page.getByRole("button", { name: /start timer/i });

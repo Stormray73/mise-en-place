@@ -10,7 +10,7 @@ test.describe("Custom Ingredients User Journeys", () => {
     page,
   }) => {
     // 1. Create in Recipe Editor
-    await page.getByRole("link", { name: /\+ new recipe/i }).click();
+    await page.getByRole("link", { name: /Add Recipe/i }).click();
     await expect(page).toHaveURL(/\/recipes\/new/);
 
     const testIngredientName = "My Secret Spice Mix " + Date.now();

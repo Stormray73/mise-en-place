@@ -54,4 +54,6 @@ temp-skills/
 
 # playwright
 playwright/.auth/
+playwright-report/
+test-results/
 

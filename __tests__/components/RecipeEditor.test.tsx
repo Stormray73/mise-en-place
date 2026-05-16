@@ -10,9 +10,11 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock the server action
-const mockSaveRecipe = vi.fn();
+const mockSaveRecipe = vi.fn().mockResolvedValue({ success: true });
 vi.mock("@/app/recipes/actions", () => ({
   saveRecipeAction: (data: any) => mockSaveRecipe(data),
+  getTagsAction: vi.fn().mockResolvedValue({ success: true, data: [] }),
+  scrapeRecipeAction: vi.fn().mockResolvedValue({ success: true, data: null }),
 }));
 
 describe("RecipeEditor", () => {
