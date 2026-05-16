@@ -35,7 +35,7 @@ export default async function MealPlannerPage({
   });
 
   return (
-    <div className="max-w-7xl mx-auto p-8 space-y-12">
+    <div className="max-w-[1600px] mx-auto p-8 space-y-12">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Meal Planner</h1>
         <Link href="/dashboard" className="text-blue-500 hover:underline">

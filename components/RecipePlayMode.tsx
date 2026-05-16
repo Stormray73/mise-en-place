@@ -261,13 +261,6 @@ export function RecipePlayMode({ recipe, scale = 1 }: RecipePlayModeProps) {
                 <span className="px-3 py-1 bg-blue-600 rounded-full text-xs font-bold uppercase tracking-wider">
                   Step {currentStep.order} of {steps.length}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => router.push(`/recipes/${recipe.id}`)}
-                  className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-                >
-                  Exit Mode
-                </button>
               </div>
               {currentStep.timerInSeconds && (
                 <button

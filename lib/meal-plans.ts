@@ -10,7 +10,7 @@ import { calculateMacros } from "./recipes";
 import { Recipe } from "@/types";
 
 export async function getMealPlan(userId: string) {
-  let mealPlan = await prisma.mealPlan.findFirst({
+  let mealPlan = await prisma.mealPlan.findUnique({
     where: { userId },
   });
 
@@ -19,11 +19,23 @@ export async function getMealPlan(userId: string) {
       data: { userId },
     });
   }
-
   return mealPlan;
 }
 
 export async function createMeal(mealPlanId: string, date: Date, slot: string) {
+  // BUG-038: Prevent duplicate presets for the same day
+  const existing = await prisma.meal.findFirst({
+    where: {
+      mealPlanId,
+      date,
+      slot,
+    },
+  });
+
+  if (existing) {
+    throw new Error(`A ${slot} entry already exists for this day.`);
+  }
+
   return prisma.meal.create({
     data: {
       mealPlanId,

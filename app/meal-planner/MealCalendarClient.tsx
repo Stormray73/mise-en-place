@@ -77,7 +77,10 @@ export default function MealCalendarClient({
   };
 
   const handleAddMeal = async (date: Date, slot: string) => {
-    await createMealAction(date, slot);
+    const res = await createMealAction(date, slot);
+    if (!res.success) {
+      alert(res.error);
+    }
     setIsAddingMeal(null);
   };
 

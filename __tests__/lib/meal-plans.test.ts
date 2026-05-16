@@ -6,11 +6,12 @@ import { getMealPlan, createMeal, addRecipeToMeal } from "../../lib/meal-plans";
 vi.mock("../../lib/prisma", () => ({
   prisma: {
     mealPlan: {
-      findFirst: vi.fn(),
+      findUnique: vi.fn(),
       create: vi.fn(),
     },
     meal: {
       create: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
     },
     plannedRecipe: {
@@ -29,11 +30,11 @@ describe("Meal Plan Library", () => {
 
   it("gets or creates a meal plan for a user", async () => {
     const mockMealPlan = { id: "mp-1", userId: mockUserId };
-    (prisma.mealPlan.findFirst as any).mockResolvedValue(mockMealPlan);
+    (prisma.mealPlan.findUnique as any).mockResolvedValue(mockMealPlan);
 
     const result = await getMealPlan(mockUserId);
     expect(result).toEqual(mockMealPlan);
-    expect(prisma.mealPlan.findFirst).toHaveBeenCalledWith({
+    expect(prisma.mealPlan.findUnique).toHaveBeenCalledWith({
       where: { userId: mockUserId },
     });
   });
@@ -46,6 +47,7 @@ describe("Meal Plan Library", () => {
       slot: "Dinner",
       mealPlanId: "mp-1",
     };
+    (prisma.meal.findFirst as any).mockResolvedValue(null);
     (prisma.meal.create as any).mockResolvedValue(mockMeal);
 
     const result = await createMeal("mp-1", mockDate, "Dinner");
@@ -69,6 +71,7 @@ describe("Meal Plan Library", () => {
         mealId: "m-1",
         recipeId: "r-1",
         scale: 1.5,
+        prepState: undefined,
       },
     });
   });
