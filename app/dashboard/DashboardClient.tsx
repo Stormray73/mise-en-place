@@ -8,7 +8,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PrepItem } from "@/types";
+import { updatePlannedRecipeAction } from "@/app/meal-planner/actions";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 
@@ -25,6 +27,7 @@ export default function DashboardClient({
 }: {
   immediatePrep: PrepItem[];
 }) {
+  const router = useRouter();
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
 
   useEffect(() => {
@@ -74,6 +77,15 @@ export default function DashboardClient({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const handleExclude = async (plannedRecipeId: string) => {
+    const res = await updatePlannedRecipeAction(plannedRecipeId, {
+      excludeFromPrep: true,
+    });
+    if (res.success) {
+      router.refresh();
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Active Timers Card */}
@@ -121,7 +133,15 @@ export default function DashboardClient({
       {/* Immediate Prep Card */}
       <Card data-testid="immediate-prep-section">
         <CardHeader>
-          <CardTitle>Immediate Prep</CardTitle>
+          <div className="flex justify-between items-center w-full">
+            <CardTitle>Immediate Prep</CardTitle>
+            <Link
+              href="/dashboard/shopping-list"
+              className="text-xs text-blue-400 hover:underline"
+            >
+              Go to Shopping List &rarr;
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
           {immediatePrep.length === 0 ? (
@@ -129,10 +149,7 @@ export default function DashboardClient({
           ) : (
             <ul className="space-y-3">
               {immediatePrep.map((item, i) => (
-                <li
-                  key={i}
-                  className="flex justify-between items-center group cursor-pointer"
-                >
+                <li key={i} className="flex justify-between items-center group">
                   <div className="flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
                     <div>
@@ -146,17 +163,27 @@ export default function DashboardClient({
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-mono font-bold text-zinc-400">
-                      {item.quantity.toFixed(1).replace(/\.0$/, "")}{" "}
-                      <span className="text-[10px]">{item.unit}</span>
-                    </p>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-sm font-mono font-bold text-zinc-400">
+                        {item.quantity} {item.unit}
+                      </p>
+                    </div>
+                    {item.type === "recipe" && (
+                      <button
+                        onClick={() => handleExclude(item.id)}
+                        className="text-[10px] font-bold text-zinc-600 hover:text-red-400 uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Hide from prep list"
+                      >
+                        Dismiss
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}
             </ul>
           )}
-          <div className="mt-4 pt-4 border-t border-zinc-800">
+          <div className="mt-6 pt-4 border-t border-zinc-800">
             <Link
               href="/meal-planner"
               className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1"

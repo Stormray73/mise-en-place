@@ -1,47 +1,66 @@
 /**
  * @file MealCalendarClient.tsx
  * @responsibility The main client-side component for the meal calendar, managing state and layout.
- * @dependencies MealSlot, AddMealModal, AddRecipeModal, CloneMealModal, actions, useRouter, usePathname, React
+ * @dependencies MealSlot, AddMealModal, AddRecipeModal, CloneMealModal, actions, useRouter, usePathname, useSearchParams, React, Link
  */
 
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import MealSlot from "@/components/MealSlot";
+import AddMealModal from "@/components/AddMealModal";
+import AddRecipeModal from "@/components/AddRecipeModal";
+import CloneMealModal from "@/components/CloneMealModal";
 import {
   createMealAction,
   addRecipeToMealAction,
   deleteMealAction,
   removeRecipeFromMealAction,
+  updatePlannedRecipeAction,
   setLeftoverSourceAction,
   linkLeftoverConsumptionAction,
-  updatePlannedRecipeAction,
   cloneMealAction,
-} from "./actions";
-import MealSlot, { MealWithRecipes } from "@/components/MealSlot";
-import AddMealModal from "@/components/AddMealModal";
-import AddRecipeModal from "@/components/AddRecipeModal";
-import CloneMealModal from "@/components/CloneMealModal";
-
-interface RecipeOption {
-  id: string;
-  title: string;
-}
+  reorderMealAction,
+} from "@/app/meal-planner/actions";
+import { Meal, Recipe } from "@/types";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface MealCalendarClientProps {
-  initialMeals: MealWithRecipes[];
+  initialMeals: (Meal & {
+    macros: {
+      calories: number;
+      protein: number;
+      fat: number;
+      carbs: number;
+    };
+    plannedRecipes: (PlannedRecipe & { recipe: Recipe })[];
+  })[];
   startDate: string;
-  allRecipes: RecipeOption[];
+  allRecipes: Pick<Recipe, "id" | "title">[];
 }
 
 export default function MealCalendarClient({
   initialMeals,
-  startDate,
+  startDate: start,
   allRecipes,
 }: MealCalendarClientProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const start = new Date(startDate);
 
   const [isAddingMeal, setIsAddingMeal] = useState<{ date: Date } | null>(null);
   const [isAddingRecipe, setIsAddingRecipe] = useState<{
@@ -51,10 +70,17 @@ export default function MealCalendarClient({
     null,
   );
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
   const days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(start);
-    date.setDate(date.getDate() + i);
-    return date;
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    return d;
   });
 
   const getMealsForDate = (date: Date) => {
@@ -66,11 +92,11 @@ export default function MealCalendarClient({
   const getDailyMacros = (date: Date) => {
     const meals = getMealsForDate(date);
     return meals.reduce(
-      (acc, meal) => ({
-        calories: acc.calories + meal.macros.calories,
-        protein: acc.protein + meal.macros.protein,
-        fat: acc.fat + meal.macros.fat,
-        carbs: acc.carbs + meal.macros.carbs,
+      (acc, m) => ({
+        calories: acc.calories + m.macros.calories,
+        protein: acc.protein + m.macros.protein,
+        fat: acc.fat + m.macros.fat,
+        carbs: acc.carbs + m.macros.carbs,
       }),
       { calories: 0, protein: 0, fat: 0, carbs: 0 },
     );
@@ -90,11 +116,13 @@ export default function MealCalendarClient({
   };
 
   const handleDeleteMeal = async (mealId: string) => {
-    await deleteMealAction(mealId);
+    if (confirm("Are you sure you want to delete this meal?")) {
+      await deleteMealAction(mealId);
+    }
   };
 
-  const handleRemoveRecipe = async (id: string) => {
-    await removeRecipeFromMealAction(id);
+  const handleRemoveRecipe = async (plannedRecipeId: string) => {
+    await removeRecipeFromMealAction(plannedRecipeId);
   };
 
   const handleCloneMeal = async (mealId: string, targetDate: Date) => {
@@ -114,6 +142,34 @@ export default function MealCalendarClient({
     sourceId: string | null,
   ) => {
     await linkLeftoverConsumptionAction(plannedRecipeId, sourceId);
+  };
+
+  const handleUpdatePlannedRecipe = async (
+    id: string,
+    updates: { scale?: number; prepState?: string; excludeFromPrep?: boolean },
+  ) => {
+    const res = await updatePlannedRecipeAction(id, updates);
+    if (!res.success) {
+      alert(res.error || "Failed to update recipe");
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent, date: Date) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const meals = getMealsForDate(date);
+      const oldIndex = meals.findIndex((m) => m.id === active.id);
+      const newIndex = meals.findIndex((m) => m.id === over.id);
+
+      const newMeals = arrayMove(meals, oldIndex, newIndex);
+
+      // Simple implementation: Update sortOrder for all moved meals
+      // In a real app, you might only update the moved one or do a batch update
+      for (let i = 0; i < newMeals.length; i++) {
+        await reorderMealAction(newMeals[i].id, i);
+      }
+    }
   };
 
   const navigateWeek = (weeks: number) => {
@@ -149,30 +205,14 @@ export default function MealCalendarClient({
             Next Week &rarr;
           </button>
         </div>
-        <h2 className="text-xl font-bold">
-          {start.toLocaleDateString(undefined, {
-            month: "long",
-            day: "numeric",
-          })}{" "}
-          -{" "}
-          {days[6].toLocaleDateString(undefined, {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </h2>
-        <button
-          onClick={() => router.push(pathname)}
-          className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded text-sm text-zinc-400"
-        >
-          Current Week
-        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
         {days.map((day, i) => {
           const dailyMacros = getDailyMacros(day);
           const isToday = day.toDateString() === new Date().toDateString();
+          const meals = getMealsForDate(day);
+
           return (
             <div
               key={i}
@@ -184,38 +224,48 @@ export default function MealCalendarClient({
                   <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
                     {day.toLocaleDateString(undefined, { weekday: "short" })}
                   </p>
-                  <p className="text-lg font-bold">{day.getDate()}</p>
+                  <p className="text-lg font-bold">
+                    {day.toLocaleDateString(undefined, { day: "numeric" })}
+                  </p>
                 </div>
                 {dailyMacros.calories > 0 && (
-                  <div className="text-right">
-                    <p className="text-[10px] font-bold text-blue-500 uppercase">
-                      Daily
-                    </p>
-                    <p className="text-xs font-mono font-bold text-zinc-300">
-                      {Math.round(dailyMacros.calories)}{" "}
-                      <span className="text-[8px] text-zinc-600 font-normal">
-                        kcal
-                      </span>
+                  <div className="text-right text-[10px] space-y-0.5 font-mono text-zinc-400">
+                    <p>{Math.round(dailyMacros.calories)} kcal</p>
+                    <p>
+                      {Math.round(dailyMacros.protein)}P |{" "}
+                      {Math.round(dailyMacros.fat)}F |{" "}
+                      {Math.round(dailyMacros.carbs)}C
                     </p>
                   </div>
                 )}
               </div>
 
               <div className="flex-1 p-2 space-y-3">
-                {getMealsForDate(day).map((meal) => (
-                  <MealSlot
-                    key={meal.id}
-                    meal={meal}
-                    onDeleteMeal={handleDeleteMeal}
-                    onCloneMeal={(mealId) => setIsCloningMeal({ mealId })}
-                    onAddRecipe={(mealId) => setIsAddingRecipe({ mealId })}
-                    onRemoveRecipe={handleRemoveRecipe}
-                    onToggleLeftoverSource={handleToggleLeftoverSource}
-                    onUpdatePlannedRecipe={updatePlannedRecipeAction}
-                    onLinkLeftover={handleLinkLeftover}
-                    leftoverSourceOptions={leftoverSourceOptions}
-                  />
-                ))}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={(event) => handleDragEnd(event, day)}
+                >
+                  <SortableContext
+                    items={meals.map((m) => m.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {meals.map((meal) => (
+                      <MealSlot
+                        key={meal.id}
+                        meal={meal}
+                        onDeleteMeal={handleDeleteMeal}
+                        onCloneMeal={(mealId) => setIsCloningMeal({ mealId })}
+                        onAddRecipe={(mealId) => setIsAddingRecipe({ mealId })}
+                        onRemoveRecipe={handleRemoveRecipe}
+                        onToggleLeftoverSource={handleToggleLeftoverSource}
+                        onUpdatePlannedRecipe={handleUpdatePlannedRecipe}
+                        onLinkLeftover={handleLinkLeftover}
+                        leftoverSourceOptions={leftoverSourceOptions}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
 
                 <button
                   onClick={() => setIsAddingMeal({ date: day })}

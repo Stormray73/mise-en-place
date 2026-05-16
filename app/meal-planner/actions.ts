@@ -100,7 +100,7 @@ export async function deleteMealAction(
 
 export async function updatePlannedRecipeAction(
   plannedRecipeId: string,
-  data: { scale?: number; prepState?: string },
+  data: { scale?: number; prepState?: string; excludeFromPrep?: boolean },
 ): Promise<ActionResult<PlannedRecipe>> {
   try {
     const userId = await getUserId();
@@ -264,6 +264,32 @@ export async function togglePrepCompletionAction(
       childRecipeId,
       completed,
     );
+    revalidatePath("/meal-planner");
+    revalidatePath("/dashboard");
+    return { success: true, data: undefined };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function reorderMealAction(
+  mealId: string,
+  sortOrder: number,
+): Promise<ActionResult<void>> {
+  try {
+    const userId = await getUserId();
+    const meal = await prisma.meal.findUnique({
+      where: { id: mealId },
+      include: { mealPlan: true },
+    });
+    if (!meal || meal.mealPlan.userId !== userId) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await mealPlanLib.updateMeal(mealId, { sortOrder });
     revalidatePath("/meal-planner");
     revalidatePath("/dashboard");
     return { success: true, data: undefined };

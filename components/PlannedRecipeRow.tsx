@@ -19,6 +19,7 @@ export interface PlannedRecipeWithRecipe {
   prepState?: string | null;
   isLeftoverSource: boolean;
   sourcePlannedRecipeId?: string | null;
+  excludeFromPrep: boolean;
 }
 
 interface PlannedRecipeRowProps {
@@ -27,7 +28,7 @@ interface PlannedRecipeRowProps {
   onToggleLeftoverSource: (id: string, isSource: boolean) => void;
   onUpdate: (
     id: string,
-    updates: { scale?: number; prepState?: string },
+    updates: { scale?: number; prepState?: string; excludeFromPrep?: boolean },
   ) => void;
   onLinkLeftover: (id: string, sourceId: string | null) => void;
   sourceOptions: { id: string; date: string | Date }[];
@@ -98,48 +99,65 @@ export default function PlannedRecipeRow({
                 scale: parseFloat(e.target.value) || 1.0,
               })
             }
-            className="p-1 h-5 text-[9px] text-center"
+            className="h-5 px-1 py-0 text-[10px] bg-zinc-800 border-zinc-600 text-zinc-200"
           />
+          <span
+            className="text-[10px] text-zinc-500"
+            data-testid={`recipe-scale-${pr.id}`}
+          >
+            x
+          </span>
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1">
           <Input
-            type="text"
             value={pr.prepState || ""}
-            placeholder="Prep override..."
             onChange={(e) =>
               onUpdate(pr.id, {
                 prepState: e.target.value,
               })
             }
-            className="p-1 h-5 text-[9px]"
+            placeholder="Prep..."
+            className="h-5 px-1 py-0 text-[10px] bg-zinc-800 border-zinc-600 text-zinc-200 w-full"
           />
         </div>
 
-        {!pr.isLeftoverSource && (
-          <div className="w-16">
-            <Select
-              className={`p-0 h-5 text-[9px] ${
-                pr.sourcePlannedRecipeId
-                  ? "border-green-500 text-green-400"
-                  : "border-zinc-600 text-zinc-500"
-              }`}
-              value={pr.sourcePlannedRecipeId || ""}
-              onChange={(e) => onLinkLeftover(pr.id, e.target.value || null)}
-            >
-              <option value="">Fresh</option>
-              {sourceOptions.map((source) => (
-                <option key={source.id} value={source.id}>
-                  From{" "}
-                  {new Date(source.date).toLocaleDateString(undefined, {
-                    weekday: "short",
-                  })}
-                </option>
-              ))}
-            </Select>
-          </div>
-        )}
+        <button
+          onClick={() =>
+            onUpdate(pr.id, { excludeFromPrep: !pr.excludeFromPrep })
+          }
+          className={`text-[9px] px-1 rounded border transition-colors h-5 flex items-center ${
+            pr.excludeFromPrep
+              ? "bg-zinc-600 border-zinc-500 text-zinc-400"
+              : "border-blue-600/50 text-blue-400 hover:bg-blue-900/20"
+          }`}
+          title={pr.excludeFromPrep ? "Excluded from Prep" : "Include in Prep"}
+        >
+          {pr.excludeFromPrep ? "NP" : "P"}
+        </button>
       </div>
+
+      {!pr.isLeftoverSource && (
+        <div className="flex items-center gap-1">
+          <label className="text-[9px] text-zinc-500 whitespace-nowrap">
+            Consume:
+          </label>
+          <Select
+            value={pr.sourcePlannedRecipeId || ""}
+            onChange={(e) => onLinkLeftover(pr.id, e.target.value || null)}
+            className="h-5 px-1 py-0 text-[9px] bg-zinc-800 border-zinc-600 text-zinc-200 w-full"
+          >
+            <option value="">None</option>
+            {sourceOptions.map((source) => (
+              <option key={source.id} value={source.id}>
+                {new Date(source.date).toLocaleDateString(undefined, {
+                  weekday: "short",
+                })}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
     </div>
   );
 }

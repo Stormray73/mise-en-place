@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
 }
 
 model Account {
@@ -13,12 +13,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?
-  access_token      String?
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?
+  id_token          String? @db.Text
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -39,16 +39,16 @@ model User {
   email           String?          @unique
   emailVerified   DateTime?
   image           String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
   accounts        Account[]
-  mealPlans       MealPlan[]
   prepCompletions PrepCompletion[]
   recipes         Recipe[]
   sessions        Session[]
   pantryItems     PantryItem[]
   ingredients     Ingredient[]
   tags            Tag[]
+  mealPlan        MealPlan?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 model VerificationToken {
@@ -154,6 +154,7 @@ model Meal {
   mealPlanId     String
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  sortOrder      Int             @default(0)
   mealPlan       MealPlan        @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
   plannedRecipes PlannedRecipe[]
 }
@@ -166,10 +167,11 @@ model PlannedRecipe {
   prepState             String?
   isLeftoverSource      Boolean          @default(false)
   sourcePlannedRecipeId String?
+  excludeFromPrep       Boolean          @default(false)
   meal                  Meal             @relation(fields: [mealId], references: [id], onDelete: Cascade)
-  recipe                Recipe           @relation(fields: [recipeId], references: [id])
-  sourcePlannedRecipe   PlannedRecipe?   @relation("LeftoverRelation", fields: [sourcePlannedRecipeId], references: [id])
-  consumedLeftovers     PlannedRecipe[]  @relation("LeftoverRelation")
+  recipe                Recipe           @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  sourcePlannedRecipe   PlannedRecipe?   @relation("Leftovers", fields: [sourcePlannedRecipeId], references: [id])
+  consumedLeftovers     PlannedRecipe[]  @relation("Leftovers")
   prepCompletions       PrepCompletion[]
 }
 

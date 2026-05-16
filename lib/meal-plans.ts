@@ -91,14 +91,32 @@ export async function getWeeklyMealPlan(userId: string, startDate: Date) {
         },
       },
     },
-    orderBy: {
-      date: "asc",
-    },
+  });
+
+  const slotOrder: Record<string, number> = {
+    Breakfast: 1,
+    Lunch: 2,
+    Dinner: 3,
+  };
+
+  const sortedMeals = meals.sort((a, b) => {
+    // 1. Sort by date
+    if (a.date.getTime() !== b.date.getTime()) {
+      return a.date.getTime() - b.date.getTime();
+    }
+    // 2. Sort by slot priority
+    const orderA = slotOrder[a.slot] || 4;
+    const orderB = slotOrder[b.slot] || 4;
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    // 3. Sort by custom sortOrder
+    return (a.sortOrder || 0) - (b.sortOrder || 0);
   });
 
   // Calculate macros for each meal
   return Promise.all(
-    meals.map(async (meal) => {
+    sortedMeals.map(async (meal) => {
       const mealMacros = { calories: 0, protein: 0, fat: 0, carbs: 0 };
 
       for (const pr of meal.plannedRecipes) {
@@ -124,6 +142,13 @@ export async function getWeeklyMealPlan(userId: string, startDate: Date) {
   );
 }
 
+export async function updateMeal(mealId: string, data: { sortOrder?: number }) {
+  return prisma.meal.update({
+    where: { id: mealId },
+    data,
+  });
+}
+
 export async function deleteMeal(mealId: string) {
   return prisma.meal.delete({
     where: { id: mealId },
@@ -132,7 +157,7 @@ export async function deleteMeal(mealId: string) {
 
 export async function updatePlannedRecipe(
   plannedRecipeId: string,
-  data: { scale?: number; prepState?: string },
+  data: { scale?: number; prepState?: string; excludeFromPrep?: boolean },
 ) {
   return prisma.plannedRecipe.update({
     where: { id: plannedRecipeId },
@@ -258,6 +283,7 @@ export async function getPrepAheadData(
         date: { gte: startDate, lte: endDate },
       },
       sourcePlannedRecipeId: null,
+      excludeFromPrep: false,
     },
     include: {
       recipe: true,
@@ -276,6 +302,20 @@ export async function getPrepAheadData(
   } = {};
 
   for (const pr of plannedRecipes) {
+    // BUG-037/Story 12: Also include the recipe itself if it has a prepState
+    if (pr.prepState) {
+      const key = `recipe_${pr.recipeId}_${pr.prepState}`;
+      if (!aggregator[key]) {
+        aggregator[key] = {
+          id: pr.id, // Use plannedRecipe ID for exclusions
+          type: "recipe",
+          name: pr.recipe.title,
+          quantity: pr.scale,
+          unit: "portion",
+          prepState: pr.prepState,
+        };
+      }
+    }
     await aggregateRecipe(pr.recipeId, pr.scale, aggregator);
   }
 
@@ -339,7 +379,7 @@ export async function cloneMeal(mealId: string, targetDate: Date) {
           scale: pr.scale,
           prepState: pr.prepState,
           isLeftoverSource: pr.isLeftoverSource,
-          // We don't clone sourcePlannedRecipeId or consumedLeftovers for now to avoid complexity
+          excludeFromPrep: pr.excludeFromPrep,
         })),
       },
     },
