@@ -12,6 +12,8 @@ import { calculateMacros } from "@/lib/recipes";
 import RecipeView from "@/components/RecipeView";
 import { Recipe, RecipeStep, RecipeComponent } from "@/types";
 
+import FavoriteToggle from "@/components/FavoriteToggle";
+
 export default async function RecipeDetailPage({
   params,
   searchParams,
@@ -30,6 +32,7 @@ export default async function RecipeDetailPage({
   const recipe = await prisma.recipe.findUnique({
     where: { id },
     include: {
+      tags: true,
       steps: {
         orderBy: { order: "asc" },
       },
@@ -58,13 +61,29 @@ export default async function RecipeDetailPage({
 
   return (
     <main className="max-w-7xl mx-auto p-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-4xl font-bold">{recipe.title}</h1>
-          <p className="text-zinc-400">
-            Yield: {recipe.yieldAmount} {recipe.yieldUnit}
-            {recipe.servings && ` • ${recipe.servings} servings`}
-          </p>
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl font-bold">{recipe.title}</h1>
+            <FavoriteToggle
+              recipeId={recipe.id}
+              initialIsFavorite={recipe.isFavorite}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <p className="text-zinc-400">
+              Yield: {recipe.yieldAmount} {recipe.yieldUnit}
+              {recipe.servings && ` • ${recipe.servings} servings`}
+            </p>
+            {recipe.tags.map((t) => (
+              <span
+                key={t.id}
+                className="text-xs px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded-full flex items-center"
+              >
+                #{t.name}
+              </span>
+            ))}
+          </div>
         </div>
         <div className="flex gap-4">
           <Link

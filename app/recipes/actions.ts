@@ -39,6 +39,70 @@ export async function deductRecipeIngredientsAction(
   }
 }
 
+export async function toggleFavoriteAction(
+  id: string,
+  isFavorite: boolean,
+): Promise<ActionResult<void>> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Verify ownership
+    const recipe = await prisma.recipe.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+
+    if (!recipe || recipe.userId !== session.user.id) {
+      return { success: false, error: "Recipe not found or unauthorized" };
+    }
+
+    await prisma.recipe.update({
+      where: { id },
+      data: { isFavorite },
+    });
+
+    revalidatePath("/recipes");
+    revalidatePath("/dashboard");
+    revalidatePath(`/recipes/${id}`);
+    return { success: true, data: undefined };
+  } catch (error) {
+    console.error("Toggle favorite error:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
+    };
+  }
+}
+
+export async function getTagsAction(): Promise<ActionResult<string[]>> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const tags = await prisma.tag.findMany({
+      where: { userId: session.user.id },
+      select: { name: true },
+    });
+
+    return { success: true, data: tags.map((t) => t.name) };
+  } catch (error) {
+    console.error("Get tags error:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
+    };
+  }
+}
+
 export async function saveRecipeAction(
   data: RecipeSaveData,
 ): Promise<ActionResult<Recipe>> {

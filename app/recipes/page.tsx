@@ -8,10 +8,10 @@ import DeleteButton from "@/components/DeleteButton";
 export default async function Dashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; favorites?: string; tag?: string }>;
 }) {
   const session = await auth();
-  const { q } = await searchParams;
+  const { q, favorites, tag } = await searchParams;
 
   if (!session) {
     redirect("/login");
@@ -20,6 +20,14 @@ export default async function Dashboard({
   const recipes = await prisma.recipe.findMany({
     where: {
       userId: session.user?.id,
+      isFavorite: favorites === "true" ? true : undefined,
+      tags: tag
+        ? {
+            some: {
+              name: tag,
+            },
+          }
+        : undefined,
       title: q
         ? {
             contains: q,
@@ -27,7 +35,15 @@ export default async function Dashboard({
           }
         : undefined,
     },
+    include: {
+      tags: true,
+    },
     orderBy: { updatedAt: "desc" },
+  });
+
+  const allTags = await prisma.tag.findMany({
+    where: { userId: session.user?.id },
+    orderBy: { name: "asc" },
   });
 
   return (
@@ -37,8 +53,45 @@ export default async function Dashboard({
           <h1 className="text-3xl font-bold">My Recipes</h1>
         </div>
 
-        <div className="flex-1 w-full flex justify-center">
+        <div className="flex-1 w-full flex flex-col items-center gap-4">
           <SearchBar />
+          <div className="flex gap-2 flex-wrap justify-center">
+            <Link
+              href="/recipes"
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
+                !favorites && !tag
+                  ? "bg-blue-600 text-white"
+                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+              }`}
+            >
+              All
+            </Link>
+            <Link
+              href={`/recipes?favorites=true${q ? `&q=${q}` : ""}`}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
+                favorites === "true"
+                  ? "bg-yellow-600 text-white"
+                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+              }`}
+            >
+              ★ Favorites
+            </Link>
+            {allTags.map((t) => (
+              <Link
+                key={t.id}
+                href={`/recipes?tag=${encodeURIComponent(t.name)}${
+                  q ? `&q=${q}` : ""
+                }`}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
+                  tag === t.name
+                    ? "bg-green-600 text-white"
+                    : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                }`}
+              >
+                #{t.name}
+              </Link>
+            ))}
+          </div>
         </div>
 
         <div className="flex-1 flex justify-end">
@@ -54,8 +107,8 @@ export default async function Dashboard({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {recipes.length === 0 ? (
           <div className="col-span-full bg-zinc-900 border border-zinc-800 p-8 rounded-lg text-center text-zinc-500">
-            {q
-              ? `No recipes found matching "${q}"`
+            {q || favorites || tag
+              ? "No recipes found matching your filters."
               : "No recipes yet. Create your first one!"}
           </div>
         ) : (
@@ -69,12 +122,32 @@ export default async function Dashboard({
                 className="flex-1 p-6 flex flex-col justify-between"
               >
                 <div>
-                  <h3 className="text-xl font-bold group-hover:text-blue-400 transition-colors line-clamp-2">
-                    {recipe.title}
-                  </h3>
+                  <div className="flex justify-between items-start gap-2">
+                    <h3 className="text-xl font-bold group-hover:text-blue-400 transition-colors line-clamp-2">
+                      {recipe.title}
+                    </h3>
+                    {recipe.isFavorite && (
+                      <span
+                        className="text-yellow-500 text-xl"
+                        title="Favorite"
+                      >
+                        ★
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-zinc-500 mt-2">
                     {recipe.yieldAmount} {recipe.yieldUnit}
                   </p>
+                  <div className="flex flex-wrap gap-1 mt-3">
+                    {recipe.tags.map((t) => (
+                      <span
+                        key={t.id}
+                        className="text-[10px] px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded-full"
+                      >
+                        #{t.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <div className="text-xs text-zinc-600">
                   Last updated {new Date(recipe.updatedAt).toLocaleDateString()}

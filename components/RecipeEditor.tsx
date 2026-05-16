@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { saveRecipeAction } from "@/app/recipes/actions";
+import { saveRecipeAction, getTagsAction } from "@/app/recipes/actions";
 import { useRouter } from "next/navigation";
 import { getUnits } from "@/lib/units";
 import { RecipeSaveData, Macros, USDAFood, RecipeSearchResult } from "@/types";
@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Autocomplete } from "./ui/Autocomplete";
 
 interface RecipeEditorProps {
   initialData?: RecipeSaveData;
@@ -20,6 +21,10 @@ interface RecipeEditorProps {
 export function RecipeEditor({ initialData }: RecipeEditorProps) {
   const router = useRouter();
   const [title, setTitle] = useState(initialData?.title || "");
+  const [isFavorite, setIsFavorite] = useState(
+    initialData?.isFavorite || false,
+  );
+  const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [yieldAmount, setYieldAmount] = useState(initialData?.yieldAmount || 1);
   const [yieldUnit, setYieldUnit] = useState(
     initialData?.yieldUnit || "servings",
@@ -105,6 +110,8 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
     const data: RecipeSaveData = {
       id: initialData?.id,
       title: title.trim(),
+      isFavorite,
+      tags,
       yieldAmount: parseFloat(yieldAmount.toString()),
       yieldUnit,
       servings: servings ? parseInt(servings.toString()) : null,
@@ -155,20 +162,36 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="md:col-span-1">
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-zinc-400"
-          >
-            Recipe Title
-          </label>
-          <Input
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="mt-1"
-            placeholder="e.g. Tomato Sauce"
-          />
+        <div className="md:col-span-2">
+          <div className="flex justify-between items-end gap-4">
+            <div className="flex-1">
+              <label
+                htmlFor="title"
+                className="block text-sm font-medium text-zinc-400"
+              >
+                Recipe Title
+              </label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="mt-1"
+                placeholder="e.g. Tomato Sauce"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsFavorite(!isFavorite)}
+              className={`mb-1 p-2 rounded-md border transition-colors ${
+                isFavorite
+                  ? "bg-yellow-900/30 border-yellow-700 text-yellow-500"
+                  : "bg-zinc-800 border-zinc-700 text-zinc-500 hover:text-zinc-300"
+              }`}
+              title={isFavorite ? "Unfavorite" : "Favorite"}
+            >
+              <span className="text-xl">{isFavorite ? "★" : "☆"}</span>
+            </button>
+          </div>
         </div>
         <div>
           <label
@@ -205,6 +228,9 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
             ))}
           </Select>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div>
           <label
             htmlFor="servings"
@@ -221,6 +247,63 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
             }
             className="mt-1"
             placeholder="e.g. 4"
+          />
+        </div>
+        <div className="md:col-span-3">
+          <label className="block text-sm font-medium text-zinc-400 mb-1">
+            Tags
+          </label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md text-sm flex items-center gap-2 border border-zinc-700"
+              >
+                #{tag}
+                <button
+                  type="button"
+                  onClick={() => setTags(tags.filter((t) => t !== tag))}
+                  className="text-zinc-500 hover:text-red-400"
+                >
+                  &times;
+                </button>
+              </span>
+            ))}
+          </div>
+          <Autocomplete<string>
+            placeholder="Add a tag..."
+            onSearch={async (query) => {
+              const res = await getTagsAction();
+              if (res.success && res.data) {
+                return res.data.filter(
+                  (t) =>
+                    t.toLowerCase().includes(query.toLowerCase()) &&
+                    !tags.includes(t),
+                );
+              }
+              return [];
+            }}
+            onSelect={(tag) => {
+              if (!tags.includes(tag)) {
+                setTags([...tags, tag]);
+              }
+            }}
+            renderItem={(tag) => <span>#{tag}</span>}
+            keyExtractor={(tag) => tag}
+            minChars={1}
+            footerAction={(query) =>
+              query && !tags.includes(query) ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTags([...tags, query]);
+                  }}
+                  className="w-full text-left px-4 py-2 text-blue-400 hover:bg-zinc-700 text-sm font-bold"
+                >
+                  + Create Tag &quot;{query}&quot;
+                </button>
+              ) : null
+            }
           />
         </div>
       </div>

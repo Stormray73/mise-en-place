@@ -125,5 +125,45 @@ describe("Recipe Logic", () => {
         /Circular dependency/,
       );
     });
+
+    it("should save recipe with favorites and tags", async () => {
+      const data: RecipeSaveData & { userId: string } = {
+        title: "Favorite Salad",
+        yieldAmount: 1,
+        yieldUnit: "portion",
+        isFavorite: true,
+        tags: ["Quick", "Healthy"],
+        components: [],
+        steps: [],
+        userId: "user1",
+      };
+
+      (prisma.recipe.create as Mock).mockResolvedValue({
+        id: "new-id",
+        ...data,
+      });
+
+      await saveRecipe(null, data);
+
+      expect(prisma.recipe.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            isFavorite: true,
+            tags: {
+              connectOrCreate: [
+                {
+                  where: { name_userId: { name: "Quick", userId: "user1" } },
+                  create: { name: "Quick", userId: "user1" },
+                },
+                {
+                  where: { name_userId: { name: "Healthy", userId: "user1" } },
+                  create: { name: "Healthy", userId: "user1" },
+                },
+              ],
+            },
+          }),
+        }),
+      );
+    });
   });
 });

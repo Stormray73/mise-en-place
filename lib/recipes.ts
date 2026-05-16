@@ -132,7 +132,7 @@ export async function saveRecipe(
   id: string | null,
   data: RecipeSaveData & { userId: string },
 ) {
-  const { components, steps, ...recipeData } = data;
+  const { components, steps, tags, ...recipeData } = data;
 
   // Check for circular dependencies
   if (id && components) {
@@ -167,6 +167,23 @@ export async function saveRecipe(
     })),
   };
 
+  const tagsPayload = tags
+    ? {
+        connectOrCreate: tags.map((tagName) => ({
+          where: {
+            name_userId: {
+              name: tagName,
+              userId: data.userId,
+            },
+          },
+          create: {
+            name: tagName,
+            userId: data.userId,
+          },
+        })),
+      }
+    : undefined;
+
   if (id) {
     return prisma.recipe.update({
       where: { id },
@@ -180,6 +197,12 @@ export async function saveRecipe(
           deleteMany: {},
           ...componentsPayload,
         },
+        tags: tags
+          ? {
+              set: [], // Clear existing relations
+              ...tagsPayload,
+            }
+          : undefined,
       },
     });
   } else {
@@ -188,6 +211,7 @@ export async function saveRecipe(
         ...recipeData,
         steps: stepsPayload,
         components: componentsPayload,
+        tags: tagsPayload,
       },
     });
   }

@@ -1,9 +1,17 @@
+export interface Tag {
+  id: string;
+  name: string;
+  userId: string;
+}
+
 export interface RecipeSaveData {
   id?: string;
   title: string;
   yieldAmount: number;
   yieldUnit: string;
   servings?: number | null;
+  isFavorite?: boolean;
+  tags?: string[]; // Tag names
   steps: {
     id?: string;
     order: number;
@@ -93,6 +101,8 @@ export interface Recipe {
   yieldUnit: string;
   servings?: number | null;
   userId: string;
+  isFavorite: boolean;
+  tags?: Tag[];
   manualMacros?: unknown; // JSON from Prisma
   steps?: RecipeStep[];
   components?: RecipeComponent[];

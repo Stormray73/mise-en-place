@@ -19,6 +19,7 @@ export default async function EditRecipePage({
   const recipe = await prisma.recipe.findUnique({
     where: { id },
     include: {
+      tags: true,
       steps: {
         orderBy: { order: "asc" },
       },
@@ -39,8 +40,11 @@ export default async function EditRecipePage({
     redirect("/dashboard");
   }
 
-  const recipeWithTypes = {
+  const recipeWithTypes: RecipeSaveData = {
     ...recipe,
+    isFavorite: recipe.isFavorite,
+    tags: recipe.tags.map((t) => t.name),
+    servings: recipe.servings || undefined,
     components: recipe.components.map((c) => ({
       ...c,
       type: c.ingredientId ? "ingredient" : ("sub-recipe" as const),
