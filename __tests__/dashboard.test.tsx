@@ -17,6 +17,11 @@ vi.mock("@/lib/meal-plans", () => ({
   getPrepAheadData: vi.fn().mockResolvedValue([]),
 }));
 
+// Mock shopping-list
+vi.mock("@/lib/shopping-list", () => ({
+  generateShoppingList: vi.fn().mockResolvedValue([]),
+}));
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   redirect: vi.fn((url: string) => {

@@ -2,6 +2,20 @@ import { GET } from "@/app/api/usda/search/route";
 import { NextRequest } from "next/server";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
+// Mock auth
+vi.mock("@/auth", () => ({
+  auth: vi.fn().mockResolvedValue(null),
+}));
+
+// Mock prisma
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    ingredient: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+  },
+}));
+
 describe("GET /api/usda/search", () => {
   beforeEach(() => {
     vi.stubEnv("USDA_API_KEY", "test-key");
