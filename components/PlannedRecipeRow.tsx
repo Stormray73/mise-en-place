@@ -145,7 +145,9 @@ export default function PlannedRecipeRow({
           <Select
             value={pr.sourcePlannedRecipeId || ""}
             onChange={(e) => onLinkLeftover(pr.id, e.target.value || null)}
-            className="h-5 px-1 py-0 text-[9px] bg-zinc-800 border-zinc-600 text-zinc-200 w-full"
+            className={`h-5 px-1 py-0 text-[9px] bg-zinc-800 text-zinc-200 w-full ${
+              pr.sourcePlannedRecipeId ? "border-green-500" : "border-zinc-600"
+            }`}
           >
             <option value="">None</option>
             {sourceOptions.map((source) => (

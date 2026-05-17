@@ -160,9 +160,10 @@ export async function generateShoppingList(
   // 5. Add manual items
   const manualItems = await prisma.manualShoppingItem.findMany({
     where: { userId },
+    orderBy: { createdAt: "desc" },
   });
 
-  const results = Object.values(shoppingList);
+  const results: ShoppingListItem[] = [];
 
   for (const item of manualItems) {
     results.push({
@@ -174,6 +175,10 @@ export async function generateShoppingList(
       unit: item.unit || "ea",
       reason: "manual",
     });
+  }
+
+  for (const item of Object.values(shoppingList)) {
+    results.push(item);
   }
 
   return results;

@@ -91,13 +91,22 @@ export const auth = async (...args: unknown[]): Promise<Session | null> => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const session = await (internalAuth as any)(...args);
   if (!session && process.env.MOCK_AUTH === "true") {
+    const user = {
+      id: "test-user-id",
+      name: "Test Chef",
+      email: "test@example.com",
+      image: "https://via.placeholder.com/150",
+    };
+
+    // Ensure user exists in DB for mock auth shortcut
+    await prisma.user.upsert({
+      where: { id: user.id },
+      update: {},
+      create: user,
+    });
+
     return {
-      user: {
-        id: "test-user-id",
-        name: "Test Chef",
-        email: "test@example.com",
-        image: "https://via.placeholder.com/150",
-      },
+      user,
       expires: new Date(Date.now() + 3600 * 1000).toISOString(),
     };
   }

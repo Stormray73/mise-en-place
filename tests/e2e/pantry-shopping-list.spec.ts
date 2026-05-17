@@ -58,7 +58,14 @@ test.describe("Pantry & Shopping List", () => {
     // Fill quantity, unit, location, threshold
     await page.getByLabel(/Quantity/i).fill("5");
     await page.getByLabel(/Unit/i).selectOption("lb");
-    await page.getByLabel(/Location/i).fill("Garage");
+
+    // Add location via Manage if it doesn't exist
+    await page.getByRole("button", { name: /Manage/i }).click();
+    await page.getByPlaceholder(/New location name/i).fill("Garage");
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+    await page.getByRole("button", { name: /Done/i }).click();
+
+    await page.getByLabel(/Location/i).selectOption({ label: "Garage" });
     await page.getByLabel(/Restock Threshold/i).fill("1");
 
     await page.getByRole("button", { name: /Add to Pantry/i }).click();
@@ -85,7 +92,14 @@ test.describe("Pantry & Shopping List", () => {
     await listbox.getByRole("option").first().click();
     await page.getByLabel(/Quantity/i).fill("10");
     await page.getByLabel(/Unit/i).selectOption("lb");
-    await page.getByLabel(/Location/i).fill(uniqueLocation);
+
+    // Add unique location via Manage
+    await page.getByRole("button", { name: /Manage/i }).click();
+    await page.getByPlaceholder(/New location name/i).fill(uniqueLocation);
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+    await page.getByRole("button", { name: /Done/i }).click();
+
+    await page.getByLabel(/Location/i).selectOption({ label: uniqueLocation });
     await page.getByRole("button", { name: /Add to Pantry/i }).click();
 
     // Now test decrement

@@ -4,6 +4,8 @@ test.describe("Meal Planner", () => {
   test.beforeEach(async ({ page }) => {
     // Auth is handled by auth.setup.ts
     await page.goto("/meal-planner");
+    // Handle confirmation dialogs
+    page.on("dialog", (dialog) => dialog.accept());
   });
 
   test("can navigate to meal planner and see the week view", async ({
@@ -45,8 +47,8 @@ test.describe("Meal Planner", () => {
     const testId = await newSlot.getAttribute("data-testid");
     const mealId = testId?.replace("meal-slot-", "");
 
-    // Delete the slot - use dispatchEvent for maximum reliability in this slow environment
-    await page.getByTestId(`delete-meal-${mealId}`).dispatchEvent("click");
+    // Delete the slot
+    await page.getByTestId(`delete-meal-${mealId}`).click();
 
     // Wait for it to disappear
     await expect(newSlot).not.toBeVisible({ timeout: 20000 });

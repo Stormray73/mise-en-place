@@ -52,7 +52,39 @@ export async function GET(request: NextRequest) {
   }
 
   const apiKey = process.env.USDA_API_KEY;
-  if (!apiKey) {
+  if (!apiKey || process.env.MOCK_AUTH === "true") {
+    // Return mock data in test mode or if API key is missing
+    if (process.env.MOCK_AUTH === "true") {
+      const mockFoods = [
+        {
+          fdcId: 1103332,
+          description: "Tomatoes, red, ripe, raw, year round average",
+          foodCategory: "Vegetables and Vegetable Products",
+          foodNutrients: [
+            { nutrientName: "Energy", value: 18 },
+            { nutrientName: "Protein", value: 0.88 },
+            { nutrientName: "Total lipid (fat)", value: 0.2 },
+            { nutrientName: "Carbohydrate, by difference", value: 3.89 },
+          ],
+        },
+        {
+          fdcId: 1103333,
+          description: "Salt, table",
+          foodCategory: "Spices and Herbs",
+          foodNutrients: [],
+        },
+      ];
+
+      return NextResponse.json({
+        foods: [
+          ...customFoods,
+          ...mockFoods.filter((f) =>
+            f.description.toLowerCase().includes(query.toLowerCase()),
+          ),
+        ],
+      });
+    }
+
     return NextResponse.json(
       { error: "USDA API key not configured" },
       { status: 500 },
@@ -60,13 +92,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(
-      `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(query)}`,
-    );
+    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
+    const response = await fetch(url);
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: "Failed to fetch data from USDA" },
+        { error: `Failed to fetch data from USDA: ${response.statusText}` },
         { status: response.status },
       );
     }

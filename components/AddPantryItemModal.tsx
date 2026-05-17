@@ -172,31 +172,28 @@ export default function AddPantryItemModal({
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-zinc-400">
-            Location
-          </label>
-          <div className="flex gap-2">
-            <Select
-              value={locationId}
-              onChange={(e) => setLocationId(e.target.value)}
-              className="flex-1"
-            >
-              <option value="">Uncategorized</option>
-              {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.name}
-                </option>
-              ))}
-            </Select>
-            <Button
-              variant="ghost"
-              type="button"
-              onClick={() => setShowManageLocations(true)}
-            >
-              Manage
-            </Button>
-          </div>
+        <div className="flex gap-2 items-end">
+          <Select
+            label="Location"
+            value={locationId}
+            onChange={(e) => setLocationId(e.target.value)}
+            className="flex-1"
+          >
+            <option value="">Uncategorized</option>
+            {locations.map((loc) => (
+              <option key={loc.id} value={loc.id}>
+                {loc.name}
+              </option>
+            ))}
+          </Select>
+          <Button
+            variant="ghost"
+            type="button"
+            onClick={() => setShowManageLocations(true)}
+            className="mb-[2px]"
+          >
+            Manage
+          </Button>
         </div>
 
         <Input

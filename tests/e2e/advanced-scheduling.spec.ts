@@ -4,6 +4,8 @@ test.describe("Story 12: Advanced Scheduling User Journeys", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/dashboard/);
+    // Handle confirmation dialogs
+    page.on("dialog", (dialog) => dialog.accept());
   });
 
   test("Chronological Sorting and Prep Exclusions", async ({ page }) => {
@@ -13,12 +15,13 @@ test.describe("Story 12: Advanced Scheduling User Journeys", () => {
     await page.getByLabel(/Recipe Title/i).fill(uniqueTitle);
 
     // Add an ingredient so it has prep content
-    await page.getByPlaceholder(/search ingredients/i).fill("Tomato");
-    await page
+    await page.getByPlaceholder(/search ingredients/i).fill("Tomatoes");
+    const tomatoesBtn = page
       .locator("button")
-      .filter({ hasText: /tomatoes, red, ripe/i })
-      .first()
-      .click();
+      .filter({ hasText: /Tomatoes, red, ripe/i })
+      .first();
+    await expect(tomatoesBtn).toBeVisible({ timeout: 20000 });
+    await tomatoesBtn.click();
 
     await page.getByRole("button", { name: /save recipe/i }).click();
     await expect(page).toHaveURL(/\/recipes/);
@@ -28,14 +31,13 @@ test.describe("Story 12: Advanced Scheduling User Journeys", () => {
     const todaySlot = page.getByTestId("day-today");
 
     // Robust cleanup: Delete all meals for today to start fresh
-    page.on("dialog", (dialog) => dialog.accept());
-    await expect(async () => {
-      const deleteBtn = todaySlot.getByTitle(/delete meal/i).first();
-      if (await deleteBtn.isVisible()) {
-        await deleteBtn.click();
-        await expect(deleteBtn).not.toBeVisible({ timeout: 5000 });
-      }
-    }).toPass({ timeout: 15000 });
+    const deleteButtons = todaySlot.getByTitle(/delete meal/i);
+    const count = await deleteButtons.count();
+    for (let i = 0; i < count; i++) {
+      const btn = deleteButtons.first();
+      await btn.click();
+      await expect(btn).not.toBeVisible({ timeout: 10000 });
+    }
 
     // Add Dinner then Breakfast
     await todaySlot.getByRole("button", { name: /\+ Add Meal/i }).click();

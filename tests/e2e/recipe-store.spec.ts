@@ -21,12 +21,13 @@ test.describe("Recipe Store User Journeys", () => {
     await page.getByLabel(/yield unit/i).selectOption("L");
 
     // Search and add ingredient
-    await page.getByPlaceholder(/search ingredients/i).fill("Tomato");
-    await page
+    await page.getByPlaceholder(/search ingredients/i).fill("Tomatoes");
+    const tomatoesBtn = page
       .locator("button")
-      .filter({ hasText: /tomatoes, red, ripe/i })
-      .first()
-      .click();
+      .filter({ hasText: /Tomatoes, red, ripe/i })
+      .first();
+    await expect(tomatoesBtn).toBeVisible({ timeout: 20000 });
+    await tomatoesBtn.click();
 
     // Verify ingredient added
     await expect(page.getByText(/Tomatoes, red, ripe/i)).toBeVisible();

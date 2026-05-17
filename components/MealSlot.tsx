@@ -63,6 +63,7 @@ export default function MealSlot({
       ref={setNodeRef}
       style={style}
       className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg overflow-hidden"
+      data-testid={`meal-slot-${meal.id}`}
     >
       <div className="p-2 border-b border-zinc-700/50 bg-zinc-900/30 flex justify-between items-center group">
         <div className="flex items-center gap-2">
@@ -110,6 +111,7 @@ export default function MealSlot({
             onClick={() => onDeleteMeal(meal.id)}
             className="p-1 text-zinc-500 hover:text-red-400 transition-colors"
             title="Delete Meal"
+            data-testid={`delete-meal-${meal.id}`}
           >
             <svg
               className="w-3 h-3"
