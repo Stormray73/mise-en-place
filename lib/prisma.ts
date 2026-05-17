@@ -9,8 +9,11 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 const connectionString = process.env.DATABASE_URL;
 
-const neon = new Pool({ connectionString });
-const adapter = new PrismaNeon(neon);
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not set");
+}
+
+const adapter = new PrismaNeon({ connectionString });
 
 export const prisma =
   globalForPrisma.prisma ||
