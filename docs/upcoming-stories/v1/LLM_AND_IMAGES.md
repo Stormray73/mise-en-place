@@ -73,3 +73,19 @@ As a chef, I want the system to automatically identify cooking times in instruct
 
 - Prompt the LLM to extract these durations during the parsing phase.
 - Ensure timers are editable in the step manager.
+
+## Story: AI Ingredient Parsing for Scraper
+
+As a user importing recipes via URL, I want the system to intelligently break down scraped ingredient strings so that quantity, unit, and name are accurately mapped in the recipe form.
+
+### Acceptance Criteria
+
+- [ ] AC 1: The scraper delegates unstructured ingredient arrays to the Vercel AI SDK (`ai`, `@ai-sdk/openai`).
+- [ ] AC 2: The LLM processes the array and returns a structured JSON object enforcing our `RecipeComponent` schema (quantity, unit, name).
+- [ ] AC 3: If the AI request fails or times out, the scraper falls back to dumping the entire raw string into the `name` field.
+- [ ] AC 4: Scraper unit tests are updated to mock the AI SDK response and verify the structured mapping.
+
+### Technical Notes
+
+- Create a new utility (e.g., `lib/ai-parser.ts`) to handle the Vercel AI SDK logic.
+- Ensure the prompt explicitly handles fractional quantities (e.g., "1/2 cup") and common abbreviations.

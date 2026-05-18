@@ -10,8 +10,9 @@ The goal of v1.0 is to refine the existing feature set into a rock-solid experie
 
 ### 1. UI/UX Polish & Refinement
 
-- **Calendar UI:** Widen days, improve visibility of delete buttons, and switch Week navigation button positions.
-- **Interaction:** Add meal edit buttons and remove unnecessary modal buttons.
+- **Full-Width Layouts:** Widen Meal Planner and Recipe Store to match Pantry/Shopping list and design mockups.
+- **Navigation:** Add "Current Week" button and swap previous/next week positions for better ergonomics.
+- **Recipe Cards:** Fix hover icon overlap on recipe squares.
 - **Documentation:** [v1/UI_UX_POLISH.md](docs/upcoming-stories/v1/UI_UX_POLISH.md)
 
 ### 2. Advanced Scheduling & Ordering
