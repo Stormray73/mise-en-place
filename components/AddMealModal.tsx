@@ -4,7 +4,7 @@
  * @dependencies Modal, Button, Input, React
  */
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import Modal from "./ui/Modal";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
@@ -14,7 +14,7 @@ const DEFAULT_SLOTS = ["Breakfast", "Lunch", "Dinner"];
 interface AddMealModalProps {
   date: Date;
   onClose: () => void;
-  onAdd: (date: Date, slot: string) => void;
+  onAdd: (date: Date, slot: string) => void | Promise<void>;
 }
 
 export default function AddMealModal({
@@ -23,6 +23,13 @@ export default function AddMealModal({
   onAdd,
 }: AddMealModalProps) {
   const [customSlot, setCustomSlot] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  const handleAdd = (slot: string) => {
+    startTransition(async () => {
+      await onAdd(date, slot);
+    });
+  };
 
   return (
     <Modal title="Add Meal Slot" onClose={onClose}>
@@ -37,11 +44,12 @@ export default function AddMealModal({
         {DEFAULT_SLOTS.map((slot) => (
           <Button
             key={slot}
-            onClick={() => onAdd(date, slot)}
+            onClick={() => handleAdd(slot)}
             variant="ghost"
             className="py-6 text-lg"
+            disabled={isPending}
           >
-            {slot}
+            {isPending ? "Adding..." : slot}
           </Button>
         ))}
       </div>
@@ -50,9 +58,13 @@ export default function AddMealModal({
           value={customSlot}
           onChange={(e) => setCustomSlot(e.target.value)}
           placeholder="Custom Slot..."
+          disabled={isPending}
         />
-        <Button onClick={() => onAdd(date, customSlot)} disabled={!customSlot}>
-          Add
+        <Button
+          onClick={() => handleAdd(customSlot)}
+          disabled={!customSlot || isPending}
+        >
+          {isPending ? "Adding..." : "Add"}
         </Button>
       </div>
     </Modal>

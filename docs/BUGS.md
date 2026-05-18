@@ -13,21 +13,21 @@ This document serves as the central registry for bugs and regressions. It is des
 
 ## Active Bugs
 
-### BUG-037: Meal Planner Preset Delay
-
-**Status:** Active
-**Description:** There is a significant delay (at least a second) with no UI feedback when clicking meal presets (Breakfast, Lunch, Dinner) in the Meal Planner, making it appear as though the click didn't register.
-**Reproduction:** Go to Meal Planner, click "Breakfast" or other preset. Observe delay before modal/action triggers.
-
-### BUG-038: Duplicate Meal Presets
-
-**Status:** Active
-**Description:** Users can currently create multiple instances of the same preset (e.g., two "Breakfast" slots) on the same day.
-**Requirement:** Prevent duplicate presets for the same day.
-
 ---
 
 ## Resolved Bugs
+
+### BUG-037: Meal Planner Preset Delay
+
+**Status:** Resolved
+**Fix:** Added `useTransition` to `AddMealModal.tsx` to provide optimistic loading UI when clicking meal presets.
+**Verification:** Verified with test case in `tests/e2e/repro-bug-037.spec.ts`.
+
+### BUG-038: Duplicate Meal Presets
+
+**Status:** Resolved
+**Fix:** Prevent duplicate presets for the same day in `lib/meal-plans.ts` (existing fix verified) and ensured UI displays the error.
+**Verification:** Verified with test case in `tests/e2e/repro-bug-038.spec.ts`.
 
 ### BUG-027: Missing Prep State Decorator in Recipe Store
 
