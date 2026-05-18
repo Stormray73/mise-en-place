@@ -47,7 +47,7 @@ export default async function Dashboard({
   });
 
   return (
-    <div className="max-w-7xl mx-auto p-8">
+    <div className="w-full px-4 md:px-8 py-8">
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
         <div className="flex-1 min-w-0">
           <h1 className="text-3xl font-bold">My Recipes</h1>
@@ -122,7 +122,7 @@ export default async function Dashboard({
                 className="flex-1 p-6 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex justify-between items-start gap-2">
+                  <div className="flex justify-between items-start gap-2 pr-16">
                     <h3 className="text-xl font-bold group-hover:text-blue-400 transition-colors line-clamp-2">
                       {recipe.title}
                     </h3>

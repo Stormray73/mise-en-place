@@ -40,8 +40,8 @@ export default async function DashboardHub() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-8">
-      <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-12">
+    <div className="w-full px-4 md:px-8 py-8">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight">Dashboard</h1>
           <p className="text-zinc-400 mt-1">
@@ -90,7 +90,7 @@ export default async function DashboardHub() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left/Center Columns: Today's Schedule */}
         <div className="lg:col-span-2 space-y-8 order-2 lg:order-1">
           <section>

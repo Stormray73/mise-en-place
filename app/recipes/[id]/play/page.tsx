@@ -60,9 +60,22 @@ export default async function PlayRecipePage({
           </div>
           <Link
             href={`/recipes/${id}?scale=${scale}`}
-            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors text-sm"
+            className="p-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 rounded-full transition-all"
+            title="Exit Cooking Mode"
           >
-            Exit
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </Link>
         </div>
         <RecipePlayMode

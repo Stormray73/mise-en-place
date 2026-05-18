@@ -191,20 +191,24 @@ export default function MealCalendarClient({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center bg-zinc-900 p-4 rounded-lg border border-zinc-800">
-        <div className="flex gap-4">
-          <button
-            onClick={() => navigateWeek(-1)}
-            className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded"
-          >
-            &larr; Prev Week
-          </button>
-          <button
-            onClick={() => navigateWeek(1)}
-            className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded"
-          >
-            Next Week &rarr;
-          </button>
-        </div>
+        <button
+          onClick={() => navigateWeek(-1)}
+          className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded font-bold"
+        >
+          &larr; Prev Week
+        </button>
+        <button
+          onClick={() => router.push(pathname)}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded font-bold transition-colors text-white"
+        >
+          Back to Current Week
+        </button>
+        <button
+          onClick={() => navigateWeek(1)}
+          className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded font-bold"
+        >
+          Next Week &rarr;
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
@@ -229,9 +233,11 @@ export default function MealCalendarClient({
                   </p>
                 </div>
                 {dailyMacros.calories > 0 && (
-                  <div className="text-right text-[10px] space-y-0.5 font-mono text-zinc-400">
-                    <p>{Math.round(dailyMacros.calories)} kcal</p>
-                    <p>
+                  <div className="text-right text-xs space-y-0.5 font-mono">
+                    <p className="font-bold text-zinc-200">
+                      {Math.round(dailyMacros.calories)} kcal
+                    </p>
+                    <p className="text-[10px] text-zinc-400">
                       {Math.round(dailyMacros.protein)}P |{" "}
                       {Math.round(dailyMacros.fat)}F |{" "}
                       {Math.round(dailyMacros.carbs)}C
