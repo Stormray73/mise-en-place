@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { convert, canConvert } from "./units";
+import { convert, canConvert, USDAFoodPortion } from "./units";
 import { Macros, Recipe, RecipeSaveData } from "@/types";
 
 export async function calculateMacros(
@@ -29,27 +29,38 @@ export async function calculateMacros(
         // USDA macros are usually per 100g or 100ml
         // We assume baseMacros are per baseAmount (default 100)
         let baseUnit = "";
-        if (canConvert(component.unit, "g")) {
+        const portions = component.ingredient
+          .foodPortions as unknown as USDAFoodPortion[];
+
+        if (canConvert(component.unit, "g", portions)) {
           baseUnit = "g";
-        } else if (canConvert(component.unit, "ml")) {
+        } else if (canConvert(component.unit, "ml", portions)) {
           baseUnit = "ml";
         }
 
         if (baseUnit) {
-          const quantityInBase = convert(
-            component.quantity,
-            component.unit,
-            baseUnit,
-          );
-          const ingredient = component.ingredient as { baseAmount?: number };
-          const baseAmount = ingredient.baseAmount || 100;
-          const ratio = quantityInBase / baseAmount;
-          componentMacros = {
-            calories: baseMacros.calories * ratio,
-            protein: baseMacros.protein * ratio,
-            fat: baseMacros.fat * ratio,
-            carbs: baseMacros.carbs * ratio,
-          };
+          try {
+            const quantityInBase = convert(
+              component.quantity,
+              component.unit,
+              baseUnit,
+              portions,
+            );
+            const ingredient = component.ingredient as { baseAmount?: number };
+            const baseAmount = ingredient.baseAmount || 100;
+            const ratio = quantityInBase / baseAmount;
+            componentMacros = {
+              calories: baseMacros.calories * ratio,
+              protein: baseMacros.protein * ratio,
+              fat: baseMacros.fat * ratio,
+              carbs: baseMacros.carbs * ratio,
+            };
+          } catch (e) {
+            console.error(
+              `Failed to convert units for macro calculation: ${e}`,
+            );
+            componentMacros = null;
+          }
         }
       }
     } else if (

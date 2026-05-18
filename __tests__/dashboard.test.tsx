@@ -5,10 +5,18 @@ import { expect, test, vi } from "vitest";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import type { Session } from "next-auth";
-
 // Mock auth
 vi.mock("@/auth", () => ({
   auth: vi.fn(),
+}));
+
+// Mock prisma
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    recipe: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+  },
 }));
 
 // Mock meal-plans
@@ -20,22 +28,6 @@ vi.mock("@/lib/meal-plans", () => ({
 // Mock shopping-list
 vi.mock("@/lib/shopping-list", () => ({
   generateShoppingList: vi.fn().mockResolvedValue([]),
-}));
-
-// Mock next/navigation
-vi.mock("next/navigation", () => ({
-  redirect: vi.fn((url: string) => {
-    const error = new Error("NEXT_REDIRECT") as Error & { digest?: string };
-    error.digest = `NEXT_REDIRECT;replace;${url};307;`;
-    throw error;
-  }),
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    prefetch: vi.fn(),
-  }),
-  usePathname: () => "",
-  useSearchParams: () => new URLSearchParams(),
 }));
 
 test("Dashboard Hub redirects to login if no session", async () => {

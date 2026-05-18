@@ -172,7 +172,7 @@ export async function generateShoppingList(
       requiredQuantity: item.quantity,
       availableQuantity: 0,
       neededQuantity: item.quantity,
-      unit: item.unit || "ea",
+      unit: item.unit || "item",
       reason: "manual",
     });
   }

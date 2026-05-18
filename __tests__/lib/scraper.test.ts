@@ -1,6 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { scrapeRecipe } from "@/lib/scraper";
 
+vi.mock("ai", () => ({
+  generateObject: vi.fn().mockResolvedValue({
+    object: {
+      ingredients: [
+        { quantity: 200, unit: "g", name: "Pasta", prepState: "dry" },
+        { quantity: 1, unit: "cup", name: "Sauce", prepState: "warm" },
+      ],
+    },
+  }),
+}));
+
 describe("Recipe Scraper", () => {
   beforeEach(() => {
     vi.clearAllMocks();

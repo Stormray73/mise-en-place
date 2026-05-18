@@ -8,31 +8,28 @@ test.describe("Web Scraping User Journeys", () => {
   });
 
   test("Story 5: Import recipe from URL", async ({ page }) => {
-    // Mock the external recipe site
-    const mockUrl = "https://chef-recipes.com/best-pasta";
+    const mockUrl = "https://example-recipes.com/pasta";
 
-    // Note: page.route only works for browser-side fetches.
-    // Since our scraping happens on the server (Server Action),
-    // we would ideally mock the fetch in the Node environment.
-    // However, for this E2E test, we'll assume the server-side fetch works
-    // or we can test the UI interaction.
-
-    // In our environment, the Server Action will run in the same process
-    // or a related one. Mocking external URLs for server-side fetches
-    // in E2E tests is tricky without a dedicated mock server.
-
-    // For now, let's verify the UI exists and interacts.
     await page.goto("/recipes/new");
     const importInput = page.getByPlaceholder(/example\.com\/recipe/i);
     await expect(importInput).toBeVisible();
 
     await importInput.fill(mockUrl);
 
-    // Since I can't easily mock the server-side fetch for the Server Action
-    // within this E2E test without more complex setup,
-    // I'll rely on the unit tests for the logic and verify the UI presence here.
-
     const importBtn = page.getByRole("button", { name: /import/i });
-    await expect(importBtn).toBeVisible();
+    await importBtn.click();
+
+    // Verify we are redirected to the editor with the mocked data from MSW
+    // MSW handler returns "MSW Mock Pasta"
+    await expect(page.getByLabel(/Recipe Title/i)).toHaveValue(
+      "MSW Mock Pasta",
+      { timeout: 15000 },
+    );
+    await expect(page.getByLabel(/Yield Amount/i)).toHaveValue("2");
+
+    // Verify ingredients
+    const pastaRow = page.locator('div:has-text("Pasta")').first();
+    await expect(pastaRow).toBeVisible();
+    await expect(pastaRow.locator('input[type="number"]')).toHaveValue("200");
   });
 });

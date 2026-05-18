@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   saveRecipeAction,
   getTagsAction,
-  scrapeRecipeAction,
+  checkR2ConfiguredAction,
 } from "@/app/recipes/actions";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getUnits } from "@/lib/units";
 import { RecipeSaveData, Macros, USDAFood, RecipeSearchResult } from "@/types";
 import { StepManager } from "./StepManager";
@@ -25,6 +25,7 @@ interface RecipeEditorProps {
 export function RecipeEditor({ initialData }: RecipeEditorProps) {
   const router = useRouter();
   const [title, setTitle] = useState(initialData?.title || "");
+  const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
   const [isFavorite, setIsFavorite] = useState(
     initialData?.isFavorite || false,
   );
@@ -44,14 +45,84 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
   );
   const [importUrl, setImportUrl] = useState("");
   const [isImporting, setIsImporting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isR2Enabled, setIsR2Enabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    checkR2ConfiguredAction().then(setIsR2Enabled);
+
+    // Handle imported recipe from sessionStorage
+    if (searchParams.get("imported") === "true") {
+      const saved = sessionStorage.getItem("importedRecipe");
+      if (saved) {
+        /* eslint-disable react-hooks/set-state-in-effect */
+        try {
+          const data = JSON.parse(saved) as RecipeSaveData;
+          setTitle(data.title || "");
+          setYieldAmount(data.yieldAmount || 1);
+          setYieldUnit(data.yieldUnit || "servings");
+          setServings(data.servings || undefined);
+          setSteps(data.steps || []);
+          setComponents(data.components || []);
+
+          // Clear it so it doesn't persist on reload
+          sessionStorage.removeItem("importedRecipe");
+        } catch (e) {
+          console.error("Failed to parse imported recipe", e);
+        }
+        /* eslint-enable react-hooks/set-state-in-effect */
+      }
+    }
+  }, [searchParams]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be smaller than 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.imageUrl) {
+        setImageUrl(data.imageUrl);
+      } else {
+        setError(data.error || "Upload failed");
+      }
+    } catch (err) {
+      setError("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleImport = async () => {
     if (!importUrl) return;
     setIsImporting(true);
     setError(null);
     try {
-      const result = await scrapeRecipeAction(importUrl);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: any = {
+        success: false,
+        data: null,
+        error: "Please use the global import button.",
+      };
       if (result.success && result.data) {
         setTitle(result.data.title);
         setYieldAmount(result.data.yieldAmount);
@@ -140,6 +211,7 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
     const data: RecipeSaveData = {
       id: initialData?.id,
       title: title.trim(),
+      imageUrl,
       isFavorite,
       tags,
       yieldAmount: parseFloat(yieldAmount.toString()),
@@ -188,6 +260,60 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
           >
             &times;
           </button>
+        </div>
+      )}
+
+      {isR2Enabled && (
+        <div className="mb-8 p-4 bg-zinc-800/30 border border-zinc-700 rounded-lg">
+          <label className="block text-sm font-medium text-zinc-400 mb-2">
+            Recipe Image
+          </label>
+          <div className="flex items-start gap-4">
+            {imageUrl && (
+              <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-zinc-700 bg-zinc-900">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imageUrl}
+                  alt="Recipe"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  onClick={() => setImageUrl("")}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  title="Remove image"
+                >
+                  <span className="block w-4 h-4 flex items-center justify-center text-xs">
+                    &times;
+                  </span>
+                </button>
+              </div>
+            )}
+            <div className="flex-1">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={isUploading}
+                className="hidden"
+                id="image-upload"
+              />
+              <label
+                htmlFor="image-upload"
+                className={`inline-flex items-center px-4 py-2 rounded-md border border-zinc-700 bg-zinc-800 text-sm font-medium text-zinc-300 hover:bg-zinc-700 cursor-pointer transition-colors ${
+                  isUploading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                {isUploading
+                  ? "Uploading..."
+                  : imageUrl
+                    ? "Change Image"
+                    : "Upload Image"}
+              </label>
+              <p className="mt-2 text-xs text-zinc-500">
+                JPG, PNG or WEBP. Max 5MB.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 

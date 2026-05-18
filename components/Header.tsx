@@ -66,6 +66,14 @@ export default async function Header() {
               >
                 Shopping List
               </Link>
+              {session.user.role === "ADMIN" && (
+                <Link
+                  href="/admin"
+                  className="text-sm font-bold text-blue-400 transition-colors hover:text-blue-300"
+                >
+                  Admin
+                </Link>
+              )}
               <LogoutButton />
             </>
           ) : (

@@ -3,18 +3,13 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { RecipeEditor } from "@/components/RecipeEditor";
 import { expect, test, vi, beforeEach, describe } from "vitest";
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-  }),
-}));
-
 // Mock the server action
 const mockSaveRecipe = vi.fn().mockResolvedValue({ success: true });
 vi.mock("@/app/recipes/actions", () => ({
   saveRecipeAction: (data: any) => mockSaveRecipe(data),
   getTagsAction: vi.fn().mockResolvedValue({ success: true, data: [] }),
   scrapeRecipeAction: vi.fn().mockResolvedValue({ success: true, data: null }),
+  checkR2ConfiguredAction: vi.fn().mockResolvedValue(true),
 }));
 
 describe("RecipeEditor", () => {

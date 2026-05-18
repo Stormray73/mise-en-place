@@ -44,6 +44,7 @@ export default defineConfig({
     stderr: "pipe",
     env: {
       MOCK_AUTH: "true",
+      MOCK_AI: "true",
       AUTH_SECRET: process.env.AUTH_SECRET || "any-secret-for-tests",
       AUTH_TRUST_HOST: "true",
       AUTH_URL: "http://localhost:3000/api/auth",

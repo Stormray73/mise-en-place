@@ -13,13 +13,19 @@ vi.mock("@/auth", () => ({
 }));
 
 // Add any global test setup here
-// For example, mocking the Next.js router:
-// vi.mock('next/navigation', () => ({
-//   useRouter: () => ({
-//     push: vi.fn(),
-//     replace: vi.fn(),
-//     prefetch: vi.fn(),
-//   }),
-//   usePathname: () => '',
-//   useSearchParams: () => new URLSearchParams(),
-// }))
+// Mocking the Next.js router globally
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+  }),
+  usePathname: () => "",
+  useSearchParams: () => new URLSearchParams(),
+  redirect: vi.fn((url: string) => {
+    const error = new Error("NEXT_REDIRECT") as Error & { digest?: string };
+    error.digest = `NEXT_REDIRECT;replace;${url};307;`;
+    throw error;
+  }),
+}));

@@ -85,8 +85,19 @@ export default function RecipeView({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-      {/* Left Column: Nutrition & Ingredients */}
+      {/* Left Column: Image, Nutrition & Ingredients */}
       <div className="lg:col-span-1 space-y-12">
+        {recipe.imageUrl && (
+          <div className="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900 shadow-2xl">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={recipe.imageUrl}
+              alt={recipe.title}
+              className="w-full aspect-square object-cover"
+            />
+          </div>
+        )}
+
         <Card className="p-6">
           <div className="flex flex-col gap-4 mb-6">
             <h2 className="text-xl font-bold flex items-center gap-2">

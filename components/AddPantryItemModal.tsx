@@ -167,7 +167,7 @@ export default function AddPantryItemModal({
               { label: "Cup", value: "cup" },
               { label: "Tablespoon (tbsp)", value: "tbsp" },
               { label: "Teaspoon (tsp)", value: "tsp" },
-              { label: "Each (ea)", value: "ea" },
+              { label: "Item", value: "item" },
             ]}
           />
         </div>

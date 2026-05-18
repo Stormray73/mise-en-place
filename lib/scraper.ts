@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import { RecipeSaveData } from "@/types";
+import { parseIngredients } from "./ai-parser";
 
 interface LDRecipe {
   "@type": string | string[];
@@ -103,11 +104,13 @@ export async function scrapeRecipe(url: string): Promise<RecipeSaveData> {
     : undefined;
 
   // Map ingredients
-  const ingredients: string[] = Array.isArray(
+  const rawIngredients: string[] = Array.isArray(
     (recipeData as LDRecipe).recipeIngredient,
   )
     ? ((recipeData as LDRecipe).recipeIngredient as string[])
     : [];
+
+  const parsedIngredients = await parseIngredients(rawIngredients);
 
   // Map instructions
   let steps: { order: number; instruction: string }[] = [];
@@ -154,14 +157,16 @@ export async function scrapeRecipe(url: string): Promise<RecipeSaveData> {
     yieldUnit,
     servings,
     steps: steps,
-    components: ingredients.map((ing) => ({
+    components: parsedIngredients.map((ing) => ({
       type: "ingredient" as const,
-      quantity: 1, // Placeholder
-      unit: "ea", // Placeholder
+      quantity: ing.quantity,
+      unit: ing.unit,
       ingredientId: null,
       ingredient: {
-        name: ing,
+        name: ing.name,
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prepState: (ing as any).prepState,
     })),
   };
 }

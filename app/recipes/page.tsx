@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import SearchBar from "@/components/SearchBar";
 import DeleteButton from "@/components/DeleteButton";
+import RecipeStoreHeader from "./RecipeStoreHeader";
 
 export default async function Dashboard({
   searchParams,
@@ -20,6 +21,7 @@ export default async function Dashboard({
   const recipes = await prisma.recipe.findMany({
     where: {
       userId: session.user?.id,
+      status: "PUBLISHED",
       isFavorite: favorites === "true" ? true : undefined,
       tags: tag
         ? {
@@ -94,14 +96,7 @@ export default async function Dashboard({
           </div>
         </div>
 
-        <div className="flex-1 flex justify-end">
-          <Link
-            href="/recipes/new"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-bold transition-colors whitespace-nowrap"
-          >
-            + New Recipe
-          </Link>
-        </div>
+        <RecipeStoreHeader />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

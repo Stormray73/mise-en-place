@@ -10,6 +10,8 @@ export interface RecipeSaveData {
   yieldAmount: number;
   yieldUnit: string;
   servings?: number | null;
+  imageUrl?: string | null;
+  status?: "DRAFT" | "PUBLISHED";
   isFavorite?: boolean;
   tags?: string[]; // Tag names
   steps: {
@@ -100,6 +102,8 @@ export interface Recipe {
   yieldAmount: number;
   yieldUnit: string;
   servings?: number | null;
+  imageUrl?: string | null;
+  status: "DRAFT" | "PUBLISHED";
   userId: string;
   isFavorite: boolean;
   tags?: Tag[];

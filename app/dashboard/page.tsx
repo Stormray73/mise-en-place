@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getWeeklyMealPlan, getPrepAheadData } from "@/lib/meal-plans";
 import { generateShoppingList } from "@/lib/shopping-list";
+import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import DashboardClient from "./DashboardClient";
 
@@ -38,6 +39,21 @@ export default async function DashboardHub() {
     today,
     endOfWeek,
   );
+
+  // Fetch draft recipes
+  const draftRecipes = await prisma.recipe.findMany({
+    where: {
+      userId: session.user.id,
+      status: "DRAFT",
+    },
+    select: {
+      id: true,
+      title: true,
+      imageUrl: true,
+      updatedAt: true,
+    },
+    orderBy: { updatedAt: "desc" },
+  });
 
   return (
     <div className="w-full px-4 md:px-8 py-8">
@@ -175,6 +191,14 @@ export default async function DashboardHub() {
           <DashboardClient
             immediatePrep={immediatePrep}
             shoppingList={shoppingList}
+            draftRecipes={
+              draftRecipes as {
+                id: string;
+                title: string;
+                imageUrl?: string | null;
+                updatedAt: Date;
+              }[]
+            }
           />
         </div>
       </div>

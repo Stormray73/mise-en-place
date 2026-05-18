@@ -27,9 +27,16 @@ interface ActiveTimer {
 export default function DashboardClient({
   immediatePrep,
   shoppingList,
+  draftRecipes = [],
 }: {
   immediatePrep: PrepItem[];
   shoppingList: ShoppingListItem[];
+  draftRecipes?: {
+    id: string;
+    title: string;
+    imageUrl?: string | null;
+    updatedAt: Date;
+  }[];
 }) {
   const router = useRouter();
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
@@ -199,6 +206,77 @@ export default function DashboardClient({
       </Card>
 
       <ShoppingListWidget items={shoppingList} />
+
+      {/* Draft Recipes Card */}
+      {draftRecipes.length > 0 && (
+        <Card className="border-blue-500/30 bg-blue-500/5">
+          <CardHeader>
+            <div className="flex justify-between items-center w-full">
+              <CardTitle className="text-blue-400">
+                Review Drafts ({draftRecipes.length})
+              </CardTitle>
+              <span className="px-2 py-0.5 bg-blue-500 text-[10px] font-bold text-white rounded uppercase tracking-widest">
+                Action Required
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {draftRecipes.slice(0, 3).map((recipe) => (
+                <div
+                  key={recipe.id}
+                  className="flex gap-4 items-center p-2 rounded-lg hover:bg-blue-500/10 transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded bg-zinc-800 flex-shrink-0 overflow-hidden border border-zinc-700">
+                    {recipe.imageUrl ? (
+                      <img
+                        src={recipe.imageUrl}
+                        alt={recipe.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                        <svg
+                          className="w-6 h-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate group-hover:text-blue-400 transition-colors">
+                      {recipe.title}
+                    </p>
+                    <p className="text-[10px] text-zinc-500">
+                      Imported {new Date(recipe.updatedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/recipes/${recipe.id}/edit`}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[10px] font-bold transition-colors"
+                  >
+                    Review
+                  </Link>
+                </div>
+              ))}
+              {draftRecipes.length > 3 && (
+                <p className="text-center text-[10px] text-zinc-500 pt-2 italic">
+                  + {draftRecipes.length - 3} more drafts pending
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
