@@ -24,6 +24,7 @@ As a user, I want to upload an image of my recipe so that I can see what the fin
 - [ ] AC 1: Users can upload an image from the UI during recipe creation/editing.
 - [ ] AC 2: Image URL is securely stored in the database associated with the recipe.
 - [ ] AC 3: Images are displayed on the Recipe View page.
+- [ ] AC 4: Image upload UI is conditionally rendered and hidden if R2 environment keys are missing.
 
 ## Story: Unified Import UI & Intelligent Routing
 
