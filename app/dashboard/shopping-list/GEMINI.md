@@ -9,11 +9,14 @@ Generates aggregated purchase lists based on upcoming meal plans and low pantry 
 - **Logic:** `lib/shopping-list.ts` (list generation) and `app/dashboard/shopping-list/actions.ts`.
 - **Aggregation:** Combines required quantities for the same ingredient over a date range.
 - **Deficit Calculation:** Subtracts current total pantry stock from meal plan requirements.
+- **Manual Items:** Supports `ManualShoppingItem` for non-food or non-recipe needs (e.g., "Paper Towels").
+- **Recurring Items:** Manual items can be marked as `isRecurring`, resetting their status upon completion rather than deleting them.
 
 ## Invariants & Constraints
 
 - **Low Stock:** Items below `restockThreshold` are always included, regardless of meal plan needs.
 - **Purchasing:** Checking an item as "purchased" automatically adds it to the Pantry in a "Purchased" location.
+- **Persistence:** Manual items are tied to a `userId` and persist until manually deleted or completed (if not recurring).
 
 ## Testing Strategy
 

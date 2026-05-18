@@ -13,7 +13,7 @@ This project uses **Modular Documentation**. Technical details, invariants, and 
 | **Recipes**  | `recipes.ts`       | `recipes/`                 | [app/recipes/GEMINI.md](./app/recipes/GEMINI.md)                                 |
 | **Pantry**   | `pantry.ts`        | `dashboard/pantry/`        | [app/dashboard/pantry/GEMINI.md](./app/dashboard/pantry/GEMINI.md)               |
 | **Shopping** | `shopping-list.ts` | `dashboard/shopping-list/` | [app/dashboard/shopping-list/GEMINI.md](./app/dashboard/shopping-list/GEMINI.md) |
-| **Planning** | `meal-plans.ts`    | `meal-planner/`            | _In development_                                                                 |
+| **Planning** | `meal-plans.ts`    | `meal-planner/`            | [app/meal-planner/GEMINI.md](./app/meal-planner/GEMINI.md)                       |
 | **Units**    | `units.ts`         | —                          | `lib/GEMINI.md` (Planned)                                                        |
 
 ## Global Standards
