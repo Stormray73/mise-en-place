@@ -63,17 +63,6 @@ export default function LoginPage() {
             </svg>
             Sign in with Google
           </button>
-
-          {process.env.NEXT_PUBLIC_MOCK_AUTH === "true" && (
-            <form onSubmit={handleMockLogin}>
-              <button
-                type="submit"
-                className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-zinc-700"
-              >
-                Sign in as Guest (Mock Auth)
-              </button>
-            </form>
-          )}
         </div>
 
         <p className="text-center text-sm text-zinc-500">

@@ -2,61 +2,6 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import Google from "next-auth/providers/google";
-import Credentials from "next-auth/providers/credentials";
-import { Role, Tier } from "@prisma/client";
-
-const providers = [];
-
-if (process.env.MOCK_AUTH === "true") {
-  providers.push(
-    Credentials({
-      id: "credentials",
-      name: "Mock Auth",
-      credentials: {
-        username: { label: "Username", type: "text" },
-      },
-      async authorize() {
-        try {
-          const user = {
-            id: "test-user-id",
-            name: "Test Chef",
-            email: "test@example.com",
-            image: "https://via.placeholder.com/150",
-            role: "ADMIN" as const,
-            tier: "PRO" as const,
-          };
-
-          // Ensure user exists in DB for mock auth
-          await prisma.user.upsert({
-            where: { id: user.id },
-            update: {},
-            create: {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              image: user.image,
-              role: "ADMIN",
-              tier: "PRO",
-            },
-          });
-
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return user as any;
-        } catch (error) {
-          console.error("Mock Auth Error:", error);
-          return null;
-        }
-      },
-    }),
-  );
-} else {
-  providers.push(
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-    }),
-  );
-}
 
 export const {
   handlers,
@@ -65,14 +10,19 @@ export const {
   signOut,
 } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  providers,
+  providers: [
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+    }),
+  ],
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
   },
   callbacks: {
     async authorized({ auth, request: { nextUrl } }) {
-      if (process.env.MOCK_AUTH === "true") return true;
+      if (process.env.ENABLE_MSW === "true") return true;
 
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith("/dashboard");
@@ -137,10 +87,16 @@ export const {
 
 import { Session } from "next-auth";
 
+let mockUserInitialized = false;
+
 export const auth = async (...args: unknown[]): Promise<Session | null> => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const session = await (internalAuth as any)(...args);
-  if (!session && process.env.MOCK_AUTH === "true") {
+
+  if (!session && process.env.ENABLE_MSW === "true") {
+    // If MSW is active and session is missing, provide a mock session
+    // This allows bypass of the brittle OAuth redirect loop in E2E tests
+    // while keeping production code 99% pure.
     const user = {
       id: "test-user-id",
       name: "Test Chef",
@@ -150,12 +106,27 @@ export const auth = async (...args: unknown[]): Promise<Session | null> => {
       tier: "PRO" as const,
     };
 
-    // Ensure user exists in DB for mock auth shortcut
-    await prisma.user.upsert({
-      where: { id: user.id },
-      update: {},
-      create: user,
-    });
+    if (!mockUserInitialized) {
+      try {
+        // Ensure user exists in DB
+        await prisma.user.upsert({
+          where: { id: user.id },
+          update: {},
+          create: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            role: "ADMIN",
+            tier: "PRO",
+          },
+        });
+        mockUserInitialized = true;
+      } catch (e) {
+        console.error("Failed to initialize mock user:", e);
+        // Don't set mockUserInitialized to true, try again next time
+      }
+    }
 
     return {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -163,5 +134,6 @@ export const auth = async (...args: unknown[]): Promise<Session | null> => {
       expires: new Date(Date.now() + 3600 * 1000).toISOString(),
     };
   }
+
   return session;
 };

@@ -3,30 +3,19 @@ import { test as setup, expect } from "@playwright/test";
 const authFile = "playwright/.auth/user.json";
 
 setup("authenticate", async ({ page }) => {
-  // Navigate to login page
-  await page.goto("/login");
+  // In our MSW environment, the auth() function is wrapped to provide a mock session
+  // whenever ENABLE_MSW=true is set. This allows us to bypass the external Google
+  // redirect loop which is extremely brittle in CI/headless environments.
 
-  if (process.env.MOCK_AUTH === "true") {
-    // Click the Mock Auth button for automated testing
-    await page.getByRole("button", { name: /sign in as guest/i }).click();
-  } else {
-    // Click the Google Sign-in button for manual/authentic setup
-    await page.getByRole("button", { name: /sign in with google/i }).click();
-  }
-
-  // Best Practice: Use a web-first assertion with a custom timeout
-  // This will retry until the URL matches /dashboard or /
-  await expect(page).toHaveURL(/\/dashboard|\//, { timeout: 60000 });
-
-  // Explicitly go to dashboard to ensure session is active and UI is loaded
+  // Navigate to the dashboard; the wrapped auth() will provide the session.
   await page.goto("/dashboard");
 
-  // Also verify that the UI has actually rendered before saving state
-  // Using a more flexible locator for the logout button
+  // Verify that the UI has actually rendered
   await expect(page.getByRole("button", { name: /logout/i })).toBeVisible({
     timeout: 20000,
   });
 
-  // Save the cookies and local storage
+  // Save the cookies and local storage (though session is server-side,
+  // Playwright needs the auth state to satisfy its storageState requirement)
   await page.context().storageState({ path: authFile });
 });

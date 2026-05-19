@@ -117,19 +117,20 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
     setIsImporting(true);
     setError(null);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result: any = {
-        success: false,
-        data: null,
-        error: "Please use the global import button.",
-      };
-      if (result.success && result.data) {
-        setTitle(result.data.title);
-        setYieldAmount(result.data.yieldAmount);
-        setYieldUnit(result.data.yieldUnit);
-        setServings(result.data.servings || undefined);
-        setSteps(result.data.steps);
-        setComponents(result.data.components);
+      const formData = new FormData();
+      formData.append("type", "url");
+      formData.append("url", importUrl);
+
+      const result = await importRecipeAction(formData);
+
+      if (result.success && result.data.recipes.length > 0) {
+        const recipe = result.data.recipes[0];
+        setTitle(recipe.title);
+        setYieldAmount(recipe.yieldAmount);
+        setYieldUnit(recipe.yieldUnit);
+        setServings(recipe.servings || undefined);
+        setSteps(recipe.steps);
+        setComponents(recipe.components);
         setImportUrl("");
       } else if (!result.success) {
         setError(result.error);
