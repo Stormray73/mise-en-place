@@ -9,10 +9,12 @@ This skill acts as a high-level orchestrator to move a feature from "Story" to "
 
 ## Pipeline Workflow
 
-### Phase 1: Implementation
+### Phase 1: Planning & Implementation
 
-1. **Activate `feature-implementer`**: Implement the feature, unit tests, and E2E tests following the story requirements.
-2. **Modular Docs**: Ensure `GEMINI.md` files are created/updated in all touched directories.
+1. **Structured Planning:** Create the native `implementation_plan.md` artifact to detail architecture, database migrations, and testing strategies. Seek user review before starting.
+2. **Task Tracking:** Initialize the native `task.md` living artifact to track task checkboxes as progress is made.
+3. **Activate `feature-implementer`**: Implement the feature, unit tests, and E2E tests following the approved story requirements.
+4. **Modular Docs**: Ensure `ANTIGRAVITY.md` files are created/updated in all touched directories.
 
 ### Phase 2: Unit Verification
 
@@ -41,7 +43,7 @@ This skill acts as a high-level orchestrator to move a feature from "Story" to "
 3. **Static Analysis (Push-Ready Check)**:
    - **Linter**: Run `npm run lint`. If fails, use `eslint --fix` or fix manually.
    - **Type Check**: Run `npx tsc --noEmit`. Fix any type errors.
-4. **Documentation Sync**: Perform a final pass on all local `GEMINI.md` files to ensure they match the post-fix implementation.
+4. **Documentation Sync**: Perform a final pass on all local `ANTIGRAVITY.md` files to ensure they match the post-fix implementation.
 5. **Handoff**: Report to the user that the feature is "Push-Ready".
 
 ## Rules & Constraints

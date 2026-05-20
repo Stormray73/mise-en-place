@@ -11,7 +11,7 @@ This skill guides the agent through a surgical, TDD-driven implementation of fea
 
 ### 1. Research & Planning
 
-- **Read Context**: Locate and read the `GEMINI.md` in the target directories. If it doesn't exist, create it after implementation.
+- **Read Context**: Locate and read the `ANTIGRAVITY.md` in the target directories. If it doesn't exist, create it after implementation.
 - **Analyze Story**: Read the feature specification (e.g., in `docs/upcoming-stories/`).
 - **Decompose**: If the story is large, break it into atomic implementation steps.
 
@@ -36,7 +36,7 @@ For each requirement:
 
 ### 4. Documentation & Context Persistence
 
-- **Modular Updates**: For EVERY directory touched during implementation, you MUST update (or create) the local `GEMINI.md`.
+- **Modular Updates**: For EVERY directory touched during implementation, you MUST update (or create) the local `ANTIGRAVITY.md`.
 - **Content**: Document how the new/modified features function within that specific scope, including new technical invariants, API changes, or updated testing instructions.
 - **Agent Context**: This is critical for ensuring future developer agents have immediate, relevant context to prevent regressions and minimize token waste.
 - **Quality Audit**: Use the [quality-checklist.md](references/quality-checklist.md) to perform a final self-review.

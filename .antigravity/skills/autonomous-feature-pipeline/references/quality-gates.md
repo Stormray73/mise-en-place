@@ -27,5 +27,5 @@ An implementation is considered "Push-Ready" only when it satisfies all of the f
 
 ## 5. The Documentation Gate
 
-- Every directory touched during the process contains an updated (or new) `GEMINI.md`.
+- Every directory touched during the process contains an updated (or new) `ANTIGRAVITY.md`.
 - Local documentation accurately reflects the final implementation, including any changes made during the "Fix" phase.

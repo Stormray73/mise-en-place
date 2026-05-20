@@ -9,8 +9,7 @@ This skill guides you in orchestrating a complete project backlog, including bug
 
 ## Core Directives
 
-1. **Strategic Delegation:** Act as a Grand Orchestrator. Identify elements that can be built in parallel and create `generalist` sub-agents to build them.
-2. **Race Condition Prevention:** NEVER allow multiple sub-agents to modify the same file concurrently. Analyze the scope of tasks before parallelizing. If tasks touch the same domains or files, they MUST be executed sequentially.
+1. **Planning & Tracking:** Initialize the native `task.md` artifact at the start of orchestration to track progress across all backlog items.
 
 ## Orchestration Pipeline
 
@@ -46,4 +45,7 @@ Once all bugs, UI/UX polish tasks, and features have been fully implemented and 
 
 1. **Linting:** Run the project's linter. Resolve any issues.
 2. **Unit Tests:** Run the project's unit test suite. Resolve any failing tests.
-3. **Dependency Audit:** Audit the project to see if any new packages have been added. Run `npm audit` (or the equivalent package manager audit) and resolve any security issues if present.
+3. **Security Auditing:** 
+   - Run the native **`scan_dependencies`** skill before importing any new packages to ensure library safety.
+   - Run the native **`run-security-scanner`** skill on the modified codebases to detect any security flaws (such as SQL injections, XSS, or exposed secrets) and address any issues.
+   - Run a final dependency vulnerability audit with `npm audit`.

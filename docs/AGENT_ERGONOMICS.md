@@ -43,11 +43,11 @@ type RecipeComponent =
 
 ## 4. Context Efficiency in Navigation
 
-When an agent is navigating the codebase, it MUST prioritize reading `GEMINI.md` files in the current directory before reading implementation code.
+When an agent is navigating the codebase, it MUST prioritize reading `ANTIGRAVITY.md` files in the current directory before reading implementation code.
 
-- **Local Context:** Every major feature directory (e.g., `app/recipes/`, `lib/pantry/`) must contain a `GEMINI.md` file defining its specific invariants, technical decisions, and testing requirements.
+- **Local Context:** Every major feature directory (e.g., `app/recipes/`, `lib/pantry/`) must contain a `ANTIGRAVITY.md` file defining its specific invariants, technical decisions, and testing requirements.
 - **Header Metadata:** File headers (as defined in Section 1) remain critical for quick file-level identification.
 
 ## 5. Domain Knowledge (The Chef's Glossary)
 
-Culinary logic (e.g., unit categories, macro calculation rules) is documented in the `GEMINI.md` files within the `app/recipes/` and `lib/` directories. Agents must verify culinary assumptions against these local files rather than relying on general model knowledge.
+Culinary logic (e.g., unit categories, macro calculation rules) is documented in the `ANTIGRAVITY.md` files within the `app/recipes/` and `lib/` directories. Agents must verify culinary assumptions against these local files rather than relying on general model knowledge.

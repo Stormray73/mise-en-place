@@ -26,7 +26,7 @@ Mise-en-place is a professional-grade web application for chefs to manage recipe
 
 For detailed information on the project architecture, testing standards, and our upcoming feature roadmap, please refer to:
 
-- **[GEMINI.md](./GEMINI.md)**: The central documentation hub.
+- **[ANTIGRAVITY.md](./ANTIGRAVITY.md)**: The central documentation hub.
 - **[Roadmap](./docs/upcoming-stories/)**: Our upcoming feature stories and implementation plans.
 
 ## 🛠 Tech Stack

@@ -4,9 +4,9 @@ Before completing a story implementation, verify the following:
 
 ## 1. Context & Documentation
 
-- [ ] Did you read the local `GEMINI.md` in all target directories?
-- [ ] Did you update/create a `GEMINI.md` in **EVERY** directory touched by your changes?
-- [ ] Does each `GEMINI.md` clearly record how the feature functions in that scope as context for future agents?
+- [ ] Did you read the local `ANTIGRAVITY.md` in all target directories?
+- [ ] Did you update/create a `ANTIGRAVITY.md` in **EVERY** directory touched by your changes?
+- [ ] Does each `ANTIGRAVITY.md` clearly record how the feature functions in that scope as context for future agents?
 - [ ] Are file headers updated/added following [AGENT_ERGONOMICS.md](../../../docs/AGENT_ERGONOMICS.md)?
 
 ## 2. Testing (TDD)
