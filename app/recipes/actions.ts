@@ -20,11 +20,7 @@ import {
 import { upsertIngredient } from "@/lib/ingredients";
 import { deductRecipeIngredients } from "@/lib/pantry";
 import { scrapeRecipe } from "@/lib/scraper";
-import {
-  parseRecipe,
-  parseBulkRecipes,
-  parseRecipeFromImage,
-} from "@/lib/ai-parser";
+import { parseBulkRecipes, parseRecipeFromImage } from "@/lib/ai-parser";
 import { extractTextFromFile } from "@/lib/file-extractor";
 import { checkRecipeLimit, checkAiLimit, incrementAiUsage } from "@/lib/limits";
 import { Tier, RecipeStatus } from "@prisma/client";
@@ -167,7 +163,7 @@ export async function importRecipeAction(
         return { success: false, error: limitCheck.error || "Limit exceeded" };
       }
 
-      const savedDrafts = await Promise.all(
+      await Promise.all(
         recipes.map(async (r) => {
           const recipeData = {
             ...r,

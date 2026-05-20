@@ -1,27 +1,8 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
 
 export default function LoginPage() {
-  const [error, setError] = useState<string | null>(null);
-
-  const handleMockLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await signIn("credentials", {
-        username: "chef",
-        callbackUrl: "/dashboard",
-      });
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
-    }
-  };
-
   return (
     <div className="flex flex-1 flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-8 backdrop-blur-sm">

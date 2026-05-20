@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { deductFromPantry, getIngredientStock, checkStock } from "@/lib/pantry";
+import { deductFromPantry, checkStock } from "@/lib/pantry";
 import { prisma } from "@/lib/prisma";
 
 vi.mock("@/lib/prisma", () => ({

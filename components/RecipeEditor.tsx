@@ -105,7 +105,7 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
       } else {
         setError(data.error || "Upload failed");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to upload image");
     } finally {
       setIsUploading(false);

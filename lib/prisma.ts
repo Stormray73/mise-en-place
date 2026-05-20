@@ -46,17 +46,17 @@ const getPrisma = () => {
   }).$extends({
     query: {
       $allModels: {
-        async $allOperations({ operation, model, args, query }) {
+        async $allOperations({ query, args }) {
           return withRetry(() => query(args));
         },
       },
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (process.env.NODE_ENV !== "production")
-    globalForPrisma.prisma = client as any;
-  return client as PrismaClient;
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client as unknown as PrismaClient;
+  }
+  return client as unknown as PrismaClient;
 };
 
 export const prisma = getPrisma();

@@ -1,5 +1,5 @@
 import { calculateMacros } from "@/lib/recipes";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { Recipe } from "@/types";
 
 describe("Recipe Macro Calculation - Count-based Units", () => {
