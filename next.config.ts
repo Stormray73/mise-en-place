@@ -10,9 +10,7 @@ const nextConfig: NextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
-  allowedDevOrigins: [
-    "nextjs--rocinante--stormray73--6vu1nsa91nhr0.pit-1.try.coder.app",
-  ],
+  allowedDevOrigins: [],
 };
 
 export default nextConfig;

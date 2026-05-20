@@ -8,7 +8,6 @@ This epic tracks minor styling tweaks, layout improvements, and ergonomic refine
 - [x] **Full-Width Layout:** Widen the UI to match the [meal-planner-mockup](../../screenshots/meal-planner-mockup.png) and the Pantry/Shopping List UI. It should take up the full screen on desktop and collapse to a single column on smaller screens.
 - [x] **Navigation Ergonomics:** Add a "Back to Current Week" button. Reposition the navigation buttons so "Previous Week" is on the far left and "Next Week" is on the far right.
 - [x] **Macro Legibility:** Ensure macro text (calories, protein, etc.) is sufficiently prominent within each day's slot.
-- [ ] **Calendar Alignment:** Change the meal-prep week start from Saturday to Sunday to align with traditional calendars and improve user predictability.
 
 ## 2. Cook Mode Ergonomics
 

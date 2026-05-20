@@ -13,6 +13,13 @@ This document serves as the central registry for bugs and regressions. It is des
 
 ## Active Bugs
 
+### BUG-039: Extraneous Cancel Button in Modals
+
+**Observation:** All modals across the application display a redundant "Cancel" button at the bottom center.
+**Location:** `components/ui/Modal.tsx`.
+**Root Cause:** The base `Modal` wrapper explicitly renders a `<button onClick={onClose}>Cancel</button>` below the rendered `children`. Because individual modals typically define their own action buttons (e.g., Save, Submit, or their own Cancel) within their content, this base button is duplicative and creates a confusing UI.
+**Fix:** Remove the hardcoded Cancel button from `components/ui/Modal.tsx`. Rely on the existing top-right `&times;` button and the specific buttons defined within each modal's `children`. Verify that all 8 implementations of `<Modal>` (e.g., `AddMealModal`, `ImportRecipeModal`) have adequate internal controls or rely on the `&times;` close button.
+
 ---
 
 ## Resolved Bugs

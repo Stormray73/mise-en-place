@@ -9,7 +9,8 @@ This domain manages the core recipe lifecycle: creation, editing, nutrition calc
 - **Logic:** `lib/recipes.ts` (data access) and `app/recipes/actions.ts` (mutations).
 - **UI:** `components/RecipeEditor.tsx` and `components/RecipeView.tsx`.
 - **Favorites & Tags:** Recipes support a `isFavorite` flag and multiple `Tag`s. Tags are user-specific and managed via `connectOrCreate` in the data layer.
-- **Web Scraping:** Recipes can be imported from URLs using the `scrapeRecipeAction`. It extracts Schema.org (JSON-LD) metadata to pre-fill the editor. Logic resides in `lib/scraper.ts`.
+- **Importing & Scraping:** Recipes can be imported from URLs using the `scrapeRecipeAction`. Additionally, the system supports importing via raw text, images (vision API), and documents (`.pdf`, `.docx`) which are processed by the Vercel AI SDK and specialized extractors (`pdf2json`, `mammoth`). Logic resides in `lib/scraper.ts`, `lib/ai-parser.ts`, and `lib/file-extractor.ts`.
+- **Image Storage:** Recipe images are stored in Cloudflare R2 buckets using the `@aws-sdk/client-s3` compatible interface. Logic resides in `lib/r2.ts`.
 - **Scaling:** Uses `yieldAmount` and `yieldUnit` to scale `RecipeComponent` quantities during playback or as a sub-recipe.
 
 ## Invariants & Constraints

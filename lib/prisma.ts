@@ -7,7 +7,7 @@ import { withRetry } from "./db-retry";
 neonConfig.webSocketConstructor = ws;
 
 const globalForPrisma = global as unknown as {
-  prisma: unknown | undefined;
+  prisma: PrismaClient | undefined;
   prismaAdapter: PrismaNeon | undefined;
 };
 
@@ -17,7 +17,15 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
 }
 
+// In standard Node.js development (like local Docker), we prefer the native driver
+// for better performance and easier debugging of connection issues.
+// The Neon Serverless adapter is primarily for Edge runtimes.
+const useAdapter =
+  process.env.NODE_ENV === "production" ||
+  process.env.FORCE_NEON_ADAPTER === "true";
+
 const getAdapter = () => {
+  if (!useAdapter) return null;
   if (globalForPrisma.prismaAdapter) return globalForPrisma.prismaAdapter;
   const adapter = new PrismaNeon({ connectionString });
   if (process.env.NODE_ENV !== "production")
@@ -29,7 +37,8 @@ const getPrisma = () => {
   if (globalForPrisma.prisma) return globalForPrisma.prisma;
   const adapter = getAdapter();
   const client = new PrismaClient({
-    adapter,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    adapter: adapter as any,
     log:
       process.env.NODE_ENV === "development"
         ? ["query", "error", "warn"]
@@ -44,8 +53,10 @@ const getPrisma = () => {
     },
   });
 
-  if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = client;
-  return client;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (process.env.NODE_ENV !== "production")
+    globalForPrisma.prisma = client as any;
+  return client as PrismaClient;
 };
 
 export const prisma = getPrisma();

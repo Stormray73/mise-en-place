@@ -10,7 +10,7 @@ const IngredientSchema = z.object({
   name: z.string().describe("The name of the ingredient"),
   prepState: z
     .string()
-    .optional()
+    .nullable()
     .describe("Optional preparation state like 'chopped', 'melted', etc."),
 });
 
@@ -22,14 +22,14 @@ const RecipeSchema = z.object({
     .describe("The unit for the yield (e.g., 'servings', 'cookies', 'loaves')"),
   servings: z
     .number()
-    .optional()
+    .nullable()
     .describe("Number of servings if different from yield"),
   steps: z.array(
     z.object({
       instruction: z.string().describe("The step instruction text"),
       timerInSeconds: z
         .number()
-        .optional()
+        .nullable()
         .describe(
           "Detected timer duration in seconds if mentioned in the instruction",
         ),
