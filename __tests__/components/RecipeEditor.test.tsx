@@ -77,8 +77,13 @@ describe("RecipeEditor", () => {
 
     fireEvent.click(screen.getByText("Apple, fresh"));
 
-    // After selection, it should appear in the ComponentList
-    expect(screen.getByText("Apple, fresh")).toBeInTheDocument();
+    // After selection the ingredient appears in display mode.
+    // Click the edit pencil to enter edit mode and expose the Qty input.
+    await waitFor(() =>
+      expect(screen.getByText("Apple, fresh")).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByTitle("Edit inline"));
+
     const quantityInputs = screen.getAllByPlaceholderText(/Qty/i);
     expect(quantityInputs.length).toBe(1);
   });
@@ -185,9 +190,19 @@ describe("RecipeEditor", () => {
     await waitFor(() => expect(screen.getByText("Onion")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Onion"));
 
-    // Set prepState
-    const prepInput = screen.getByPlaceholderText(/Prep \(e.g. diced\)/i);
+    // Ingredient is added in display mode — click edit pencil to expose inputs.
+    // The prep state input placeholder is "diced, minced..." in the current design.
+    await waitFor(() =>
+      expect(screen.getByTitle("Edit inline")).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByTitle("Edit inline"));
+
+    // Set prepState using the current placeholder text
+    const prepInput = screen.getByPlaceholderText(/diced, minced/i);
     fireEvent.change(prepInput, { target: { value: "finely diced" } });
+
+    // Commit the edit by clicking the Apply (✓) button
+    fireEvent.click(screen.getByTitle("Apply changes"));
 
     const saveButton = screen.getByText(/Save Recipe/i);
     fireEvent.click(saveButton);

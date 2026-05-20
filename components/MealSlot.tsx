@@ -1,14 +1,9 @@
-/**
- * @file MealSlot.tsx
- * @responsibility Handles a single meal slot (e.g., Breakfast) and its recipes, including cloning and deletion.
- * @dependencies PlannedRecipeRow, Button, Card, React
- */
-
 import React from "react";
-import PlannedRecipeRow, { PlannedRecipeWithRecipe } from "./PlannedRecipeRow";
+import Link from "next/link";
 import { Button } from "./ui/Button";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { PlannedRecipeWithRecipe } from "./PlannedRecipeRow";
 
 interface MealSlotProps {
   meal: {
@@ -19,14 +14,7 @@ interface MealSlotProps {
   onDeleteMeal: (mealId: string) => void;
   onCloneMeal: (mealId: string) => void;
   onAddRecipe: (mealId: string) => void;
-  onRemoveRecipe: (plannedRecipeId: string) => void;
-  onToggleLeftoverSource: (plannedRecipeId: string, isSource: boolean) => void;
-  onUpdatePlannedRecipe: (
-    id: string,
-    updates: { scale?: number; prepState?: string; excludeFromPrep?: boolean },
-  ) => void;
-  onLinkLeftover: (id: string, sourceId: string | null) => void;
-  leftoverSourceOptions: { id: string; date: string | Date }[];
+  onEditMeal: (meal: any) => void;
 }
 
 export default function MealSlot({
@@ -34,11 +22,7 @@ export default function MealSlot({
   onDeleteMeal,
   onCloneMeal,
   onAddRecipe,
-  onRemoveRecipe,
-  onToggleLeftoverSource,
-  onUpdatePlannedRecipe,
-  onLinkLeftover,
-  leftoverSourceOptions,
+  onEditMeal,
 }: MealSlotProps) {
   const {
     attributes,
@@ -79,13 +63,15 @@ export default function MealSlot({
               </svg>
             </div>
           )}
-          <span
-            className={`text-[10px] font-black uppercase tracking-widest ${
-              isPreset ? "text-zinc-400" : "text-blue-400"
+          <button
+            onClick={() => onEditMeal(meal)}
+            className={`text-[10px] font-black uppercase tracking-widest text-left hover:underline transition-all ${
+              isPreset ? "text-zinc-400 hover:text-zinc-200" : "text-blue-400 hover:text-blue-300"
             }`}
+            title="Edit Meal details & recipes"
           >
             {meal.slot}
-          </span>
+          </button>
         </div>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
@@ -130,17 +116,43 @@ export default function MealSlot({
         </div>
       </div>
 
-      <div className="p-2 space-y-2">
+      <div className="p-2 space-y-1">
         {meal.plannedRecipes.map((pr) => (
-          <PlannedRecipeRow
+          <Link
             key={pr.id}
-            pr={pr}
-            onRemove={onRemoveRecipe}
-            onToggleLeftoverSource={onToggleLeftoverSource}
-            onUpdate={onUpdatePlannedRecipe}
-            onLinkLeftover={onLinkLeftover}
-            sourceOptions={leftoverSourceOptions}
-          />
+            href={`/recipes/${pr.recipeId}?scale=${pr.scale}`}
+            className="group/item flex items-center justify-between block truncate text-xs hover:text-blue-400 text-zinc-200 transition-colors py-1 px-1.5 rounded hover:bg-zinc-800/80"
+            title={pr.recipe.title}
+          >
+            <span className="truncate flex-1">
+              {pr.recipe.title}
+              {pr.scale !== 1 && (
+                <span className="text-zinc-500 ml-1 text-[10px]">x{pr.scale}</span>
+              )}
+            </span>
+            <div className="flex items-center gap-1 shrink-0 ml-1.5">
+              {pr.isLeftoverSource && (
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-amber-500"
+                  title="Produces Leftovers"
+                />
+              )}
+              {pr.sourcePlannedRecipeId && (
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-green-500"
+                  title="Consumed Leftovers"
+                />
+              )}
+              {pr.excludeFromPrep && (
+                <span
+                  className="text-[9px] px-1 py-0.2 bg-zinc-700/60 border border-zinc-600/30 rounded text-zinc-400 font-mono"
+                  title="Excluded from prep list"
+                >
+                  NP
+                </span>
+              )}
+            </div>
+          </Link>
         ))}
         <Button
           variant="ghost"

@@ -17,7 +17,7 @@ import {
   ActionResult,
   USDAFoodPortion,
 } from "@/types";
-import { upsertIngredient } from "@/lib/ingredients";
+import { upsertIngredient, matchIngredientFuzzy } from "@/lib/ingredients";
 import { deductRecipeIngredients } from "@/lib/pantry";
 import { scrapeRecipe } from "@/lib/scraper";
 import { parseBulkRecipes, parseRecipeFromImage } from "@/lib/ai-parser";
@@ -149,6 +149,33 @@ export async function importRecipeAction(
       }
     }
 
+    // Resolve fuzzy matching for all imported recipe ingredients
+    recipes = await Promise.all(
+      recipes.map(async (recipe) => {
+        const components = await Promise.all(
+          recipe.components.map(async (c) => {
+            if (c.type === "ingredient" && c.ingredient && !c.ingredientId) {
+              const match = await matchIngredientFuzzy(c.ingredient.name);
+              return {
+                ...c,
+                ingredientId: match.ingredientId,
+                ingredient: {
+                  ...c.ingredient,
+                  ...match.ingredient,
+                },
+                needsReview: match.needsReview,
+              };
+            }
+            return c;
+          })
+        );
+        return {
+          ...recipe,
+          components,
+        };
+      })
+    );
+
     // Increment AI usage
     await incrementAiUsage(session.user.id);
 
@@ -171,7 +198,7 @@ export async function importRecipeAction(
             status: "DRAFT" as RecipeStatus,
             components: r.components.map((c) => ({
               ...c,
-              ingredientId: null,
+              ingredientId: c.type === "ingredient" ? (c as any).ingredientId || null : null,
               childRecipeId: null,
             })),
           };

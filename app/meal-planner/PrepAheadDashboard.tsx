@@ -7,7 +7,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { getPrepAheadDataAction, togglePrepCompletionAction } from "./actions";
+import { getPrepAheadDataAction, togglePrepCompletionAction, dismissPrepItemAction } from "./actions";
 
 interface PrepAheadDashboardProps {
   startDate: string;
@@ -80,6 +80,30 @@ export default function PrepAheadDashboard({
     });
   };
 
+  const handleDismiss = (item: PrepItem) => {
+    if (confirm(`Dismiss "${item.name}" from your prep list?`)) {
+      startTransition(async () => {
+        const ingredientId = item.type === "ingredient" ? item.id : null;
+        const childRecipeId = item.type === "recipe" ? item.id : null;
+        await dismissPrepItemAction(ingredientId, childRecipeId, true);
+
+        // Refresh data after dismiss
+        setIsLoading(true);
+        try {
+          const result = await getPrepAheadDataAction(
+            new Date(startDate),
+            new Date(endDate),
+          );
+          if (result.success) {
+            setData(result.data);
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 animate-pulse h-48 flex items-center justify-center text-zinc-500">
@@ -121,7 +145,7 @@ export default function PrepAheadDashboard({
           {data.map((item, i) => (
             <div
               key={i}
-              className={`bg-zinc-800/30 p-3 rounded-lg border flex justify-between items-center transition-all ${item.completed ? "border-green-900/50 opacity-60" : "border-zinc-800"}`}
+              className={`bg-zinc-800/30 p-3 rounded-lg border flex justify-between items-center transition-all group relative ${item.completed ? "border-green-900/50 opacity-60" : "border-zinc-800"}`}
             >
               <div className="flex items-center gap-3">
                 <input
@@ -144,15 +168,37 @@ export default function PrepAheadDashboard({
                   )}
                 </div>
               </div>
-              <div className="text-right">
-                <p
-                  className={`text-lg font-mono font-bold ${item.completed ? "text-zinc-600" : "text-blue-400"}`}
+              <div className="flex items-center gap-2">
+                <div className="text-right">
+                  <p
+                    className={`text-lg font-mono font-bold ${item.completed ? "text-zinc-600" : "text-blue-400"}`}
+                  >
+                    {item.quantity.toFixed(1).replace(/\.0$/, "")}
+                  </p>
+                  <p className="text-[10px] text-zinc-500 uppercase">
+                    {item.unit}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleDismiss(item)}
+                  className="p-1 text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                  title="Dismiss from prep list"
+                  disabled={isPending}
                 >
-                  {item.quantity.toFixed(1).replace(/\.0$/, "")}
-                </p>
-                <p className="text-[10px] text-zinc-500 uppercase">
-                  {item.unit}
-                </p>
+                  <svg
+                    className="w-4.5 h-4.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           ))}

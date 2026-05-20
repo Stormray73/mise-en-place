@@ -324,12 +324,23 @@ export async function getPrepAheadData(
     where: { userId },
   });
 
-  return Object.values(aggregator).map((item) => ({
+  const activeItems = Object.values(aggregator).filter((item) => {
+    const isDismissed = completions.some(
+      (c) =>
+        c.dismissed &&
+        ((item.type === "ingredient" && c.ingredientId === item.id) ||
+         (item.type === "recipe" && c.childRecipeId === item.id))
+    );
+    return !isDismissed;
+  });
+
+  return activeItems.map((item) => ({
     ...item,
     completed: completions.some(
       (c) =>
-        (item.type === "ingredient" && c.ingredientId === item.id) ||
-        (item.type === "recipe" && c.childRecipeId === item.id),
+        c.completed &&
+        ((item.type === "ingredient" && c.ingredientId === item.id) ||
+         (item.type === "recipe" && c.childRecipeId === item.id)),
     ),
   }));
 }
@@ -340,7 +351,17 @@ export async function togglePrepCompletion(
   childRecipeId: string | null,
   completed: boolean,
 ) {
+  const existing = await prisma.prepCompletion.findFirst({
+    where: { userId, ingredientId, childRecipeId }
+  });
+
   if (completed) {
+    if (existing) {
+      return prisma.prepCompletion.update({
+        where: { id: existing.id },
+        data: { completed: true }
+      });
+    }
     return prisma.prepCompletion.create({
       data: {
         userId,
@@ -350,6 +371,12 @@ export async function togglePrepCompletion(
       },
     });
   } else {
+    if (existing && existing.dismissed) {
+      return prisma.prepCompletion.update({
+        where: { id: existing.id },
+        data: { completed: false }
+      });
+    }
     return prisma.prepCompletion.deleteMany({
       where: {
         userId,
@@ -357,6 +384,46 @@ export async function togglePrepCompletion(
         childRecipeId,
       },
     });
+  }
+}
+
+export async function dismissPrepItem(
+  userId: string,
+  ingredientId: string | null,
+  childRecipeId: string | null,
+  dismissed: boolean,
+) {
+  const existing = await prisma.prepCompletion.findFirst({
+    where: { userId, ingredientId, childRecipeId }
+  });
+
+  if (dismissed) {
+    if (existing) {
+      return prisma.prepCompletion.update({
+        where: { id: existing.id },
+        data: { dismissed: true }
+      });
+    }
+    return prisma.prepCompletion.create({
+      data: {
+        userId,
+        ingredientId,
+        childRecipeId,
+        dismissed: true,
+      },
+    });
+  } else {
+    if (existing) {
+      if (existing.completed) {
+        return prisma.prepCompletion.update({
+          where: { id: existing.id },
+          data: { dismissed: false }
+        });
+      }
+      return prisma.prepCompletion.delete({
+        where: { id: existing.id }
+      });
+    }
   }
 }
 

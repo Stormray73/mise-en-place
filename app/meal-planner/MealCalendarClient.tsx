@@ -12,6 +12,7 @@ import MealSlot from "@/components/MealSlot";
 import AddMealModal from "@/components/AddMealModal";
 import AddRecipeModal from "@/components/AddRecipeModal";
 import CloneMealModal from "@/components/CloneMealModal";
+import EditMealModal from "@/components/EditMealModal";
 import {
   createMealAction,
   addRecipeToMealAction,
@@ -69,6 +70,8 @@ export default function MealCalendarClient({
   const [isCloningMeal, setIsCloningMeal] = useState<{ mealId: string } | null>(
     null,
   );
+  const [editingMealId, setEditingMealId] = useState<string | null>(null);
+  const activeEditingMeal = initialMeals.find((m) => m.id === editingMealId);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -104,10 +107,13 @@ export default function MealCalendarClient({
 
   const handleAddMeal = async (date: Date, slot: string) => {
     const res = await createMealAction(date, slot);
-    if (!res.success) {
-      alert(res.error);
+    if (res.success && res.data) {
+      setIsAddingMeal(null);
+      setIsAddingRecipe({ mealId: res.data.id });
+    } else {
+      if (!res.success) alert(res.error);
+      setIsAddingMeal(null);
     }
-    setIsAddingMeal(null);
   };
 
   const handleAddRecipe = async (mealId: string, recipeId: string) => {
@@ -263,11 +269,7 @@ export default function MealCalendarClient({
                         onDeleteMeal={handleDeleteMeal}
                         onCloneMeal={(mealId) => setIsCloningMeal({ mealId })}
                         onAddRecipe={(mealId) => setIsAddingRecipe({ mealId })}
-                        onRemoveRecipe={handleRemoveRecipe}
-                        onToggleLeftoverSource={handleToggleLeftoverSource}
-                        onUpdatePlannedRecipe={handleUpdatePlannedRecipe}
-                        onLinkLeftover={handleLinkLeftover}
-                        leftoverSourceOptions={leftoverSourceOptions}
+                        onEditMeal={(m) => setEditingMealId(m.id)}
                       />
                     ))}
                   </SortableContext>
@@ -308,6 +310,20 @@ export default function MealCalendarClient({
           days={days}
           onClose={() => setIsCloningMeal(null)}
           onClone={handleCloneMeal}
+        />
+      )}
+
+      {activeEditingMeal && (
+        <EditMealModal
+          meal={activeEditingMeal}
+          onClose={() => setEditingMealId(null)}
+          onAddRecipe={(mealId) => setIsAddingRecipe({ mealId })}
+          onDeleteMeal={handleDeleteMeal}
+          onRemoveRecipe={handleRemoveRecipe}
+          onToggleLeftoverSource={handleToggleLeftoverSource}
+          onUpdatePlannedRecipe={handleUpdatePlannedRecipe}
+          onLinkLeftover={handleLinkLeftover}
+          leftoverSourceOptions={leftoverSourceOptions}
         />
       )}
     </div>

@@ -30,6 +30,7 @@ export interface RecipeSaveData {
           baseMacros?: Macros | null;
           baseAmount?: number | null;
           foodPortions?: unknown | null;
+          userId?: string | null;
         } | null;
       }
     | {
@@ -44,6 +45,7 @@ export interface RecipeSaveData {
     quantity: number;
     unit: string;
     prepState?: string | null;
+    needsReview?: boolean;
   })[];
 }
 
@@ -71,6 +73,7 @@ export interface USDAFood {
   foodPortions?: USDAFoodPortion[];
   userId?: string | null;
   baseAmount?: number | null;
+  source?: string;
 }
 
 export interface RecipeSearchResult {

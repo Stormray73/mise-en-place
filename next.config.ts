@@ -8,9 +8,11 @@ const nextConfig: NextConfig = {
     // Dangerously allow production builds to successfully complete even if
     // your project has type errors.
     // !! WARN !!
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
-  allowedDevOrigins: [],
+  allowedDevOrigins: [
+    'nextjs--rocinante--stormray73--it9auqie8495i.pit-1.try.coder.app'
+  ],
 };
 
 export default nextConfig;

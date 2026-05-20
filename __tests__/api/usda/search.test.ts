@@ -42,6 +42,7 @@ describe("GET /api/usda/search", () => {
               measureUnitName: "cup",
             },
           ],
+          source: "USDA",
         },
       ],
     };
