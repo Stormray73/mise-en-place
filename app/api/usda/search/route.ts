@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { JsonValue } from "@prisma/client/runtime/library";
-import { searchOpenFoodFacts } from "@/lib/off";
+import { searchOpenFoodFacts, OFFNormalizedFood } from "@/lib/off";
 
 export async function GET(request: NextRequest) {
   try {
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     const branded = searchParams.get("branded") === "true";
     const apiKey = process.env.USDA_API_KEY;
-    let usdaFoods: any[] = [];
+    let usdaFoods: (Record<string, unknown> | OFFNormalizedFood)[] = [];
 
     // Search USDA if not explicitly searching branded only, and USDA key is configured
     if (!branded && apiKey) {
@@ -66,10 +66,12 @@ export async function GET(request: NextRequest) {
         const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
-          usdaFoods = (data.foods || []).map((food: any) => ({
-            ...food,
-            source: "USDA",
-          }));
+          usdaFoods = (data.foods || []).map(
+            (food: Record<string, unknown>) => ({
+              ...food,
+              source: "USDA",
+            }),
+          );
         }
       } catch (err) {
         console.error("USDA fetch failed:", err);
@@ -100,4 +102,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

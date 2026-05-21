@@ -13,7 +13,7 @@ interface ComponentListProps {
 
 export function ComponentList({ components, onChange }: ComponentListProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  
+
   // Inline editing temp states
   const [editQuantity, setEditQuantity] = useState<number>(0);
   const [editUnit, setEditUnit] = useState<string>("");
@@ -46,7 +46,10 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
     onChange(newComponents);
   };
 
-  const startEditing = (index: number, comp: RecipeSaveData["components"][0]) => {
+  const startEditing = (
+    index: number,
+    comp: RecipeSaveData["components"][0],
+  ) => {
     setEditingIndex(index);
     setEditQuantity(comp.quantity);
     setEditUnit(comp.unit);
@@ -54,7 +57,7 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
     setEditName(
       comp.type === "ingredient"
         ? comp.ingredient?.name || ""
-        : comp.childRecipe?.title || ""
+        : comp.childRecipe?.title || "",
     );
     setMacroForm(null); // Reset dummy form
   };
@@ -66,7 +69,7 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
 
   const applyEdits = (index: number) => {
     const original = components[index];
-    const updates: any = {
+    const updates: Record<string, unknown> = {
       quantity: editQuantity,
       unit: editUnit,
       prepState: editPrepState || null,
@@ -84,7 +87,7 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
       };
     }
 
-    updateComponent(index, updates);
+    updateComponent(index, updates as Partial<RecipeSaveData["components"][0]>);
     setEditingIndex(null);
   };
 
@@ -120,7 +123,7 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
             baseAmount: 100,
             baseMacros: macros,
           },
-        } as any);
+        } as Partial<RecipeSaveData["components"][0]>);
         setEditingIndex(null);
         setMacroForm(null);
       } else {
@@ -164,7 +167,9 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                   <Input
                     type="number"
                     value={editQuantity}
-                    onChange={(e) => setEditQuantity(parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setEditQuantity(parseFloat(e.target.value) || 0)
+                    }
                     placeholder="Qty"
                   />
                 </div>
@@ -257,7 +262,8 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                         }
                         className="text-xs text-blue-400 hover:text-blue-300 text-left font-bold flex items-center gap-1"
                       >
-                        💡 This is an imported dummy ingredient. Define Macros & Save to My Ingredients
+                        💡 This is an imported dummy ingredient. Define Macros &
+                        Save to My Ingredients
                       </button>
                     ) : (
                       <div className="bg-zinc-900/60 p-3 rounded border border-zinc-800 flex flex-col gap-3 animate-in slide-in-from-top-2 duration-200">
@@ -282,7 +288,10 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                               type="number"
                               value={macroForm.calories}
                               onChange={(e) =>
-                                setMacroForm({ ...macroForm, calories: e.target.value })
+                                setMacroForm({
+                                  ...macroForm,
+                                  calories: e.target.value,
+                                })
                               }
                               className="h-8 text-xs"
                             />
@@ -295,7 +304,10 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                               type="number"
                               value={macroForm.protein}
                               onChange={(e) =>
-                                setMacroForm({ ...macroForm, protein: e.target.value })
+                                setMacroForm({
+                                  ...macroForm,
+                                  protein: e.target.value,
+                                })
                               }
                               className="h-8 text-xs"
                             />
@@ -308,7 +320,10 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                               type="number"
                               value={macroForm.fat}
                               onChange={(e) =>
-                                setMacroForm({ ...macroForm, fat: e.target.value })
+                                setMacroForm({
+                                  ...macroForm,
+                                  fat: e.target.value,
+                                })
                               }
                               className="h-8 text-xs"
                             />
@@ -321,7 +336,10 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                               type="number"
                               value={macroForm.carbs}
                               onChange={(e) =>
-                                setMacroForm({ ...macroForm, carbs: e.target.value })
+                                setMacroForm({
+                                  ...macroForm,
+                                  carbs: e.target.value,
+                                })
                               }
                               className="h-8 text-xs"
                             />
@@ -334,7 +352,9 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                             onClick={() => convertDummyIngredient(i)}
                             disabled={isConverting || !editName.trim()}
                           >
-                            {isConverting ? "Saving..." : "Save Custom Ingredient"}
+                            {isConverting
+                              ? "Saving..."
+                              : "Save Custom Ingredient"}
                           </Button>
                         </div>
                       </div>
@@ -352,7 +372,9 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
           <div
             key={i}
             className={`flex items-center justify-between gap-3 bg-zinc-800 p-3 rounded-md border transition-all duration-200 ${
-              needsReview ? "border-yellow-500/50 bg-yellow-950/10" : "border-zinc-700"
+              needsReview
+                ? "border-yellow-500/50 bg-yellow-950/10"
+                : "border-zinc-700"
             }`}
           >
             <div className="flex-1 min-w-0 flex items-center gap-2">

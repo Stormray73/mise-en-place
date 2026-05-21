@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { Macros } from "@/types";
+import { Macros, USDANutrient } from "@/types";
 import { Prisma } from "@prisma/client";
 import { USDAFoodPortion } from "./units";
 
@@ -8,28 +8,36 @@ export function determineDepartment(name: string, category?: string): string {
   const lowercaseCategory = (category || "").toLowerCase();
 
   if (
-    /chicken|beef|pork|turkey|lamb|veal|bacon|sausage|ham|steak|meat|fish|salmon|tuna|shrimp|crab|lobster|cod|halibut|scallop|fillet|breasts|thighs|wings/i.test(lowercaseName) ||
+    /chicken|beef|pork|turkey|lamb|veal|bacon|sausage|ham|steak|meat|fish|salmon|tuna|shrimp|crab|lobster|cod|halibut|scallop|fillet|breasts|thighs|wings/i.test(
+      lowercaseName,
+    ) ||
     /meat|poultry|seafood|fish/i.test(lowercaseCategory)
   ) {
     return "Meat & Seafood";
   }
 
   if (
-    /apple|banana|orange|grape|berry|lemon|lime|melon|peach|pear|plum|onion|garlic|tomato|potato|carrot|celery|broccoli|cauliflower|spinach|lettuce|salad|cabbage|pepper|squash|zucchini|cucumber|asparagus|mushroom|ginger|herb|cilantro|parsley|basil|rosemary|thyme|mint|avocado/i.test(lowercaseName) ||
+    /apple|banana|orange|grape|berry|lemon|lime|melon|peach|pear|plum|onion|garlic|tomato|potato|carrot|celery|broccoli|cauliflower|spinach|lettuce|salad|cabbage|pepper|squash|zucchini|cucumber|asparagus|mushroom|ginger|herb|cilantro|parsley|basil|rosemary|thyme|mint|avocado/i.test(
+      lowercaseName,
+    ) ||
     /produce|fruit|vegetable/i.test(lowercaseCategory)
   ) {
     return "Produce";
   }
 
   if (
-    /milk|cheese|egg|butter|cream|yogurt|dairy|sour cream|parmesan|cheddar|mozzarella|ricotta|heavy cream/i.test(lowercaseName) ||
+    /milk|cheese|egg|butter|cream|yogurt|dairy|sour cream|parmesan|cheddar|mozzarella|ricotta|heavy cream/i.test(
+      lowercaseName,
+    ) ||
     /dairy|egg|cheese/i.test(lowercaseCategory)
   ) {
     return "Dairy & Eggs";
   }
 
   if (
-    /bread|bun|roll|tortilla|bagel|pastry|crust|wrap|pita|naan/i.test(lowercaseName) ||
+    /bread|bun|roll|tortilla|bagel|pastry|crust|wrap|pita|naan/i.test(
+      lowercaseName,
+    ) ||
     /bakery|bread/i.test(lowercaseCategory)
   ) {
     return "Bakery";
@@ -43,7 +51,9 @@ export function determineDepartment(name: string, category?: string): string {
   }
 
   if (
-    /water|juice|soda|coffee|tea|coke|sprite|beverage|drink/i.test(lowercaseName) ||
+    /water|juice|soda|coffee|tea|coke|sprite|beverage|drink/i.test(
+      lowercaseName,
+    ) ||
     /beverage|drink/i.test(lowercaseCategory)
   ) {
     return "Beverages";
@@ -108,7 +118,7 @@ export function getLevenshteinDistance(a: string, b: string): number {
       tmp[i][j] = Math.min(
         tmp[i - 1][j] + 1, // deletion
         tmp[i][j - 1] + 1, // insertion
-        tmp[i - 1][j - 1] + val // substitution
+        tmp[i - 1][j - 1] + val, // substitution
       );
     }
   }
@@ -118,7 +128,10 @@ export function getLevenshteinDistance(a: string, b: string): number {
 export function getSimilarity(s1: string, s2: string): number {
   const m = Math.max(s1.length, s2.length);
   if (m === 0) return 1;
-  const dist = getLevenshteinDistance(s1.trim().toLowerCase(), s2.trim().toLowerCase());
+  const dist = getLevenshteinDistance(
+    s1.trim().toLowerCase(),
+    s2.trim().toLowerCase(),
+  );
   return 1 - dist / m;
 }
 
@@ -135,7 +148,7 @@ export async function matchIngredientFuzzy(name: string) {
     },
   });
 
-  let bestMatch: typeof dbIngredients[0] | null = null;
+  let bestMatch: (typeof dbIngredients)[0] | null = null;
   let highestSimilarity = 0;
 
   for (const dbIng of dbIngredients) {
@@ -152,9 +165,9 @@ export async function matchIngredientFuzzy(name: string) {
       ingredient: {
         name: bestMatch.name,
         usdaId: bestMatch.usdaId,
-        baseMacros: bestMatch.baseMacros as any,
+        baseMacros: bestMatch.baseMacros as unknown as Macros,
         baseAmount: bestMatch.baseAmount,
-        foodPortions: bestMatch.foodPortions as any,
+        foodPortions: bestMatch.foodPortions as unknown as USDAFoodPortion[],
       },
       needsReview: false,
     };
@@ -172,10 +185,23 @@ export async function matchIngredientFuzzy(name: string) {
         for (const food of usdaFoods) {
           const similarity = getSimilarity(name, food.description);
           if (similarity >= 0.85) {
-            const kcal = food.foodNutrients?.find((n: any) => n.nutrientName === "Energy")?.value || 0;
-            const protein = food.foodNutrients?.find((n: any) => n.nutrientName === "Protein")?.value || 0;
-            const fat = food.foodNutrients?.find((n: any) => n.nutrientName === "Total lipid (fat)")?.value || 0;
-            const carbs = food.foodNutrients?.find((n: any) => n.nutrientName === "Carbohydrate, by difference")?.value || 0;
+            const kcal =
+              food.foodNutrients?.find(
+                (n: USDANutrient) => n.nutrientName === "Energy",
+              )?.value || 0;
+            const protein =
+              food.foodNutrients?.find(
+                (n: USDANutrient) => n.nutrientName === "Protein",
+              )?.value || 0;
+            const fat =
+              food.foodNutrients?.find(
+                (n: USDANutrient) => n.nutrientName === "Total lipid (fat)",
+              )?.value || 0;
+            const carbs =
+              food.foodNutrients?.find(
+                (n: USDANutrient) =>
+                  n.nutrientName === "Carbohydrate, by difference",
+              )?.value || 0;
 
             const baseMacros: Macros = {
               calories: kcal,
@@ -197,9 +223,10 @@ export async function matchIngredientFuzzy(name: string) {
               ingredient: {
                 name: created.name,
                 usdaId: created.usdaId,
-                baseMacros: created.baseMacros as any,
+                baseMacros: created.baseMacros as unknown as Macros,
                 baseAmount: created.baseAmount,
-                foodPortions: created.foodPortions as any,
+                foodPortions:
+                  created.foodPortions as unknown as USDAFoodPortion[],
               },
               needsReview: false,
             };
@@ -218,10 +245,19 @@ export async function matchIngredientFuzzy(name: string) {
     for (const food of offFoods) {
       const similarity = getSimilarity(name, food.description);
       if (similarity >= 0.85) {
-        const kcal = food.foodNutrients.find((n) => n.nutrientName === "Energy")?.value || 0;
-        const protein = food.foodNutrients.find((n) => n.nutrientName === "Protein")?.value || 0;
-        const fat = food.foodNutrients.find((n) => n.nutrientName === "Total lipid (fat)")?.value || 0;
-        const carbs = food.foodNutrients.find((n) => n.nutrientName === "Carbohydrate, by difference")?.value || 0;
+        const kcal =
+          food.foodNutrients.find((n) => n.nutrientName === "Energy")?.value ||
+          0;
+        const protein =
+          food.foodNutrients.find((n) => n.nutrientName === "Protein")?.value ||
+          0;
+        const fat =
+          food.foodNutrients.find((n) => n.nutrientName === "Total lipid (fat)")
+            ?.value || 0;
+        const carbs =
+          food.foodNutrients.find(
+            (n) => n.nutrientName === "Carbohydrate, by difference",
+          )?.value || 0;
 
         const baseMacros: Macros = {
           calories: kcal,
@@ -235,7 +271,8 @@ export async function matchIngredientFuzzy(name: string) {
           usdaId: food.fdcId,
           baseMacros,
           baseAmount: 100,
-          foodPortions: food.foodPortions as any || [],
+          foodPortions:
+            (food.foodPortions as unknown as USDAFoodPortion[]) || [],
         });
 
         return {
@@ -243,9 +280,9 @@ export async function matchIngredientFuzzy(name: string) {
           ingredient: {
             name: created.name,
             usdaId: created.usdaId,
-            baseMacros: created.baseMacros as any,
+            baseMacros: created.baseMacros as unknown as Macros,
             baseAmount: created.baseAmount,
-            foodPortions: created.foodPortions as any,
+            foodPortions: created.foodPortions as unknown as USDAFoodPortion[],
           },
           needsReview: false,
         };
@@ -263,4 +300,3 @@ export async function matchIngredientFuzzy(name: string) {
     needsReview: true,
   };
 }
-

@@ -1,5 +1,3 @@
-import { Macros } from "@/types";
-
 export interface OFFProduct {
   code?: string;
   _id?: string;
@@ -44,12 +42,14 @@ function parseServingSizeToGrams(servingSize: string): number {
   return 100;
 }
 
-export async function searchOpenFoodFacts(query: string): Promise<OFFNormalizedFood[]> {
+export async function searchOpenFoodFacts(
+  query: string,
+): Promise<OFFNormalizedFood[]> {
   try {
     const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
-      query
+      query,
     )}&search_simple=1&action=process&json=1&page_size=10`;
-    
+
     const res = await fetch(url, {
       headers: {
         "User-Agent": "MiseEnPlace/1.0 (contact@miseenplace.app)",
@@ -65,13 +65,29 @@ export async function searchOpenFoodFacts(query: string): Promise<OFFNormalizedF
     const products: OFFProduct[] = data.products || [];
 
     return products.map((product) => {
-      const id = product.code || product._id || Math.random().toString(36).substring(7);
-      const name = product.product_name || product.product_name_en || "Unknown OFF Product";
+      const id =
+        product.code || product._id || Math.random().toString(36).substring(7);
+      const name =
+        product.product_name ||
+        product.product_name_en ||
+        "Unknown OFF Product";
       const servingSize = product.serving_size || "";
-      const kcal = Number(product.nutriments?.["energy-kcal_100g"] ?? product.nutriments?.["energy-kcal"] ?? 0);
-      const protein = Number(product.nutriments?.proteins_100g ?? product.nutriments?.proteins ?? 0);
-      const fat = Number(product.nutriments?.fat_100g ?? product.nutriments?.fat ?? 0);
-      const carbs = Number(product.nutriments?.carbohydrates_100g ?? product.nutriments?.carbohydrates ?? 0);
+      const kcal = Number(
+        product.nutriments?.["energy-kcal_100g"] ??
+          product.nutriments?.["energy-kcal"] ??
+          0,
+      );
+      const protein = Number(
+        product.nutriments?.proteins_100g ?? product.nutriments?.proteins ?? 0,
+      );
+      const fat = Number(
+        product.nutriments?.fat_100g ?? product.nutriments?.fat ?? 0,
+      );
+      const carbs = Number(
+        product.nutriments?.carbohydrates_100g ??
+          product.nutriments?.carbohydrates ??
+          0,
+      );
 
       const portions = servingSize
         ? [

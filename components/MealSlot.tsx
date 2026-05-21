@@ -14,7 +14,11 @@ interface MealSlotProps {
   onDeleteMeal: (mealId: string) => void;
   onCloneMeal: (mealId: string) => void;
   onAddRecipe: (mealId: string) => void;
-  onEditMeal: (meal: any) => void;
+  onEditMeal: (meal: {
+    id: string;
+    slot: string;
+    plannedRecipes: PlannedRecipeWithRecipe[];
+  }) => void;
 }
 
 export default function MealSlot({
@@ -66,7 +70,9 @@ export default function MealSlot({
           <button
             onClick={() => onEditMeal(meal)}
             className={`text-[10px] font-black uppercase tracking-widest text-left hover:underline transition-all ${
-              isPreset ? "text-zinc-400 hover:text-zinc-200" : "text-blue-400 hover:text-blue-300"
+              isPreset
+                ? "text-zinc-400 hover:text-zinc-200"
+                : "text-blue-400 hover:text-blue-300"
             }`}
             title="Edit Meal details & recipes"
           >
@@ -127,7 +133,9 @@ export default function MealSlot({
             <span className="truncate flex-1">
               {pr.recipe.title}
               {pr.scale !== 1 && (
-                <span className="text-zinc-500 ml-1 text-[10px]">x{pr.scale}</span>
+                <span className="text-zinc-500 ml-1 text-[10px]">
+                  x{pr.scale}
+                </span>
               )}
             </span>
             <div className="flex items-center gap-1 shrink-0 ml-1.5">

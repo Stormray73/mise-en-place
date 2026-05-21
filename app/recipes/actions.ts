@@ -167,13 +167,13 @@ export async function importRecipeAction(
               };
             }
             return c;
-          })
+          }),
         );
         return {
           ...recipe,
           components,
         };
-      })
+      }),
     );
 
     // Increment AI usage
@@ -198,7 +198,8 @@ export async function importRecipeAction(
             status: "DRAFT" as RecipeStatus,
             components: r.components.map((c) => ({
               ...c,
-              ingredientId: c.type === "ingredient" ? (c as any).ingredientId || null : null,
+              ingredientId:
+                c.type === "ingredient" ? c.ingredientId || null : null,
               childRecipeId: null,
             })),
           };
