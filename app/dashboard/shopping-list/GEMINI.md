@@ -20,5 +20,5 @@ Generates aggregated purchase lists based on upcoming meal plans and low pantry 
 
 ## Testing Strategy
 
-- **Unit Tests:** `lib/shopping-list.test.ts` (Note: Ensure this is created/updated).
+- **Unit Tests:** `__tests__/lib/shopping-list.test.ts` covers list generation, deficit calculation, and recurring item logic.
 - **E2E Tests:** `tests/e2e/pantry-shopping-list.spec.ts` verifies the full loop from meal plan -> shopping list -> pantry stock.

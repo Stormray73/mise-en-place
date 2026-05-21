@@ -7,6 +7,7 @@ Handles the scheduling of recipes into meals, leftovers management, and prep-ahe
 ## Implementation Details
 
 - **Logic:** `lib/meal-plans.ts` and `app/meal-planner/actions.ts`.
+- **Key Components:** `MealCalendarClient.tsx` (the full week/month calendar UI with drag-and-drop) and `PrepAheadDashboard.tsx` (aggregated upcoming prep tasks).
 - **Scheduling:** Meals are organized by date and slot (e.g., Breakfast, Lunch, Dinner).
 - **Ordering:** Custom meals can be reordered via a `sortOrder` field.
 - **Prep-Ahead:** The `PrepAheadDashboard` aggregates upcoming requirements, filtering out items marked as `excludeFromPrep`.

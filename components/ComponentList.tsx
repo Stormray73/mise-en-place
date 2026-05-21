@@ -3,8 +3,7 @@ import { RecipeSaveData } from "@/types";
 import { getUnits } from "@/lib/units";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { Button } from "@/components/ui/Button";
-import { saveCustomIngredientAction } from "@/app/recipes/ingredient-actions";
+import { DummyIngredientConverter } from "./DummyIngredientConverter";
 
 interface ComponentListProps {
   components: RecipeSaveData["components"];
@@ -19,15 +18,6 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
   const [editUnit, setEditUnit] = useState<string>("");
   const [editName, setEditName] = useState<string>("");
   const [editPrepState, setEditPrepState] = useState<string>("");
-
-  // Macro definition form for dummy ingredients
-  const [macroForm, setMacroForm] = useState<{
-    calories: string;
-    protein: string;
-    fat: string;
-    carbs: string;
-  } | null>(null);
-  const [isConverting, setIsConverting] = useState(false);
 
   const removeComponent = (index: number) => {
     onChange(components.filter((_, i) => i !== index));
@@ -59,12 +49,10 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
         ? comp.ingredient?.name || ""
         : comp.childRecipe?.title || "",
     );
-    setMacroForm(null); // Reset dummy form
   };
 
   const cancelEditing = () => {
     setEditingIndex(null);
-    setMacroForm(null);
   };
 
   const applyEdits = (index: number) => {
@@ -89,52 +77,6 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
 
     updateComponent(index, updates as Partial<RecipeSaveData["components"][0]>);
     setEditingIndex(null);
-  };
-
-  const convertDummyIngredient = async (index: number) => {
-    if (!macroForm || !editName.trim()) return;
-
-    setIsConverting(true);
-    try {
-      const macros = {
-        calories: parseFloat(macroForm.calories) || 0,
-        protein: parseFloat(macroForm.protein) || 0,
-        fat: parseFloat(macroForm.fat) || 0,
-        carbs: parseFloat(macroForm.carbs) || 0,
-      };
-
-      const res = await saveCustomIngredientAction({
-        name: editName,
-        baseAmount: 100,
-        unit: "g",
-        macros,
-      });
-
-      if (res.success) {
-        // Successfully saved in DB. Now update this component row with database ingredient ID and metadata
-        updateComponent(index, {
-          ingredientId: res.data.id,
-          quantity: editQuantity,
-          unit: editUnit,
-          prepState: editPrepState || null,
-          ingredient: {
-            name: editName,
-            usdaId: null,
-            baseAmount: 100,
-            baseMacros: macros,
-          },
-        } as Partial<RecipeSaveData["components"][0]>);
-        setEditingIndex(null);
-        setMacroForm(null);
-      } else {
-        alert(res.error || "Failed to convert ingredient.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("An error occurred while saving custom ingredient.");
-    } finally {
-      setIsConverting(false);
-    }
   };
 
   return (
@@ -248,118 +190,24 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                 !c.ingredient?.usdaId &&
                 !c.ingredientId &&
                 !c.ingredient?.userId && (
-                  <div className="border-t border-zinc-800/80 pt-3 mt-1 flex flex-col gap-2">
-                    {!macroForm ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setMacroForm({
-                            calories: "0",
-                            protein: "0",
-                            fat: "0",
-                            carbs: "0",
-                          })
-                        }
-                        className="text-xs text-blue-400 hover:text-blue-300 text-left font-bold flex items-center gap-1"
-                      >
-                        💡 This is an imported dummy ingredient. Define Macros &
-                        Save to My Ingredients
-                      </button>
-                    ) : (
-                      <div className="bg-zinc-900/60 p-3 rounded border border-zinc-800 flex flex-col gap-3 animate-in slide-in-from-top-2 duration-200">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-semibold text-zinc-300">
-                            Define Macros (per 100g)
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setMacroForm(null)}
-                            className="text-zinc-500 hover:text-zinc-300 text-xs font-bold"
-                          >
-                            Hide
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                          <div>
-                            <label className="block text-[10px] text-zinc-400 mb-0.5">
-                              Calories
-                            </label>
-                            <Input
-                              type="number"
-                              value={macroForm.calories}
-                              onChange={(e) =>
-                                setMacroForm({
-                                  ...macroForm,
-                                  calories: e.target.value,
-                                })
-                              }
-                              className="h-8 text-xs"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] text-zinc-400 mb-0.5">
-                              Protein (g)
-                            </label>
-                            <Input
-                              type="number"
-                              value={macroForm.protein}
-                              onChange={(e) =>
-                                setMacroForm({
-                                  ...macroForm,
-                                  protein: e.target.value,
-                                })
-                              }
-                              className="h-8 text-xs"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] text-zinc-400 mb-0.5">
-                              Fat (g)
-                            </label>
-                            <Input
-                              type="number"
-                              value={macroForm.fat}
-                              onChange={(e) =>
-                                setMacroForm({
-                                  ...macroForm,
-                                  fat: e.target.value,
-                                })
-                              }
-                              className="h-8 text-xs"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] text-zinc-400 mb-0.5">
-                              Carbs (g)
-                            </label>
-                            <Input
-                              type="number"
-                              value={macroForm.carbs}
-                              onChange={(e) =>
-                                setMacroForm({
-                                  ...macroForm,
-                                  carbs: e.target.value,
-                                })
-                              }
-                              className="h-8 text-xs"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => convertDummyIngredient(i)}
-                            disabled={isConverting || !editName.trim()}
-                          >
-                            {isConverting
-                              ? "Saving..."
-                              : "Save Custom Ingredient"}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <DummyIngredientConverter
+                    ingredientName={editName}
+                    onSave={(macros, ingredientId) => {
+                      updateComponent(i, {
+                        ingredientId,
+                        quantity: editQuantity,
+                        unit: editUnit,
+                        prepState: editPrepState || null,
+                        ingredient: {
+                          name: editName,
+                          usdaId: null,
+                          baseAmount: 100,
+                          baseMacros: macros,
+                        },
+                      } as Partial<RecipeSaveData["components"][0]>);
+                      setEditingIndex(null);
+                    }}
+                  />
                 )}
             </div>
           );

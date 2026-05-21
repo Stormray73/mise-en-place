@@ -45,9 +45,25 @@ type RecipeComponent =
 
 When an agent is navigating the codebase, it MUST prioritize reading `GEMINI.md` files in the current directory before reading implementation code.
 
-- **Local Context:** Every major feature directory (e.g., `app/recipes/`, `lib/pantry/`) must contain a `GEMINI.md` file defining its specific invariants, technical decisions, and testing requirements.
+- **Local Context:** Every major feature directory (e.g., `app/recipes/`, `lib/`) must contain a `GEMINI.md` file defining its specific invariants, technical decisions, and testing requirements.
 - **Header Metadata:** File headers (as defined in Section 1) remain critical for quick file-level identification.
 
 ## 5. Domain Knowledge (The Chef's Glossary)
 
 Culinary logic (e.g., unit categories, macro calculation rules) is documented in the `GEMINI.md` files within the `app/recipes/` and `lib/` directories. Agents must verify culinary assumptions against these local files rather than relying on general model knowledge.
+
+## 6. Mandatory GEMINI.md Maintenance After Changes
+
+**After completing any code change, an agent MUST review the `GEMINI.md` file(s) for every directory it modified and update them if there is any deviation.**
+
+This is not optional. Stale documentation is actively harmful to future agents.
+
+Specifically, you MUST update the relevant `GEMINI.md` when your change:
+
+- **Adds** a new file, module, route, or component to a directory
+- **Deletes or renames** anything referenced by a `GEMINI.md`
+- **Changes** an invariant, constraint, or key architectural decision (e.g., a new required field, a changed data flow)
+- **Changes** which component calls which action or API route
+- **Introduces** a new testing file or changes the testing strategy for a domain
+
+If no `GEMINI.md` exists for a directory you modified and the directory is substantial enough to warrant one, create it. Use the existing domain GEMINI.md files as templates.
