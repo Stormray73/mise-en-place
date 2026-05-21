@@ -14,7 +14,7 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: test_user
+          POSTGRES_USER: root
           POSTGRES_PASSWORD: test_password
           POSTGRES_DB: test_db
         ports:
@@ -26,7 +26,7 @@ jobs:
           --health-retries 5
 
     env:
-      DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+      DATABASE_URL: postgresql://root:test_password@localhost:5432/test_db
       AUTH_SECRET: any-secret-for-tests
       AUTH_TRUST_HOST: "true"
       AUTH_URL: "http://localhost:3000/api/auth"

@@ -30,6 +30,8 @@ test.describe("Web Scraping User Journeys", () => {
     // Verify ingredients
     const pastaRow = page.locator('div:has-text("Pasta")').first();
     await expect(pastaRow).toBeVisible();
-    await expect(pastaRow.locator('input[type="number"]')).toHaveValue("200");
+    await expect(pastaRow.locator('input[type="number"]').first()).toHaveValue(
+      "200",
+    );
   });
 });

@@ -15,17 +15,15 @@ test("BUG-038: Duplicate Meal Presets on the same day are prevented", async ({
   // Wait for it to be added
   await expect(page.locator("text=Breakfast").first()).toBeVisible();
 
-  // Try adding Breakfast again to the same day
+  // Try adding Breakfast again - set up dialog handler BEFORE clicking
+  const dialogPromise = page.waitForEvent("dialog");
   await page.locator('button:has-text("+ Add Meal")').first().click();
   await page.waitForSelector("text=Add Meal Slot");
-
-  // Click Breakfast again
-  page.on("dialog", async (dialog) => {
-    expect(dialog.message()).toContain("already exists");
-    await dialog.accept();
-  });
-
   await page.locator('button:has-text("Breakfast")').click();
+
+  const dialog = await dialogPromise;
+  expect(dialog.message()).toContain("already exists");
+  await dialog.accept();
 
   // Wait for modal to close or alert to fire
   await page.waitForTimeout(500);
