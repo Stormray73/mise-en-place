@@ -87,3 +87,34 @@ To completely automate project management and ensure zero manual overhead for th
   1. Move the file from `docs/upcoming-stories/v1/` to `docs/completed-stories/` (preserving its name).
   2. Locate `docs/ROADMAP.md` and move the epic from the **Active** list to the **Completed Features** section at the bottom.
   3. Ensure that any new design invariants, component additions, or file directories are documented in the respective local `GEMINI.md` (see Section 6).
+
+## 8. Branching & Pull Request Workflow
+
+To keep the primary branches (`main` or `staging`) stable and ensure a structured review cycle, all feature implementations and bug fixes MUST be developed on dedicated branches and merged via Pull Requests.
+
+### A. Branch Creation & Naming
+
+- NEVER write code directly to `main` or `staging` unless explicitly directed by the user for trivial, one-off fixes.
+- Before starting a story, create a descriptive local branch:
+  ```bash
+  git checkout -b feature/[story-or-epic-slug]
+  ```
+  _(Example: `feature/microsoft-auth` or `bugfix/user-limits`)_
+
+### B. Pull Request (PR) Creation
+
+- Once implementation is complete, all tests pass locally, and the story checklists/documentation have been updated:
+  1. Push the branch to the remote origin:
+     ```bash
+     git push origin feature/[story-or-epic-slug]
+     ```
+  2. Open a Pull Request into the target branch (`staging` or `main`) using the GitHub CLI:
+     ```bash
+     gh pr create --title "[Feature/Fix Name]" --body "[Description]"
+     ```
+- In the PR body, clearly reference which local markdown file and stories are being implemented (e.g., _"Implements Story 1 of docs/upcoming-stories/v1/ADDITIONAL_AUTH.md"_).
+
+### C. Verification & Handoff
+
+- The agent's turn MUST end by presenting the link to the created Pull Request to the user.
+- The user will review the code and documentation diffs, perform manual verification if desired, and perform the final merge.
