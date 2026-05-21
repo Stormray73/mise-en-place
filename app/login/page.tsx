@@ -1,8 +1,35 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { Suspense } from "react";
 
-export default function LoginPage() {
+function getErrorMessage(error: string | null) {
+  if (!error) return null;
+  switch (error) {
+    case "Configuration":
+      return "There is a problem with the server configuration. Please try again later.";
+    case "AccessDenied":
+      return "Access denied. You do not have permission to sign in.";
+    case "Verification":
+      return "The sign-in link is no longer valid. Please request a new one.";
+    case "OAuthSignin":
+    case "OAuthCallback":
+      return "An error occurred during the sign-in process with the external provider.";
+    case "OAuthAccountNotLinked":
+      return "This email is already associated with another account. Please sign in using the provider you originally registered with.";
+    case "CredentialsSignin":
+      return "Invalid credentials. Please check your username and password.";
+    default:
+      return `An authentication error occurred: ${error}`;
+  }
+}
+
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const errorCode = searchParams.get("error");
+  const errorMessage = getErrorMessage(errorCode);
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-8 backdrop-blur-sm">
@@ -13,9 +40,9 @@ export default function LoginPage() {
           <p className="mt-2 text-zinc-400">Log in to your chef workstation</p>
         </div>
 
-        {error && (
+        {errorMessage && (
           <div className="p-3 rounded bg-red-900/20 border border-red-900 text-red-400 text-sm">
-            {error}
+            {errorMessage}
           </div>
         )}
 
@@ -51,5 +78,26 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-1 flex-col items-center justify-center p-4">
+          <div className="w-full max-w-md space-y-8 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-8 backdrop-blur-sm">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold tracking-tight text-white">
+                Welcome back
+              </h1>
+              <p className="mt-2 text-zinc-400">Loading...</p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
