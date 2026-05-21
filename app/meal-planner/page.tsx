@@ -19,13 +19,13 @@ export default async function MealPlannerPage({
   const { date } = await searchParams;
   const initialDate = date ? new Date(date) : new Date();
 
-  // Normalize to start of week (Sunday)
+  // Normalize to start of week (Sunday) in UTC
   const startDate = new Date(initialDate);
-  startDate.setHours(0, 0, 0, 0);
-  startDate.setDate(startDate.getDate() - startDate.getDay());
+  startDate.setUTCHours(0, 0, 0, 0);
+  startDate.setUTCDate(startDate.getUTCDate() - startDate.getUTCDay());
 
   const endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 7);
+  endDate.setUTCDate(endDate.getUTCDate() + 7);
 
   const meals = await getWeeklyMealPlan(session.user.id, startDate);
 
