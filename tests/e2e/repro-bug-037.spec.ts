@@ -22,11 +22,13 @@ test("BUG-037: Meal Planner Preset Delay provides UI feedback", async ({
   });
 
   // Click Breakfast
-  const breakfastBtn = page.locator('button:has-text("Breakfast")');
+  const breakfastBtn = page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Breakfast" });
   await breakfastBtn.click();
 
   // Check if it shows some loading state (text changing to "Adding...")
-  const addingBtn = page.locator('button:has-text("Adding...")');
+  const addingBtn = page.locator('button:has-text("Adding...")').first();
   await expect(addingBtn).toBeVisible();
   await expect(addingBtn).toBeDisabled();
 });

@@ -73,7 +73,9 @@ export async function generateShoppingList(
           const quantity = component.quantity * pr.scale;
 
           const ingredientStore = component.ingredient.lastPurchasedStore;
-          const department = component.ingredient.department || determineDepartment(component.ingredient.name);
+          const department =
+            component.ingredient.department ||
+            determineDepartment(component.ingredient.name);
 
           if (!aggregateNeeds[key]) {
             aggregateNeeds[key] = {
@@ -174,7 +176,9 @@ export async function generateShoppingList(
       if (deficit > 0) {
         if (!thresholdNeeds[item.ingredientId]) {
           const ingredientStore = item.ingredient.lastPurchasedStore;
-          const department = item.ingredient.department || determineDepartment(item.ingredient.name);
+          const department =
+            item.ingredient.department ||
+            determineDepartment(item.ingredient.name);
           thresholdNeeds[item.ingredientId] = {
             name: item.ingredient.name,
             deficit: convert(deficit, item.unit, item.unit, stock.portions),
@@ -217,7 +221,13 @@ export async function generateShoppingList(
 
   for (const item of manualItems) {
     // Filter out recurring items whose lastPurchasedAt is within or after the current viewing window (startDate)
-    if (item.isRecurring && item.lastPurchasedAt && item.lastPurchasedAt >= startDate) {
+    const startOfDayDate = new Date(startDate);
+    startOfDayDate.setHours(0, 0, 0, 0);
+    if (
+      item.isRecurring &&
+      item.lastPurchasedAt &&
+      item.lastPurchasedAt >= startOfDayDate
+    ) {
       continue;
     }
 
@@ -282,7 +292,7 @@ export async function completeShop(
     quantity: number;
     unit: string;
     reason: "meal-plan" | "low-stock" | "manual";
-  }[]
+  }[],
 ) {
   return prisma.$transaction(async (tx) => {
     for (const item of items) {
@@ -324,10 +334,16 @@ export async function completeShop(
         });
 
         if (existingPantryItem) {
-          const portions = existingPantryItem.ingredient.foodPortions as unknown as USDAFoodPortion[];
+          const portions = existingPantryItem.ingredient
+            .foodPortions as unknown as USDAFoodPortion[];
           let qtyToAdd = item.quantity;
           if (canConvert(item.unit, existingPantryItem.unit, portions)) {
-            qtyToAdd = convert(item.quantity, item.unit, existingPantryItem.unit, portions);
+            qtyToAdd = convert(
+              item.quantity,
+              item.unit,
+              existingPantryItem.unit,
+              portions,
+            );
           }
           await tx.pantryItem.update({
             where: { id: existingPantryItem.id },

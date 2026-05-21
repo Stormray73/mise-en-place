@@ -59,8 +59,29 @@ export async function GET(request: NextRequest) {
     const apiKey = process.env.USDA_API_KEY;
     let usdaFoods: (Record<string, unknown> | OFFNormalizedFood)[] = [];
 
-    // Search USDA if not explicitly searching branded only, and USDA key is configured
-    if (!branded && apiKey) {
+    if (process.env.ENABLE_MSW === "true") {
+      usdaFoods = [
+        {
+          fdcId: 1103332,
+          description: "Tomatoes, red, ripe, raw, year round average",
+          foodCategory: "Vegetables and Vegetable Products",
+          source: "USDA",
+          foodNutrients: [
+            { nutrientName: "Energy", value: 18 },
+            { nutrientName: "Protein", value: 0.88 },
+            { nutrientName: "Total lipid (fat)", value: 0.2 },
+            { nutrientName: "Carbohydrate, by difference", value: 3.89 },
+          ],
+        },
+        {
+          fdcId: 1103333,
+          description: "Salt, table",
+          foodCategory: "Spices and Herbs",
+          source: "USDA",
+          foodNutrients: [],
+        },
+      ];
+    } else if (!branded && apiKey) {
       try {
         const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
         const response = await fetch(url);

@@ -32,19 +32,42 @@ test.describe("Story 12: Advanced Scheduling User Journeys", () => {
 
     // Robust cleanup: Delete all meals for today to start fresh
     const deleteButtons = todaySlot.getByTitle(/delete meal/i);
-    const count = await deleteButtons.count();
-    for (let i = 0; i < count; i++) {
+    while ((await deleteButtons.count()) > 0) {
       const btn = deleteButtons.first();
-      await btn.click();
-      await expect(btn).not.toBeVisible({ timeout: 10000 });
+      const testId = await btn.getAttribute("data-testid");
+      await btn.click({ force: true });
+      if (testId) {
+        await expect(page.getByTestId(testId)).not.toBeVisible({
+          timeout: 10000,
+        });
+      } else {
+        await page.waitForTimeout(500);
+      }
     }
 
     // Add Dinner then Breakfast
     await todaySlot.getByRole("button", { name: /\+ Add Meal/i }).click();
-    await page.getByRole("button", { name: "Dinner" }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Dinner" })
+      .click();
+
+    // Wait for the recipe modal to open, then close it
+    const recipeModal = page.locator(
+      'div[role="dialog"]:has-text("Add Recipe to Meal")',
+    );
+    await expect(recipeModal).toBeVisible({ timeout: 15000 });
+    await recipeModal.getByRole("button", { name: "×" }).click();
+    await expect(recipeModal).not.toBeVisible({ timeout: 15000 });
 
     await todaySlot.getByRole("button", { name: /\+ Add Meal/i }).click();
-    await page.getByRole("button", { name: "Breakfast" }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Breakfast" })
+      .click();
+    await expect(recipeModal).toBeVisible({ timeout: 15000 });
+    await recipeModal.getByRole("button", { name: "×" }).click();
+    await expect(recipeModal).not.toBeVisible({ timeout: 15000 });
 
     // Verify chronological order: Breakfast should be first
     const firstMeal = todaySlot.locator('div[class*="bg-zinc-800/50"]').first();
@@ -57,13 +80,6 @@ test.describe("Story 12: Advanced Scheduling User Journeys", () => {
       .first()
       .click();
     await page.getByRole("button", { name: uniqueTitle }).first().click();
-
-    // Find the specific row for our recipe to avoid strict mode issues
-    const recipeRow = todaySlot
-      .locator('div[data-testid^="planned-recipe-"]')
-      .filter({ hasText: uniqueTitle });
-    const excludeBtn = recipeRow.getByTitle(/include in prep/i);
-    await expect(excludeBtn).toBeVisible();
 
     // Verify it shows up on Dashboard first (as an ingredient)
     await page.goto("/dashboard");
@@ -78,8 +94,14 @@ test.describe("Story 12: Advanced Scheduling User Journeys", () => {
 
     // Go back and exclude it
     await page.goto("/meal-planner");
-    await recipeRow.getByTitle(/include in prep/i).click();
-    await expect(recipeRow.getByTitle(/excluded from prep/i)).toBeVisible();
+    // Open the Edit Meal modal
+    await todaySlot.getByRole("button", { name: "Breakfast" }).click();
+    const modal = page.getByRole("dialog");
+    const excludeCheckbox = modal.getByLabel("Exclude from Prep List (NP)");
+    await expect(excludeCheckbox).toBeVisible();
+    await excludeCheckbox.click();
+    await expect(excludeCheckbox).toBeChecked({ timeout: 15000 });
+    await modal.getByRole("button", { name: "Close" }).click();
 
     // Verify it's gone from Dashboard
     await page.goto("/dashboard");

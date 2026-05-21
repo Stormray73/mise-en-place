@@ -28,10 +28,12 @@ test.describe("Web Scraping User Journeys", () => {
     await expect(page.getByLabel(/Yield Amount/i)).toHaveValue("2");
 
     // Verify ingredients
-    const pastaRow = page.locator('div:has-text("Pasta")').first();
+    const pastaRow = page
+      .locator("div.bg-zinc-800")
+      .filter({ hasText: "Pasta" })
+      .first();
     await expect(pastaRow).toBeVisible();
-    await expect(pastaRow.locator('input[type="number"]').first()).toHaveValue(
-      "200",
-    );
+    await expect(pastaRow).toContainText("200");
+    await expect(pastaRow).toContainText("g");
   });
 });

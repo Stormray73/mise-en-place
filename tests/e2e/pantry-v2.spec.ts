@@ -46,17 +46,33 @@ test.describe("Story 14: Pantry & Shopping v2 User Journeys", () => {
 
     // Add recurring item
     await page.getByPlaceholder(/What do you need/i).fill(recurringItem);
-    await page.getByLabel(/Mark as Recurring/i).check();
+    await page.getByLabel(/Recurring/i).check();
     await page.getByRole("button", { name: /Add to List/i }).click();
 
     await expect(page.getByText(recurringItem)).toBeVisible();
     await expect(page.getByText(/Manual/i).first()).toBeVisible();
 
-    // Check off - should NOT disappear
-    await page
-      .getByRole("button", { name: /Remove/i })
-      .first()
-      .click();
-    await expect(page.getByText(recurringItem)).toBeVisible();
+    // Enter Shopping Mode
+    await page.getByRole("button", { name: /Go Shopping/i }).click();
+
+    // Check off the recurring item
+    const itemRow = page
+      .locator("div.flex.justify-between.items-center", {
+        hasText: recurringItem,
+      })
+      .first();
+    await itemRow.locator('input[type="checkbox"]').click();
+
+    // Complete shop
+    await page.getByRole("button", { name: /Complete Shop/i }).click();
+
+    // In current week, it should be completed and gone
+    await expect(page.getByText(recurringItem)).not.toBeVisible({
+      timeout: 10000,
+    });
+
+    // Go to next week - it should reappear!
+    await page.getByRole("button", { name: /Next Week/i }).click();
+    await expect(page.getByText(recurringItem)).toBeVisible({ timeout: 15000 });
   });
 });

@@ -67,3 +67,23 @@ Specifically, you MUST update the relevant `GEMINI.md` when your change:
 - **Introduces** a new testing file or changes the testing strategy for a domain
 
 If no `GEMINI.md` exists for a directory you modified and the directory is substantial enough to warrant one, create it. Use the existing domain GEMINI.md files as templates.
+
+## 7. Automated Story Lifecycle & Completion
+
+To completely automate project management and ensure zero manual overhead for the developer, agents MUST update user story files directly in the codebase as they implement features.
+
+### A. Marking Active Stories
+
+- Before starting work on any story, locate its markdown file in `docs/upcoming-stories/v1/`.
+- Mark the story's overall status or active sub-tasks as `[/]` (in-progress) in the workspace to indicate implementation has begun.
+
+### B. Checking Off Acceptance Criteria (AC)
+
+- As soon as a story's acceptance criteria are fully met and verified (via passing unit and E2E tests), edit the respective epic file in `docs/upcoming-stories/v1/` to change the corresponding checkbox from `- [ ]` to `- [x]`.
+
+### C. Archiving Completed Epics
+
+- When **all** stories and ACs in an epic file (e.g., `docs/upcoming-stories/v1/MY_FEATURE.md`) are 100% completed:
+  1. Move the file from `docs/upcoming-stories/v1/` to `docs/completed-stories/` (preserving its name).
+  2. Locate `docs/ROADMAP.md` and move the epic from the **Active** list to the **Completed Features** section at the bottom.
+  3. Ensure that any new design invariants, component additions, or file directories are documented in the respective local `GEMINI.md` (see Section 6).

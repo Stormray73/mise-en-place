@@ -10,7 +10,12 @@ test("BUG-038: Duplicate Meal Presets on the same day are prevented", async ({
   await page.waitForSelector("text=Add Meal Slot");
 
   // Click Breakfast
-  await page.locator('button:has-text("Breakfast")').click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Breakfast" })
+    .click();
+  // Close the auto-opened recipe modal
+  await page.getByRole("button", { name: "×" }).click();
 
   // Wait for it to be added
   await expect(page.locator("text=Breakfast").first()).toBeVisible();
@@ -19,7 +24,10 @@ test("BUG-038: Duplicate Meal Presets on the same day are prevented", async ({
   const dialogPromise = page.waitForEvent("dialog");
   await page.locator('button:has-text("+ Add Meal")').first().click();
   await page.waitForSelector("text=Add Meal Slot");
-  await page.locator('button:has-text("Breakfast")').click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Breakfast" })
+    .click();
 
   const dialog = await dialogPromise;
   expect(dialog.message()).toContain("already exists");

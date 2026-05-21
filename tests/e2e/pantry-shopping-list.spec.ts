@@ -109,12 +109,12 @@ test.describe("Pantry & Shopping List", () => {
       .first();
     await expect(itemCard).toBeVisible();
 
-    // Click -1
-    await itemCard.getByRole("button", { name: "-1" }).click();
+    // Click -
+    await itemCard.getByRole("button", { name: "-" }).click();
     await expect(itemCard.locator(".text-2xl")).toContainText(/9\s*lb/i);
 
-    // Click Finish
-    await itemCard.getByRole("button", { name: /Finish/i }).click();
+    // Click Mark as Used
+    await itemCard.getByLabel(/Mark as Used/i).click();
 
     // It should be 0 and hidden by default
     await expect(itemCard).not.toBeVisible({ timeout: 10000 });
@@ -130,18 +130,42 @@ test.describe("Pantry & Shopping List", () => {
     await page.goto("/dashboard/shopping-list");
     await page.getByRole("button", { name: /Update List/i }).click();
 
-    // Check if there are items to buy
-    const buyButton = page.getByRole("button", { name: /^Buy$/i }).first();
-    if (await buyButton.isVisible()) {
-      const itemName = await page.locator("h3").first().textContent();
-      await buyButton.click();
-      await expect(
-        page.getByRole("button", { name: /Purchased/i }).first(),
-      ).toBeVisible();
+    // Check if there are items to buy in Active Shopping mode
+    const goShoppingBtn = page.getByRole("button", { name: /Go Shopping/i });
+    if (await goShoppingBtn.isVisible()) {
+      await goShoppingBtn.click();
 
-      // 4. Verify in Pantry
-      await page.goto("/dashboard/pantry");
-      await expect(page.getByText(itemName!).first()).toBeVisible();
+      // Locate the first actual shopping item card that is NOT a manual item
+      const itemRow = page
+        .locator("div.flex.justify-between.items-center")
+        .filter({
+          has: page.locator('input[type="checkbox"]'),
+        })
+        .filter({
+          hasNot: page.locator('span:has-text("Manual")'),
+        })
+        .first();
+
+      if (await itemRow.isVisible()) {
+        const checkbox = itemRow.locator('input[type="checkbox"]');
+        const itemName = await itemRow.locator("h4").textContent();
+        // Check the checkbox for this item
+        await checkbox.click();
+
+        // Complete the shop
+        await page.getByRole("button", { name: /Complete Shop/i }).click();
+
+        // Wait for checkout/transition to finish (Go Shopping button is visible again)
+        await expect(
+          page.getByRole("button", { name: /Go Shopping/i }),
+        ).toBeVisible({ timeout: 15000 });
+
+        // Verify the item is now in the Pantry
+        await page.goto("/dashboard/pantry");
+        await expect(page.getByText(itemName!.trim()).first()).toBeVisible({
+          timeout: 15000,
+        });
+      }
     }
   });
 
@@ -159,10 +183,7 @@ test.describe("Pantry & Shopping List", () => {
 
     // Wait for ingredient to be added to UI
     await expect(
-      page
-        .locator("div.bg-zinc-800")
-        .filter({ hasText: uniqueIngName })
-        .locator('input[type="number"]'),
+      page.locator("div.bg-zinc-800").filter({ hasText: uniqueIngName }),
     ).toBeVisible({ timeout: 20000 });
 
     await page.getByRole("button", { name: /Save Recipe/i }).click();
