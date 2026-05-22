@@ -155,6 +155,11 @@ test.describe("Pantry & Shopping List", () => {
         // Complete the shop
         await page.getByRole("button", { name: /Complete Shop/i }).click();
 
+        // Confirm checkout in the modal
+        await page
+          .getByRole("button", { name: /Yes, Commit to Pantry/i })
+          .click();
+
         // Wait for checkout/transition to finish (Go Shopping button is visible again)
         await expect(
           page.getByRole("button", { name: /Go Shopping/i }),

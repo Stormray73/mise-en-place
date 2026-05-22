@@ -66,6 +66,9 @@ test.describe("Story 14: Pantry & Shopping v2 User Journeys", () => {
     // Complete shop
     await page.getByRole("button", { name: /Complete Shop/i }).click();
 
+    // Confirm checkout in the modal
+    await page.getByRole("button", { name: /Yes, Commit to Pantry/i }).click();
+
     // In current week, it should be completed and gone
     await expect(page.getByText(recurringItem)).not.toBeVisible({
       timeout: 10000,
