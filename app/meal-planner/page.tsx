@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getWeeklyMealPlan } from "@/lib/meal-plans";
+import { getWeeklyMealPlan, getPrepAheadData } from "@/lib/meal-plans";
 import Link from "next/link";
 import MealCalendarClient from "./MealCalendarClient";
 import PrepAheadDashboard from "./PrepAheadDashboard";
@@ -28,6 +28,11 @@ export default async function MealPlannerPage({
   endDate.setUTCDate(endDate.getUTCDate() + 7);
 
   const meals = await getWeeklyMealPlan(session.user.id, startDate);
+  const prepAheadData = await getPrepAheadData(
+    session.user.id,
+    startDate,
+    endDate,
+  );
 
   const allRecipes = await prisma.recipe.findMany({
     where: { userId: session.user.id },
@@ -46,6 +51,8 @@ export default async function MealPlannerPage({
       <PrepAheadDashboard
         startDate={startDate.toISOString()}
         endDate={endDate.toISOString()}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        initialData={prepAheadData as any}
       />
 
       <MealCalendarClient

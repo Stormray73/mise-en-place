@@ -94,6 +94,93 @@ describe("Recipe Logic", () => {
       const macros = await calculateMacros(mainRecipe);
       expect(macros.calories).toBe(260);
     });
+
+    it("should calculate macros for discrete designations using USDA portions if available", async () => {
+      const blackBeansMacros: Macros = {
+        calories: 130,
+        protein: 8,
+        fat: 0.5,
+        carbs: 20,
+      };
+      const recipe: Partial<Recipe> = {
+        components: [
+          {
+            type: "ingredient",
+            ingredientId: "i3",
+            id: "3",
+            recipeId: "r3",
+            quantity: 2,
+            unit: "can",
+            ingredient: {
+              id: "i3",
+              name: "Black Beans",
+              baseMacros: blackBeansMacros as unknown,
+              baseAmount: 100,
+              foodPortions: [
+                {
+                  gramWeight: 260,
+                  modifier: "1 can",
+                  amount: 1,
+                  measureUnitName: "can",
+                },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ] as any,
+            },
+          },
+        ],
+      };
+
+      const macros = await calculateMacros(recipe);
+      // 2 cans * 260g/can = 520g total
+      // 520g / 100g baseAmount = 5.2 ratio
+      // 130 * 5.2 = 676 calories
+      // 8 * 5.2 = 41.6 protein
+      expect(macros.calories).toBeCloseTo(676);
+      expect(macros.protein).toBeCloseTo(41.6);
+    });
+
+    it("should calculate macros for discrete designations using fallbacks if USDA portions are not matched", async () => {
+      const seasoningMacros: Macros = {
+        calories: 300,
+        protein: 10,
+        fat: 2,
+        carbs: 60,
+      };
+      const recipe: Partial<Recipe> = {
+        components: [
+          {
+            type: "ingredient",
+            ingredientId: "i4",
+            id: "4",
+            recipeId: "r4",
+            quantity: 3,
+            unit: "packet",
+            ingredient: {
+              id: "i4",
+              name: "Taco Seasoning",
+              baseMacros: seasoningMacros as unknown,
+              baseAmount: 100,
+              foodPortions: [], // No matching portions
+            },
+          },
+        ],
+      };
+
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
+
+      const macros = await calculateMacros(recipe);
+      // fallback weight for packet is 10g
+      // 3 packets * 10g/packet = 30g total
+      // 30g / 100g baseAmount = 0.3 ratio
+      // 300 * 0.3 = 90 calories
+      // 10 * 0.3 = 3 protein
+      expect(macros.calories).toBeCloseTo(90);
+      expect(macros.protein).toBeCloseTo(3);
+      expect(consoleWarnSpy).toHaveBeenCalled();
+      consoleWarnSpy.mockRestore();
+    });
   });
 
   describe("saveRecipe", () => {

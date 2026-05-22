@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { RecipeSaveData } from "@/types";
 import { parseIngredients } from "./ai-parser";
+import { normalizeUnitAndQuantity } from "./units";
 
 interface LDRecipe {
   "@type": string | string[];
@@ -182,16 +183,19 @@ export async function scrapeRecipe(url: string): Promise<RecipeSaveData> {
     yieldUnit,
     servings,
     steps: steps,
-    components: parsedIngredients.map((ing) => ({
-      type: "ingredient" as const,
-      quantity: ing.quantity,
-      unit: ing.unit,
-      ingredientId: null,
-      ingredient: {
-        name: ing.name,
-      },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      prepState: (ing as any).prepState,
-    })),
+    components: parsedIngredients.map((ing) => {
+      const normalized = normalizeUnitAndQuantity(ing.quantity, ing.unit);
+      return {
+        type: "ingredient" as const,
+        quantity: normalized.quantity,
+        unit: normalized.unit,
+        ingredientId: null,
+        ingredient: {
+          name: ing.name,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        prepState: (ing as any).prepState,
+      };
+    }),
   };
 }

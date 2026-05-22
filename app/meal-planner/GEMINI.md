@@ -17,6 +17,9 @@ Handles the scheduling of recipes into meals, leftovers management, and prep-ahe
 - **Single Plan:** Users currently have one active `MealPlan` record which serves as the container for all `Meal` entities.
 - **Leftovers:** `PlannedRecipe` can be marked as `isLeftoverSource` and linked to child recipes via `sourcePlannedRecipeId`.
 - **Calendar Timezone and Week Start:** The calendar displays the week starting on Sunday. To avoid local timezone shifts (e.g. negative browser offsets showing Saturday first), both server normalization and client rendering must operate timezone-neutrally using UTC date operations (`setUTCDate`, `getUTCDay`, `setUTCHours`) and rendering formatters configured with `timeZone: "UTC"`.
+- **Prep List Dismissal UX:** Support "Dismiss" for prep items with a warning confirmation modal. Checking "Do not show this warning again during this session" suppresses the modal for subsequent dismissals using session-persisted client-side state.
+- **Recipe Slot Duplication Block:** Server actions and database constraints prevent adding the exact same recipe multiple times to the same meal slot on a single day.
+- **Prep-Ahead Synchronization:** Deleting a recipe from a planned meal slot immediately and dynamically recalculates the Prep Ahead dashboard items, preventing stale prep items from remaining visible.
 
 ## Testing Strategy
 

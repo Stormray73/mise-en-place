@@ -102,4 +102,44 @@ describe("RecipeView", () => {
       expect(screen.getByText("1000 g")).toBeInTheDocument();
     });
   });
+
+  test("renders to taste and optional ingredients correctly", () => {
+    const customRecipe = {
+      ...mockRecipe,
+      components: [
+        {
+          type: "ingredient" as const,
+          ingredientId: "i1",
+          id: "c1",
+          quantity: 0,
+          unit: "g",
+          ingredient: { id: "i1", name: "Salt" },
+          recipeId: "r1",
+          isToTaste: true,
+          isOptional: false,
+        },
+        {
+          type: "ingredient" as const,
+          ingredientId: "i2",
+          id: "c2",
+          quantity: 2,
+          unit: "tbsp",
+          ingredient: { id: "i2", name: "Parsley" },
+          recipeId: "r1",
+          isToTaste: false,
+          isOptional: true,
+        },
+      ],
+    };
+
+    render(<RecipeView recipe={customRecipe} macros={mockMacros} />);
+
+    // Salt should show "To Taste" and NOT show "0 g"
+    expect(screen.getByText("Salt")).toBeInTheDocument();
+    expect(screen.getByText("To Taste")).toBeInTheDocument();
+
+    // Parsley should show "Parsley (optional)" and quantity "2 tbsp"
+    expect(screen.getByText("Parsley (optional)")).toBeInTheDocument();
+    expect(screen.getByText("2 tbsp")).toBeInTheDocument();
+  });
 });

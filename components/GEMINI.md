@@ -59,17 +59,18 @@ Contains all reusable React components consumed by pages across the app. These a
 
 Custom-built, unstyled base components (not from an external library):
 
-| File               | Purpose                                                               |
-| :----------------- | :-------------------------------------------------------------------- |
-| `Autocomplete.tsx` | Dropdown input with async search support. Used by `IngredientSearch`. |
-| `Button.tsx`       | Styled button with variant and size props.                            |
-| `Card.tsx`         | Content card wrapper.                                                 |
-| `Input.tsx`        | Styled text input.                                                    |
-| `Modal.tsx`        | Accessible modal dialog wrapper (focus trap, backdrop).               |
-| `Select.tsx`       | Styled native `<select>` wrapper.                                     |
+| File               | Purpose                                                                                                                                                                                   |
+| :----------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Autocomplete.tsx` | Dropdown input with async search support, including full keyboard accessibility (Arrow keys, Enter to select, Escape to dismiss) and API Match status checks. Used by `IngredientSearch`. |
+| `Button.tsx`       | Styled button with variant and size props.                                                                                                                                                |
+| `Card.tsx`         | Content card wrapper.                                                                                                                                                                     |
+| `Input.tsx`        | Styled text input.                                                                                                                                                                        |
+| `Modal.tsx`        | Accessible modal dialog wrapper (focus trap, backdrop).                                                                                                                                   |
+| `Select.tsx`       | Styled native `<select>` wrapper.                                                                                                                                                         |
 
 ## Invariants & Constraints
 
 - Components **must not** import directly from each other's parent page/route directories.
 - All data mutation calls go through Server Actions in the relevant `actions.ts` file, not inline fetch calls.
+- `Autocomplete.tsx` supports full keyboard navigation (arrow keys to highlight, Enter to select, Escape to dismiss). When selection matches an API returned item, it preserves the selection inside the dropdown field and displays a green checkmark next to the name to clearly signify a successful API match.
 - `RecipePlayMode.tsx` is the **only** component that calls `deductFromPantry` — do not duplicate this logic elsewhere.

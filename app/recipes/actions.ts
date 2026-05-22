@@ -17,7 +17,11 @@ import {
   ActionResult,
   USDAFoodPortion,
 } from "@/types";
-import { upsertIngredient, matchIngredientFuzzy } from "@/lib/ingredients";
+import {
+  upsertIngredient,
+  matchIngredientFuzzy,
+  cleanIngredientName,
+} from "@/lib/ingredients";
 import { deductRecipeIngredients } from "@/lib/pantry";
 import { scrapeRecipe } from "@/lib/scraper";
 import { parseBulkRecipes, parseRecipeFromImage } from "@/lib/ai-parser";
@@ -149,22 +153,68 @@ export async function importRecipeAction(
       }
     }
 
-    // Resolve fuzzy matching for all imported recipe ingredients
+    // Fetch all of user's existing recipes first to resolve sub-recipes
+    const userRecipes = await prisma.recipe.findMany({
+      where: { userId: session.user.id },
+      select: { id: true, title: true },
+    });
+
+    const findMatchingRecipe = (
+      ingredientName: string,
+      allRecipes: { id: string; title: string }[],
+    ) => {
+      const trimmedIng = ingredientName.trim().toLowerCase();
+      const directMatch = allRecipes.find(
+        (r) => r.title.trim().toLowerCase() === trimmedIng,
+      );
+      if (directMatch) return directMatch;
+
+      const cleanedIng = cleanIngredientName(ingredientName);
+      if (!cleanedIng) return null;
+      return allRecipes.find((r) => {
+        const cleanedTitle = cleanIngredientName(r.title);
+        return cleanedTitle === cleanedIng;
+      });
+    };
+
+    // Resolve fuzzy matching or sub-recipe matching for all imported recipe ingredients
     recipes = await Promise.all(
       recipes.map(async (recipe) => {
         const components = await Promise.all(
           recipe.components.map(async (c) => {
-            if (c.type === "ingredient" && c.ingredient && !c.ingredientId) {
-              const match = await matchIngredientFuzzy(c.ingredient.name);
-              return {
-                ...c,
-                ingredientId: match.ingredientId,
-                ingredient: {
-                  ...c.ingredient,
-                  ...match.ingredient,
-                },
-                needsReview: match.needsReview,
-              };
+            if (c.type === "ingredient" && c.ingredient) {
+              // 1. Check if it matches a sub-recipe
+              const matchedRecipe = findMatchingRecipe(
+                c.ingredient.name,
+                userRecipes,
+              );
+              if (matchedRecipe) {
+                return {
+                  type: "sub-recipe" as const,
+                  quantity: c.quantity,
+                  unit: c.unit,
+                  childRecipeId: matchedRecipe.id,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  childRecipe: { title: matchedRecipe.title } as any,
+                  prepState: c.prepState,
+                  isToTaste: !!c.isToTaste,
+                  isOptional: !!c.isOptional,
+                };
+              }
+
+              // 2. Standard fuzzy match if not a sub-recipe
+              if (!c.ingredientId) {
+                const match = await matchIngredientFuzzy(c.ingredient.name);
+                return {
+                  ...c,
+                  ingredientId: match.ingredientId,
+                  ingredient: {
+                    ...c.ingredient,
+                    ...match.ingredient,
+                  },
+                  needsReview: match.needsReview,
+                };
+              }
             }
             return c;
           }),
@@ -190,7 +240,8 @@ export async function importRecipeAction(
         return { success: false, error: limitCheck.error || "Limit exceeded" };
       }
 
-      await Promise.all(
+      // Save draft recipes in DB
+      const savedRecipes = await Promise.all(
         recipes.map(async (r) => {
           const recipeData = {
             ...r,
@@ -200,10 +251,59 @@ export async function importRecipeAction(
               ...c,
               ingredientId:
                 c.type === "ingredient" ? c.ingredientId || null : null,
-              childRecipeId: null,
+              childRecipeId:
+                c.type === "sub-recipe" ? c.childRecipeId || null : null,
             })),
           };
           return saveRecipe(null, recipeData);
+        }),
+      );
+
+      // Now fetch updated user recipes (including newly saved drafts) to perform cross-batch sub-recipe linking!
+      const updatedUserRecipes = await prisma.recipe.findMany({
+        where: { userId: session.user.id! },
+        select: { id: true, title: true },
+      });
+
+      // Fetch newly saved recipes with their created components from DB
+      const dbRecipes = await prisma.recipe.findMany({
+        where: {
+          id: { in: savedRecipes.map((sr) => sr.id) },
+        },
+        include: {
+          components: {
+            include: {
+              ingredient: true,
+            },
+          },
+        },
+      });
+
+      // Update any component in database that should now link to another recipe in this batch or library
+      await Promise.all(
+        dbRecipes.map(async (dbRecipe) => {
+          await Promise.all(
+            dbRecipe.components.map(async (component) => {
+              // We only want to convert it to a sub-recipe if it's currently an ingredient component
+              if (component.ingredientId) {
+                const ingName = component.ingredient?.name || "";
+                const matchedRecipe = findMatchingRecipe(
+                  ingName,
+                  updatedUserRecipes,
+                );
+                // Exclude self reference to avoid circular dependency loop
+                if (matchedRecipe && matchedRecipe.id !== dbRecipe.id) {
+                  await prisma.recipeComponent.update({
+                    where: { id: component.id },
+                    data: {
+                      ingredientId: null,
+                      childRecipeId: matchedRecipe.id,
+                    },
+                  });
+                }
+              }
+            }),
+          );
         }),
       );
 

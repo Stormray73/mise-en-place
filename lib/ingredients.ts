@@ -125,13 +125,63 @@ export function getLevenshteinDistance(a: string, b: string): number {
   return tmp[a.length][b.length];
 }
 
+export function cleanIngredientName(name: string): string {
+  if (!name) return "";
+  let cleaned = name.toLowerCase();
+
+  // Remove parenthetical text (e.g., "peanuts (raw)", "beans (drained)")
+  cleaned = cleaned.replace(/\s*\([^)]*\)/g, "");
+
+  // Common adjectives and prep instructions to strip
+  const noiseWords = [
+    "unsalted",
+    "salted",
+    "organic",
+    "chopped",
+    "sliced",
+    "drained",
+    "peeled",
+    "diced",
+    "minced",
+    "fresh",
+    "dried",
+    "ground",
+    "powdered",
+    "large",
+    "medium",
+    "small",
+    "shredded",
+    "grated",
+    "raw",
+    "cooked",
+    "baked",
+    "roasted",
+    "toasted",
+    "boneless",
+    "skinless",
+  ];
+
+  // Replace each noise word with a boundary check to not affect sub-words
+  for (const word of noiseWords) {
+    const regex = new RegExp(`\\b${word}\\b`, "gi");
+    cleaned = cleaned.replace(regex, "");
+  }
+
+  // Clean commas, punctuation, and extra whitespace
+  cleaned = cleaned.replace(/,\s*,/g, ",");
+  cleaned = cleaned.replace(/,\s*$/g, "");
+  cleaned = cleaned.replace(/^,\s*/g, "");
+  cleaned = cleaned.replace(/\s+/g, " ");
+
+  return cleaned.trim();
+}
+
 export function getSimilarity(s1: string, s2: string): number {
-  const m = Math.max(s1.length, s2.length);
+  const clean1 = cleanIngredientName(s1);
+  const clean2 = cleanIngredientName(s2);
+  const m = Math.max(clean1.length, clean2.length);
   if (m === 0) return 1;
-  const dist = getLevenshteinDistance(
-    s1.trim().toLowerCase(),
-    s2.trim().toLowerCase(),
-  );
+  const dist = getLevenshteinDistance(clean1, clean2);
   return 1 - dist / m;
 }
 

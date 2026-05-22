@@ -109,13 +109,9 @@ export default function AddPantryItemModal({
               <div className="text-xs text-zinc-400">{food.foodCategory}</div>
             </>
           )}
+          selectedText={selectedFood?.description}
+          onClearSelection={() => setSelectedFood(null)}
         />
-
-        {selectedFood && (
-          <div className="text-sm text-zinc-400">
-            Selected: {selectedFood.description}
-          </div>
-        )}
 
         <div className="border-t border-zinc-800 pt-4 mt-4">
           <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">
