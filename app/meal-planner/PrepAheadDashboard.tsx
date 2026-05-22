@@ -7,11 +7,18 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { getPrepAheadDataAction, togglePrepCompletionAction, dismissPrepItemAction } from "./actions";
+import {
+  getPrepAheadDataAction,
+  togglePrepCompletionAction,
+  dismissPrepItemAction,
+} from "./actions";
+import Modal from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 
 interface PrepAheadDashboardProps {
   startDate: string;
   endDate: string;
+  initialData?: PrepItem[];
 }
 
 interface PrepItem {
@@ -27,12 +34,40 @@ interface PrepItem {
 export default function PrepAheadDashboard({
   startDate,
   endDate,
+  initialData,
 }: PrepAheadDashboardProps) {
-  const [data, setData] = useState<PrepItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<PrepItem[]>(initialData || []);
+  const [isLoading, setIsLoading] = useState(!initialData);
   const [isPending, startTransition] = useTransition();
 
+  const [showDismissModal, setShowDismissModal] = useState(false);
+  const [itemToDismiss, setItemToDismiss] = useState<PrepItem | null>(null);
+  const [dontShowWarningAgain, setDontShowWarningAgain] = useState(false);
+  const [suppressWarning, setSuppressWarning] = useState(false);
+
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("suppress-prep-dismiss-warning");
+      if (stored === "true") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSuppressWarning(true);
+      }
+    }
+  }, []);
+
+  // Sync data when initialData prop changes (e.g. parent page revalidates)
+  useEffect(() => {
+    if (initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setData(initialData);
+
+      setIsLoading(false);
+    }
+  }, [initialData]);
+
+  useEffect(() => {
+    if (initialData) return;
+
     async function fetchData() {
       setIsLoading(true);
       try {
@@ -52,7 +87,7 @@ export default function PrepAheadDashboard({
       }
     }
     fetchData();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, initialData]);
 
   const handleToggle = (item: PrepItem) => {
     startTransition(async () => {
@@ -80,28 +115,47 @@ export default function PrepAheadDashboard({
     });
   };
 
-  const handleDismiss = (item: PrepItem) => {
-    if (confirm(`Dismiss "${item.name}" from your prep list?`)) {
-      startTransition(async () => {
-        const ingredientId = item.type === "ingredient" ? item.id : null;
-        const childRecipeId = item.type === "recipe" ? item.id : null;
-        await dismissPrepItemAction(ingredientId, childRecipeId, true);
+  const performDismiss = async (item: PrepItem) => {
+    startTransition(async () => {
+      const ingredientId = item.type === "ingredient" ? item.id : null;
+      const childRecipeId = item.type === "recipe" ? item.id : null;
+      await dismissPrepItemAction(ingredientId, childRecipeId, true);
 
-        // Refresh data after dismiss
-        setIsLoading(true);
-        try {
-          const result = await getPrepAheadDataAction(
-            new Date(startDate),
-            new Date(endDate),
-          );
-          if (result.success) {
-            setData(result.data);
-          }
-        } finally {
-          setIsLoading(false);
+      // Refresh data after dismiss
+      setIsLoading(true);
+      try {
+        const result = await getPrepAheadDataAction(
+          new Date(startDate),
+          new Date(endDate),
+        );
+        if (result.success) {
+          setData(result.data);
         }
-      });
+      } finally {
+        setIsLoading(false);
+      }
+    });
+  };
+
+  const handleDismiss = (item: PrepItem) => {
+    if (suppressWarning) {
+      performDismiss(item);
+    } else {
+      setItemToDismiss(item);
+      setShowDismissModal(true);
     }
+  };
+
+  const confirmDismissal = () => {
+    if (itemToDismiss) {
+      if (dontShowWarningAgain) {
+        sessionStorage.setItem("suppress-prep-dismiss-warning", "true");
+        setSuppressWarning(true);
+      }
+      performDismiss(itemToDismiss);
+    }
+    setShowDismissModal(false);
+    setItemToDismiss(null);
   };
 
   if (isLoading) {
@@ -209,6 +263,62 @@ export default function PrepAheadDashboard({
         * Quantities are consolidated across all non-leftover meals in the
         selected range.
       </p>
+
+      {showDismissModal && itemToDismiss && (
+        <Modal
+          title="Confirm Dismissal"
+          onClose={() => {
+            setShowDismissModal(false);
+            setItemToDismiss(null);
+          }}
+        >
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-zinc-300 text-left">
+              Are you sure you want to dismiss{" "}
+              <span className="font-bold text-zinc-100">
+                &ldquo;{itemToDismiss.name}&rdquo;
+              </span>{" "}
+              from your prep list? This will remove the item from this view.
+            </p>
+            <div className="flex items-center gap-2 pt-2">
+              <input
+                type="checkbox"
+                id="dont-show-warning-again"
+                checked={dontShowWarningAgain}
+                onChange={(e) => setDontShowWarningAgain(e.target.checked)}
+                className="w-4 h-4 rounded border-zinc-750 bg-zinc-950 text-blue-600 focus:ring-0 cursor-pointer"
+              />
+              <label
+                htmlFor="dont-show-warning-again"
+                className="text-xs text-zinc-400 cursor-pointer select-none font-medium"
+              >
+                Do not show this warning again during this session
+              </label>
+            </div>
+            <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setShowDismissModal(false);
+                  setItemToDismiss(null);
+                }}
+                className="text-xs text-zinc-400 hover:text-zinc-200"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                onClick={confirmDismissal}
+                className="text-xs px-4 py-2 font-bold"
+              >
+                Dismiss Item
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
