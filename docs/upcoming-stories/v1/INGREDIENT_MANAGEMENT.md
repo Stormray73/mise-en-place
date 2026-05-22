@@ -40,14 +40,25 @@ As a user managing my kitchen, I want an intuitive and consistent interface for 
 - **AC 4:** Clicking the "Edit" button opens a modal that allows the user to modify the item's current quantity, unit, location, and restock threshold.
 - **AC 5:** The overall styling, spacing, and interaction patterns match the `RecipeStore` cards for a unified system-wide experience.
 
+### Story 4: Qualitative Ingredient States ("to taste" and "optional")
+
+As a user browsing recipes, I want to see ingredients marked as "to taste" or "optional" qualitatively rather than as numeric 0 quantities, so that instructions are clear and accurate.
+
+- **AC 1:** The `RecipeComponent` database model is updated to support qualitative flags (`isToTaste: Boolean` and `isOptional: Boolean`).
+- **AC 2:** The `RecipeEditor` ingredient rows provide toggle checkboxes for "To Taste" and "Optional".
+- **AC 3:** If "To Taste" is checked, the quantity input is disabled and the quantity field is rendered as "To Taste" in both the editor and the Recipe Detail View instead of `0`.
+- **AC 4:** If "Optional" is checked, the ingredient name is suffixed with `(optional)` on the recipe card and detail pages.
+
 ## Implementation Plan
 
-1. **Phase 1: Recipe Editor Enhancements**
+1. **Phase 1: Recipe Editor Enhancements & Qualitative States**
+   - Update `RecipeComponent` database schema with `isToTaste` and `isOptional` Boolean fields.
    - Implement the inline edit form for `RecipeEditor`.
    - Implement the `userId` attachment and macro saving logic for dummy conversion.
+   - Add "To Taste" and "Optional" toggle UI controls to the `RecipeEditor`.
 2. **Phase 2: Pantry UI Refactor**
    - Update the `PantryItem` card component with new icons and standardized controls.
    - Implement the `EditPantryItemModal`.
 3. **Phase 3: Validation & Testing**
-   - Write E2E tests for the ingredient editing and dummy conversion flows.
+   - Write E2E tests for the ingredient editing, qualitative states, and dummy conversion flows.
    - Verify consistency across different screen sizes.
