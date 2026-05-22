@@ -10,6 +10,9 @@ import { Input } from "./Input";
 interface AutocompleteProps<T> {
   label?: string;
   placeholder?: string;
+  initialValue?: string;
+  onChange?: (value: string) => void;
+  clearOnSelect?: boolean;
   onSelect: (item: T) => void;
   onSearch: (query: string) => Promise<T[]>;
   renderItem: (item: T) => React.ReactNode;
@@ -22,6 +25,9 @@ interface AutocompleteProps<T> {
 export function Autocomplete<T>({
   label,
   placeholder,
+  initialValue,
+  onChange,
+  clearOnSelect = true,
   onSelect,
   onSearch,
   renderItem,
@@ -30,10 +36,17 @@ export function Autocomplete<T>({
   className = "",
   footerAction,
 }: AutocompleteProps<T>) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialValue || "");
   const [results, setResults] = useState<T[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initialValue !== undefined) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setQuery(initialValue);
+    }
+  }, [initialValue]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -63,6 +76,9 @@ export function Autocomplete<T>({
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
+    if (onChange) {
+      onChange(val);
+    }
 
     if (val.length < minChars) {
       setResults([]);
@@ -82,7 +98,9 @@ export function Autocomplete<T>({
 
   const handleSelect = (item: T) => {
     onSelect(item);
-    setQuery("");
+    if (clearOnSelect) {
+      setQuery("");
+    }
     setResults([]);
   };
 

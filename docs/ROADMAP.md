@@ -46,6 +46,12 @@ The goal of v1.0 is to refine the existing feature set into a rock-solid experie
 - **Admin:** Manual tier override portal for early adopters and admins.
 - **Documentation:** [v1/USER_TIERS.md](docs/upcoming-stories/v1/USER_TIERS.md)
 
+### 7. KitchenCINC Rebranding
+
+- **Rebrand:** Overhaul application brand name, logos, and user-facing copy from "Mise-en-place" to "KitchenCINC" (Chef-in-Chief).
+- **Constraints:** Keep layouts, colors, and walkthrough page sections intact.
+- **Documentation:** [v1/REBRANDING.md](docs/upcoming-stories/v1/REBRANDING.md)
+
 ---
 
 ## v2.0: Stretch Features (Lower Priority)

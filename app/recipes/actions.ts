@@ -366,6 +366,7 @@ export async function saveRecipeAction(
 
     const recipeData = {
       ...data,
+      status: "PUBLISHED" as RecipeStatus,
       userId: session.user.id,
       components: componentsWithIngredients.map((c) => ({
         ...c,

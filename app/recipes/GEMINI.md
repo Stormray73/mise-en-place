@@ -23,6 +23,8 @@ This domain manages the core recipe lifecycle: creation, editing, nutrition calc
 ## Invariants & Constraints
 
 - **Circular Dependencies:** A recipe cannot be added to itself as a sub-recipe.
+- **Draft Promotion:** Saving a recipe via `saveRecipeAction` automatically promotes its status from `"DRAFT"` to `"PUBLISHED"`.
+- **Inline Ingredient Editor:** The recipe editor (`components/ComponentList.tsx`) supports in-place ingredient editing with a waterfall search autocomplete (`/api/usda/search`) and instant macro recalculations in the React state.
 - **Tags:** Tag names are unique per user. They are automatically created when added to a recipe if they don't exist.
 - **Nutrition:** Macros are always stored per `baseAmount` (usually 100g) on the `Ingredient` model and scaled based on component `quantity`.
 - **Yield Units:** Must be supported by `lib/units.ts` for automated conversion.

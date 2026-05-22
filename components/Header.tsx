@@ -28,7 +28,7 @@ export default async function Header() {
               </svg>
             </div>
             <span className="text-xl font-bold tracking-tight text-white sm:inline-block">
-              Mise-en-place
+              KitchenCINC
             </span>
           </Link>
         </div>

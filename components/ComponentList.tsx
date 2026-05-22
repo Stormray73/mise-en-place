@@ -1,9 +1,31 @@
 import { useState } from "react";
-import { RecipeSaveData } from "@/types";
+import { RecipeSaveData, Macros, USDAFood } from "@/types";
 import { getUnits } from "@/lib/units";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { DummyIngredientConverter } from "./DummyIngredientConverter";
+import { Autocomplete } from "./ui/Autocomplete";
+
+const extractMacros = (food: USDAFood): Macros => {
+  const energy =
+    food.foodNutrients.find((n) => n.nutrientName === "Energy")?.value || 0;
+  const protein =
+    food.foodNutrients.find((n) => n.nutrientName === "Protein")?.value || 0;
+  const fat =
+    food.foodNutrients.find((n) => n.nutrientName === "Total lipid (fat)")
+      ?.value || 0;
+  const carbs =
+    food.foodNutrients.find(
+      (n) => n.nutrientName === "Carbohydrate, by difference",
+    )?.value || 0;
+
+  return {
+    calories: energy,
+    protein,
+    fat,
+    carbs,
+  };
+};
 
 interface ComponentListProps {
   components: RecipeSaveData["components"];
@@ -95,12 +117,94 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                   <label className="block text-xs font-semibold text-zinc-400 mb-1">
                     Name
                   </label>
-                  <Input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Ingredient Name"
-                  />
+                  {c.type === "ingredient" ? (
+                    <Autocomplete<USDAFood>
+                      placeholder="Search or type ingredient..."
+                      initialValue={editName}
+                      clearOnSelect={false}
+                      onChange={(val) => setEditName(val)}
+                      onSearch={async (query) => {
+                        const res = await fetch(
+                          `/api/usda/search?q=${encodeURIComponent(query)}`,
+                        );
+                        const data = await res.json();
+                        return data.foods || [];
+                      }}
+                      onSelect={(food) => {
+                        const baseMacros = extractMacros(food);
+                        setEditName(food.description);
+                        updateComponent(i, {
+                          quantity: editQuantity,
+                          unit: editUnit,
+                          prepState: editPrepState || null,
+                          ingredientId: null,
+                          ingredient: {
+                            name: food.description,
+                            usdaId: food.fdcId.toString(),
+                            baseMacros,
+                            baseAmount: food.baseAmount || 100,
+                          },
+                        } as Partial<RecipeSaveData["components"][0]>);
+                      }}
+                      minChars={3}
+                      keyExtractor={(food) => food.fdcId.toString()}
+                      renderItem={(food) => (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium flex items-center gap-2 text-zinc-100 text-left">
+                              <span>{food.description}</span>
+                              {food.source && (
+                                <span
+                                  className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
+                                    food.source === "Local"
+                                      ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                                      : food.source === "OFF"
+                                        ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                                        : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                  }`}
+                                >
+                                  {food.source}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-zinc-400 text-left">
+                              {food.foodCategory}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      footerAction={(query) => (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditName(query);
+                            updateComponent(i, {
+                              quantity: editQuantity,
+                              unit: editUnit,
+                              prepState: editPrepState || null,
+                              ingredientId: null,
+                              ingredient: {
+                                name: query,
+                                usdaId: null,
+                                baseAmount: 100,
+                                baseMacros: null,
+                              },
+                            } as Partial<RecipeSaveData["components"][0]>);
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm text-blue-400 hover:bg-zinc-700 transition-colors"
+                        >
+                          + Use &quot;{query}&quot; as custom/dummy ingredient
+                        </button>
+                      )}
+                    />
+                  ) : (
+                    <Input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Sub-recipe Title"
+                    />
+                  )}
                 </div>
                 <div className="w-24">
                   <label className="block text-xs font-semibold text-zinc-400 mb-1">
