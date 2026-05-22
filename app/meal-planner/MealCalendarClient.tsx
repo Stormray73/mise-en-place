@@ -82,13 +82,14 @@ export default function MealCalendarClient({
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start);
-    d.setDate(d.getDate() + i);
+    d.setUTCDate(d.getUTCDate() + i);
     return d;
   });
 
   const getMealsForDate = (date: Date) => {
+    const dateStr = date.toISOString().split("T")[0];
     return initialMeals.filter(
-      (m) => new Date(m.date).toDateString() === date.toDateString(),
+      (m) => new Date(m.date).toISOString().split("T")[0] === dateStr,
     );
   };
 
@@ -180,7 +181,7 @@ export default function MealCalendarClient({
 
   const navigateWeek = (weeks: number) => {
     const newDate = new Date(start);
-    newDate.setDate(newDate.getDate() + weeks * 7);
+    newDate.setUTCDate(newDate.getUTCDate() + weeks * 7);
     router.push(`${pathname}?date=${newDate.toISOString().split("T")[0]}`);
   };
 
@@ -220,7 +221,9 @@ export default function MealCalendarClient({
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
         {days.map((day, i) => {
           const dailyMacros = getDailyMacros(day);
-          const isToday = day.toDateString() === new Date().toDateString();
+          const isToday =
+            day.toISOString().split("T")[0] ===
+            new Date().toLocaleDateString("en-CA");
           const meals = getMealsForDate(day);
 
           return (
@@ -232,10 +235,16 @@ export default function MealCalendarClient({
               <div className="p-3 border-b border-zinc-800 bg-zinc-950/50 rounded-t-lg flex justify-between items-start">
                 <div>
                   <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                    {day.toLocaleDateString(undefined, { weekday: "short" })}
+                    {day.toLocaleDateString(undefined, {
+                      weekday: "short",
+                      timeZone: "UTC",
+                    })}
                   </p>
                   <p className="text-lg font-bold">
-                    {day.toLocaleDateString(undefined, { day: "numeric" })}
+                    {day.toLocaleDateString(undefined, {
+                      day: "numeric",
+                      timeZone: "UTC",
+                    })}
                   </p>
                 </div>
                 {dailyMacros.calories > 0 && (

@@ -16,6 +16,7 @@ Handles the scheduling of recipes into meals, leftovers management, and prep-ahe
 
 - **Single Plan:** Users currently have one active `MealPlan` record which serves as the container for all `Meal` entities.
 - **Leftovers:** `PlannedRecipe` can be marked as `isLeftoverSource` and linked to child recipes via `sourcePlannedRecipeId`.
+- **Calendar Timezone and Week Start:** The calendar displays the week starting on Sunday. To avoid local timezone shifts (e.g. negative browser offsets showing Saturday first), both server normalization and client rendering must operate timezone-neutrally using UTC date operations (`setUTCDate`, `getUTCDay`, `setUTCHours`) and rendering formatters configured with `timeZone: "UTC"`.
 
 ## Testing Strategy
 

@@ -24,6 +24,14 @@ This document serves as the central registry for bugs and regressions. It is des
 
 ## Resolved Bugs
 
+### BUG-040: Timezone Shift in Meal Planner Week Start
+
+**Status:** Resolved
+**Fix:** Surgically neutralized local timezone offsets on both client and server: used UTC operations (`setUTCHours`, `setUTCDate`, `getUTCDay`, `getUTCDate`) in `app/meal-planner/page.tsx` and `app/meal-planner/MealCalendarClient.tsx` to handle week bounds and generation, utilized timezone-naive ISO string comparisons for matching recipes, and configured `toLocaleDateString` formatters with `timeZone: "UTC"` in the calendar days and `CloneMealModal.tsx`.
+**Verification:** Added a reproducing and passing test suite in `__tests__/components/repro-calendar-timezone.test.tsx` forcing negative timezone offsets.
+
+---
+
 ### BUG-037: Meal Planner Preset Delay
 
 **Status:** Resolved
