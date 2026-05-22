@@ -17,6 +17,7 @@ vi.mock("../../lib/prisma", () => ({
     plannedRecipe: {
       create: vi.fn(),
       update: vi.fn(),
+      findFirst: vi.fn(),
     },
   },
 }));
