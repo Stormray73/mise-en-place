@@ -121,8 +121,9 @@ export default function MealCalendarClient({
     const res = await addRecipeToMealAction(mealId, recipeId);
     if (!res.success) {
       alert(res.error);
+    } else {
+      setIsAddingRecipe(null);
     }
-    setIsAddingRecipe(null);
   };
 
   const handleDeleteMeal = async (mealId: string) => {
