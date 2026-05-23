@@ -569,14 +569,13 @@ export default function ShoppingListClient({
                 activePreset !== "custom" ? "opacity-60 cursor-not-allowed" : ""
               }
             />
-            {activePreset === "custom" ? (
-              <Button
-                onClick={() => updateRangeWithDates(startDate, endDate)}
-                className="w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 font-bold"
-              >
-                Update List
-              </Button>
-            ) : (
+            <Button
+              onClick={() => updateRangeWithDates(startDate, endDate)}
+              className="w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 font-bold"
+            >
+              Update List
+            </Button>
+            {activePreset !== "custom" && (
               <div className="text-xs text-zinc-500 italic text-center pt-2">
                 Dates locked by preset. Select &quot;Custom Range&quot; to edit.
               </div>
