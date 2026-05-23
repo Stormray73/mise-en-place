@@ -46,6 +46,8 @@ export interface RecipeSaveData {
     unit: string;
     prepState?: string | null;
     needsReview?: boolean;
+    isToTaste?: boolean;
+    isOptional?: boolean;
   })[];
 }
 
@@ -142,6 +144,8 @@ export type RecipeComponent = (
   unit: string;
   prepState?: string | null;
   recipeId: string;
+  isToTaste?: boolean;
+  isOptional?: boolean;
 };
 
 export interface Meal {

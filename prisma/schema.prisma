@@ -173,6 +173,8 @@ model RecipeComponent {
   childRecipeId String?
   prepState     String?
   needsReview   Boolean     @default(false)
+  isToTaste     Boolean     @default(false)
+  isOptional    Boolean     @default(false)
   childRecipe   Recipe?     @relation("ChildRecipe", fields: [childRecipeId], references: [id])
   ingredient    Ingredient? @relation(fields: [ingredientId], references: [id])
   recipe        Recipe      @relation("ParentRecipe", fields: [recipeId], references: [id], onDelete: Cascade)

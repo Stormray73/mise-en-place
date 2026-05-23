@@ -46,6 +46,7 @@ export function Autocomplete<T>({
   const [results, setResults] = useState<T[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+  const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,12 +75,14 @@ export function Autocomplete<T>({
         !containerRef.current.contains(event.target as Node)
       ) {
         setResults([]);
+        setIsOpen(false);
       }
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setResults([]);
+        setIsOpen(false);
       }
     }
 
@@ -94,6 +97,7 @@ export function Autocomplete<T>({
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
+    setIsOpen(true);
     if (onChange) {
       onChange(val);
     }
@@ -126,6 +130,7 @@ export function Autocomplete<T>({
     }
     setResults([]);
     setFocusedIndex(-1);
+    setIsOpen(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -153,11 +158,12 @@ export function Autocomplete<T>({
       e.preventDefault();
       setResults([]);
       setFocusedIndex(-1);
+      setIsOpen(false);
     }
   };
 
   const showDropdown =
-    query.length >= minChars && (results.length > 0 || footerAction);
+    isOpen && query.length >= minChars && (results.length > 0 || footerAction);
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
@@ -170,6 +176,7 @@ export function Autocomplete<T>({
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
+          onFocus={() => setIsOpen(true)}
           className={selectedItem ? "pr-10" : ""}
         />
         {selectedItem && (

@@ -40,6 +40,8 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
   const [editUnit, setEditUnit] = useState<string>("");
   const [editName, setEditName] = useState<string>("");
   const [editPrepState, setEditPrepState] = useState<string>("");
+  const [editIsToTaste, setEditIsToTaste] = useState<boolean>(false);
+  const [editIsOptional, setEditIsOptional] = useState<boolean>(false);
 
   const removeComponent = (index: number) => {
     onChange(components.filter((_, i) => i !== index));
@@ -71,6 +73,8 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
         ? comp.ingredient?.name || ""
         : comp.childRecipe?.title || "",
     );
+    setEditIsToTaste(comp.isToTaste || false);
+    setEditIsOptional(comp.isOptional || false);
   };
 
   const cancelEditing = () => {
@@ -80,9 +84,11 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
   const applyEdits = (index: number) => {
     const original = components[index];
     const updates: Record<string, unknown> = {
-      quantity: editQuantity,
+      quantity: editIsToTaste ? 0 : editQuantity,
       unit: editUnit,
       prepState: editPrepState || null,
+      isToTaste: editIsToTaste,
+      isOptional: editIsOptional,
     };
 
     if (original.type === "ingredient") {
@@ -212,11 +218,12 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                   </label>
                   <Input
                     type="number"
-                    value={editQuantity}
+                    value={editIsToTaste ? "" : editQuantity}
                     onChange={(e) =>
                       setEditQuantity(parseFloat(e.target.value) || 0)
                     }
-                    placeholder="Qty"
+                    placeholder={editIsToTaste ? "To Taste" : "Qty"}
+                    disabled={editIsToTaste}
                   />
                 </div>
                 <div className="w-28">
@@ -245,6 +252,33 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                     placeholder="diced, minced..."
                   />
                 </div>
+                {c.type === "ingredient" && (
+                  <div className="flex items-center gap-4 h-10 px-1 mb-0.5">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-zinc-400 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={editIsToTaste}
+                        onChange={(e) => {
+                          setEditIsToTaste(e.target.checked);
+                          if (e.target.checked) {
+                            setEditQuantity(0);
+                          }
+                        }}
+                        className="rounded border-zinc-700 bg-zinc-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-zinc-900 w-4 h-4 cursor-pointer"
+                      />
+                      To Taste
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-zinc-400 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={editIsOptional}
+                        onChange={(e) => setEditIsOptional(e.target.checked)}
+                        className="rounded border-zinc-700 bg-zinc-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-zinc-900 w-4 h-4 cursor-pointer"
+                      />
+                      Optional
+                    </label>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -299,9 +333,11 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                     onSave={(macros, ingredientId) => {
                       updateComponent(i, {
                         ingredientId,
-                        quantity: editQuantity,
+                        quantity: editIsToTaste ? 0 : editQuantity,
                         unit: editUnit,
                         prepState: editPrepState || null,
+                        isToTaste: editIsToTaste,
+                        isOptional: editIsOptional,
                         ingredient: {
                           name: editName,
                           usdaId: null,
@@ -341,11 +377,11 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
               )}
               <div className="truncate text-zinc-200">
                 <span className="font-semibold text-zinc-400 mr-2">
-                  {c.quantity} {c.unit}
+                  {c.isToTaste ? "To Taste" : `${c.quantity} ${c.unit}`}
                 </span>
                 <span className="font-medium text-zinc-100">
                   {c.type === "ingredient"
-                    ? c.ingredient?.name || "Ingredient"
+                    ? `${c.ingredient?.name || "Ingredient"}${c.isOptional ? " (optional)" : ""}`
                     : c.childRecipe?.title || "Sub-recipe"}
                 </span>
                 {c.prepState && (
