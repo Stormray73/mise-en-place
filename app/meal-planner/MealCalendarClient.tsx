@@ -108,12 +108,12 @@ export default function MealCalendarClient({
 
   const handleAddMeal = async (date: Date, slot: string) => {
     const res = await createMealAction(date, slot);
-    if (res.success && res.data) {
+    if (res.success) {
       return { success: true, mealId: res.data.id };
     } else {
       return {
         success: false,
-        error: res.error || "Failed to create meal slot",
+        error: res.error,
       };
     }
   };
