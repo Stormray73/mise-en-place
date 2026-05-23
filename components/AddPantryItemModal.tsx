@@ -101,6 +101,9 @@ export default function AddPantryItemModal({
           placeholder="Search USDA..."
           onSearch={searchUSDA}
           onSelect={setSelectedFood}
+          selectedItem={selectedFood}
+          getOptionLabel={(food) => food.description}
+          onClearSelection={() => setSelectedFood(null)}
           minChars={3}
           keyExtractor={(food) => food.fdcId.toString()}
           renderItem={(food) => (
@@ -110,12 +113,6 @@ export default function AddPantryItemModal({
             </>
           )}
         />
-
-        {selectedFood && (
-          <div className="text-sm text-zinc-400">
-            Selected: {selectedFood.description}
-          </div>
-        )}
 
         <div className="border-t border-zinc-800 pt-4 mt-4">
           <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">
