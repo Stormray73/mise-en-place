@@ -17,9 +17,9 @@ To refine the user interface and user experience across the application, adding 
 
 ### Pantry & Ingredients
 
-- [ ] **Pantry Match Indicator:** When adding an ingredient to the pantry, replace the small text-based label `Selected: [Ingredient Name]` below the input. Instead, preserve the selection inside the dropdown field and display a green checkmark next to the name to clearly signify a successful API match.
-- [ ] **Dropdown Keyboard Accessibility:** Enable full keyboard navigation (Up/Down arrow keys for highlighting, Enter to select, Escape to dismiss) for all ingredient-adding dropdown inputs across the pantry and recipe editing views.
+- [x] **Pantry Match Indicator:** When adding an ingredient to the pantry, replace the small text-based label `Selected: [Ingredient Name]` below the input. Instead, preserve the selection inside the dropdown field and display a green checkmark next to the name to clearly signify a successful API match.
+- [x] **Dropdown Keyboard Accessibility:** Enable full keyboard navigation (Up/Down arrow keys for highlighting, Enter to select, Escape to dismiss) for all ingredient-adding dropdown inputs across the pantry and recipe editing views.
 
 ### Global Navigation
 
-- [ ] **Page Transition Loading Indicator:** Add a subtle visual transition loading indicator (e.g., an animated top progress bar or overlay spinner) during slow network route transitions to reassure the user that the application is actively processing their request.
+- [x] **Page Transition Loading Indicator:** Add a subtle visual transition loading indicator (e.g., an animated top progress bar or overlay spinner) during slow network route transitions to reassure the user that the application is actively processing their request.
