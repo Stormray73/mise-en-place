@@ -326,3 +326,27 @@ export async function cloneMealAction(
     };
   }
 }
+
+export async function dismissPrepItemAction(
+  ingredientId: string | null,
+  childRecipeId: string | null,
+  dismissed: boolean,
+): Promise<ActionResult<void>> {
+  try {
+    const userId = await getUserId();
+    await mealPlanLib.dismissPrepItem(
+      userId,
+      ingredientId,
+      childRecipeId,
+      dismissed,
+    );
+    revalidatePath("/meal-planner");
+    revalidatePath("/dashboard");
+    return { success: true, data: undefined };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}

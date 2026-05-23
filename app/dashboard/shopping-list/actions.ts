@@ -5,8 +5,8 @@ import {
   generateShoppingList,
   addManualShoppingItem,
   deleteManualShoppingItem,
+  completeShop,
 } from "@/lib/shopping-list";
-import { addToPantry } from "@/lib/pantry";
 import { revalidatePath } from "next/cache";
 import { ActionResult } from "@/types";
 import { prisma } from "@/lib/prisma";
@@ -26,17 +26,15 @@ export async function purchaseItemAction(
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  // For now, we just add it to the pantry.
-  // In a more complex system, we might want to update an existing item or ask for a location.
-  // We'll default to "Purchased" location tag.
-  await addToPantry(
-    session.user.id,
-    ingredientId,
-    quantity,
-    unit,
-    undefined,
-    0,
-  );
+  // We can delegate to completeShop with a single item
+  await completeShop(session.user.id, null, [
+    {
+      ingredientId,
+      quantity,
+      unit,
+      reason: "meal-plan", // default fallback
+    },
+  ]);
 
   revalidatePath("/dashboard/pantry");
   revalidatePath("/dashboard/shopping-list");
@@ -48,6 +46,8 @@ export async function addManualShoppingItemAction(
   quantity: number = 1,
   unit?: string,
   isRecurring: boolean = false,
+  storeId?: string | null,
+  recurringInterval?: string | null,
 ): Promise<ActionResult<void>> {
   try {
     const session = await auth();
@@ -59,6 +59,8 @@ export async function addManualShoppingItemAction(
       quantity,
       unit,
       isRecurring,
+      storeId,
+      recurringInterval,
     );
 
     revalidatePath("/dashboard/shopping-list");
@@ -79,18 +81,156 @@ export async function deleteManualShoppingItemAction(
     const session = await auth();
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
-    const item = await prisma.manualShoppingItem.findUnique({
-      where: { id, userId: session.user.id },
-    });
-
-    if (item && !item.isRecurring) {
-      await deleteManualShoppingItem(id, session.user.id);
-    }
-    // If recurring, we just leave it for now.
-    // In a more complex system, we'd track 'checked' state per cycle.
+    await deleteManualShoppingItem(id, session.user.id);
 
     revalidatePath("/dashboard/shopping-list");
     revalidatePath("/dashboard");
+    return { success: true, data: undefined };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function completeShopAction(
+  storeId: string | null,
+  items: {
+    id?: string;
+    ingredientId?: string;
+    quantity: number;
+    unit: string;
+    reason: "meal-plan" | "low-stock" | "manual";
+  }[],
+): Promise<ActionResult<void>> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    await completeShop(session.user.id, storeId, items);
+
+    revalidatePath("/dashboard/pantry");
+    revalidatePath("/dashboard/shopping-list");
+    revalidatePath("/dashboard");
+    return { success: true, data: undefined };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function getStoresAction(): Promise<
+  ActionResult<{ id: string; name: string }[]>
+> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    const stores = await prisma.store.findMany({
+      where: { userId: session.user.id },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    });
+
+    return { success: true, data: stores };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function createStoreAction(
+  name: string,
+): Promise<ActionResult<{ id: string; name: string }>> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    const store = await prisma.store.create({
+      data: {
+        name,
+        userId: session.user.id,
+      },
+      select: { id: true, name: true },
+    });
+
+    revalidatePath("/dashboard/shopping-list");
+    return { success: true, data: store };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function deleteStoreAction(
+  id: string,
+): Promise<ActionResult<void>> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    await prisma.store.delete({
+      where: { id, userId: session.user.id },
+    });
+
+    revalidatePath("/dashboard/shopping-list");
+    return { success: true, data: undefined };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function assignStoreToIngredientAction(
+  ingredientId: string,
+  storeId: string | null,
+): Promise<ActionResult<void>> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    await prisma.ingredient.update({
+      where: { id: ingredientId },
+      data: {
+        lastPurchasedStoreId: storeId,
+      },
+    });
+
+    revalidatePath("/dashboard/shopping-list");
+    return { success: true, data: undefined };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function assignStoreToManualItemAction(
+  manualItemId: string,
+  storeId: string | null,
+): Promise<ActionResult<void>> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    await prisma.manualShoppingItem.update({
+      where: { id: manualItemId, userId: session.user.id },
+      data: {
+        storeId,
+      },
+    });
+
+    revalidatePath("/dashboard/shopping-list");
     return { success: true, data: undefined };
   } catch (error: unknown) {
     return {

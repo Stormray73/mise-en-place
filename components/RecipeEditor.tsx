@@ -5,6 +5,7 @@ import {
   saveRecipeAction,
   getTagsAction,
   checkR2ConfiguredAction,
+  importRecipeAction,
 } from "@/app/recipes/actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getUnits } from "@/lib/units";
@@ -46,6 +47,7 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
   const [importUrl, setImportUrl] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isR2Enabled, setIsR2Enabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -205,6 +207,8 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
       return;
     }
 
+    setIsSaving(true);
+
     const filteredSteps = steps
       .filter((s) => s.instruction.trim() !== "")
       .map((s, i) => ({ ...s, order: i + 1 }));
@@ -239,6 +243,7 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
         router.push("/recipes");
       } else {
         setError(result.error);
+        setIsSaving(false);
       }
     } catch (err: unknown) {
       console.error("Failed to save recipe:", err);
@@ -247,6 +252,7 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
           ? err.message
           : "Failed to save recipe. Please try again.";
       setError(message);
+      setIsSaving(false);
     }
   };
 
@@ -508,8 +514,13 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
       </div>
 
       <div className="pt-8 border-t border-zinc-800 flex justify-end">
-        <Button type="button" onClick={handleSave} size="lg">
-          Save Recipe
+        <Button
+          type="button"
+          onClick={handleSave}
+          size="lg"
+          disabled={isSaving}
+        >
+          {isSaving ? "Saving..." : "Save Recipe"}
         </Button>
       </div>
     </Card>

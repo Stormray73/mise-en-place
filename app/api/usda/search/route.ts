@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { JsonValue } from "@prisma/client/runtime/library";
+import { searchOpenFoodFacts, OFFNormalizedFood } from "@/lib/off";
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,6 +41,7 @@ export async function GET(request: NextRequest) {
           userId: ing.userId,
           baseAmount: ing.baseAmount,
           foodPortions: (ing.foodPortions as JsonValue) || [],
+          source: "Local",
           foodNutrients: [
             { nutrientName: "Energy", value: macros.calories || 0 },
             { nutrientName: "Protein", value: macros.protein || 0 },
@@ -53,29 +55,65 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const branded = searchParams.get("branded") === "true";
     const apiKey = process.env.USDA_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "USDA API key not configured" },
-        { status: 500 },
-      );
+    let usdaFoods: (Record<string, unknown> | OFFNormalizedFood)[] = [];
+
+    if (process.env.ENABLE_MSW === "true") {
+      usdaFoods = [
+        {
+          fdcId: 1103332,
+          description: "Tomatoes, red, ripe, raw, year round average",
+          foodCategory: "Vegetables and Vegetable Products",
+          source: "USDA",
+          foodNutrients: [
+            { nutrientName: "Energy", value: 18 },
+            { nutrientName: "Protein", value: 0.88 },
+            { nutrientName: "Total lipid (fat)", value: 0.2 },
+            { nutrientName: "Carbohydrate, by difference", value: 3.89 },
+          ],
+        },
+        {
+          fdcId: 1103333,
+          description: "Salt, table",
+          foodCategory: "Spices and Herbs",
+          source: "USDA",
+          foodNutrients: [],
+        },
+      ];
+    } else if (!branded && apiKey) {
+      try {
+        const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          usdaFoods = (data.foods || []).map(
+            (food: Record<string, unknown>) => ({
+              ...food,
+              source: "USDA",
+            }),
+          );
+        }
+      } catch (err) {
+        console.error("USDA fetch failed:", err);
+      }
     }
 
-    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: `Failed to fetch data from USDA: ${response.statusText}` },
-        { status: response.status },
-      );
+    // Waterfall to Open Food Facts if USDA returned no results, or if specifically looking for branded items,
+    // or if USDA API key is not configured.
+    if (usdaFoods.length === 0 || branded) {
+      try {
+        const offFoods = await searchOpenFoodFacts(query);
+        usdaFoods = offFoods; // already mapped with source: "OFF"
+      } catch (err) {
+        console.error("Open Food Facts search failed:", err);
+      }
     }
 
-    const data = await response.json();
-    data.foods = [...customIngredients, ...(data.foods || [])];
-    return NextResponse.json(data);
+    const foods = [...customIngredients, ...usdaFoods];
+    return NextResponse.json({ foods });
   } catch (error) {
-    console.error("USDA Proxy Error:", error);
+    console.error("Ingredient Search Error:", error);
     return NextResponse.json(
       {
         error: "Internal Server Error",

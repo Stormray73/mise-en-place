@@ -44,6 +44,15 @@ Currently, when a recipe is imported via URL, Text, or Image, the AI successfull
 - **AC 2:** The Open Food Facts API response is normalized into the existing `USDAFood` interface (mapping energy to calories, proteins, fats, carbs, and extracting portion sizes if available) so the frontend requires no changes to handle the new data source.
 - **AC 3:** The search dropdown clearly indicates the source of the data (e.g., a small "USDA" or "OFF" badge) to set user expectations regarding data quality.
 
+### Story 4: USDA/Open Food Facts Search in Ingredient Editor
+
+**As a user editing a recipe's ingredient, I want to search the USDA or Open Food Facts APIs directly from the edit view so that I can clean up imported ingredients or modify existing recipes with standardized data.**
+
+- **AC 1:** In the inline ingredient editor, a search option/field is provided to query the unified ingredient search API (`/api/usda/search`).
+- **AC 2:** The search utilizes the standard waterfall backend (Custom Ingredients -> USDA -> Open Food Facts) to find matching food items.
+- **AC 3:** Selecting a search result updates the ingredient's name, base macros, food portions, and external ID (FDC ID / OFF ID) immediately in the editor.
+- **AC 4:** Saving the recipe persists these standardized macros and external reference IDs to the database.
+
 ## Alternatives Considered
 
 - **Bulk Seeding OFF Data:** Rejected due to massive database storage costs and the complexity of keeping millions of records up to date. Federation (on-the-fly querying) is more scalable.

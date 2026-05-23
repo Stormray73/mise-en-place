@@ -7,10 +7,12 @@ Manages current ingredient stock, restock thresholds, and automated inventory de
 ## Implementation Details
 
 - **Logic:** `lib/pantry.ts` (stock management) and `app/dashboard/pantry/actions.ts` (UI mutations).
+- **Location Actions:** `app/dashboard/pantry/location-actions.ts` handles `PantryLocation` CRUD separately from item-level actions in `actions.ts`.
 - **Core Feature:** `deductFromPantry` handles FIFO deduction across multiple locations.
 - **Conversions:** Relies on `lib/units.ts` for mass-to-volume density conversions using USDA portion data.
 - **Locations:** Uses the `PantryLocation` model for user-defined inventory categorization (managed via `ManageLocationsModal`).
 - **Bulk Support:** Supports `packageQuantity` and `packageSize` for tracking bulk purchases (e.g., "12 x 12 oz").
+- **Custom Ingredients:** `PantryClient.tsx` renders the main stock view; `CustomIngredientsClient.tsx` (co-located in this directory) renders the custom ingredient management tab within the pantry UI.
 
 ## Invariants & Constraints
 

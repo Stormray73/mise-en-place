@@ -51,6 +51,7 @@ test.describe("Favorites and Tags User Journeys", () => {
     await expect(favoriteBtn).toBeVisible();
     await favoriteBtn.click();
     await expect(page.getByTitle(/add to favorites/i)).toBeVisible();
+    await expect(page.getByTitle(/add to favorites/i)).toBeEnabled();
 
     // 6. Verify favorite status updated in store
     await page.goto("/recipes");

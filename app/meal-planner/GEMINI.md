@@ -7,6 +7,7 @@ Handles the scheduling of recipes into meals, leftovers management, and prep-ahe
 ## Implementation Details
 
 - **Logic:** `lib/meal-plans.ts` and `app/meal-planner/actions.ts`.
+- **Key Components:** `MealCalendarClient.tsx` (the full week/month calendar UI with drag-and-drop) and `PrepAheadDashboard.tsx` (aggregated upcoming prep tasks).
 - **Scheduling:** Meals are organized by date and slot (e.g., Breakfast, Lunch, Dinner).
 - **Ordering:** Custom meals can be reordered via a `sortOrder` field.
 - **Prep-Ahead:** The `PrepAheadDashboard` aggregates upcoming requirements, filtering out items marked as `excludeFromPrep`.
@@ -15,6 +16,7 @@ Handles the scheduling of recipes into meals, leftovers management, and prep-ahe
 
 - **Single Plan:** Users currently have one active `MealPlan` record which serves as the container for all `Meal` entities.
 - **Leftovers:** `PlannedRecipe` can be marked as `isLeftoverSource` and linked to child recipes via `sourcePlannedRecipeId`.
+- **Calendar Timezone and Week Start:** The calendar displays the week starting on Sunday. To avoid local timezone shifts (e.g. negative browser offsets showing Saturday first), both server normalization and client rendering must operate timezone-neutrally using UTC date operations (`setUTCDate`, `getUTCDay`, `setUTCHours`) and rendering formatters configured with `timeZone: "UTC"`.
 
 ## Testing Strategy
 

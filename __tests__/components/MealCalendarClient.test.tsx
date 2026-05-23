@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 import MealCalendarClient from "@/app/meal-planner/MealCalendarClient";
 import { expect, test, vi, describe, beforeEach } from "vitest";
@@ -134,7 +134,7 @@ describe("MealCalendarClient", () => {
     expect(screen.getByText("Clone Meal to Date")).toBeInTheDocument();
   });
 
-  test("updates planned recipe scale", () => {
+  test("updates planned recipe scale", async () => {
     render(
       <MealCalendarClient
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -142,6 +142,14 @@ describe("MealCalendarClient", () => {
         startDate={mockStartDate}
         allRecipes={mockAllRecipes}
       />,
+    );
+
+    // Scale is now inside EditMealModal — open it by clicking the meal slot title
+    fireEvent.click(screen.getByTitle("Edit Meal details & recipes"));
+
+    // Wait for the modal to appear
+    await waitFor(() =>
+      expect(screen.getByText("Edit Meal: Dinner")).toBeInTheDocument(),
     );
 
     const scaleInput = screen.getByTestId("scale-input-pr1");

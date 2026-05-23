@@ -44,10 +44,11 @@ The current Shopping List UI treats planning and purchasing as the same immediat
 - **AC 2:** When pulling USDA data or using the AI parser, attempt to automatically categorize the ingredient into a department.
 - **AC 3:** Update the Shopping List UI to group items by these departments, sorting them in a logical store flow (e.g., Produce first, Frozen last).
 
-### Story 4: Week-by-Week Navigation & Enhanced Custom Items
+### Story 4: Week-by-Week Navigation, Date UX & Enhanced Custom Items
 
-**As a user planning my week, I want quick navigation and detailed custom items so that my list is accurate and easy to manage.**
+**As a user planning my week, I want quick week navigation, smart default presets, and advanced custom/recurring items so that my list is accurate and easy to manage.**
 
-- **AC 1:** Enhance the existing manual start/end date pickers by adding `< Prev Week`, `Current Week`, and `Next Week >` quick-navigation buttons alongside them.
-- **AC 2:** Expand the "Add Custom Item" UI to include inputs for exact Quantity (allowing decimals) and Unit (e.g., "lbs", "boxes").
-- **AC 3:** Fix recurring item logic by tracking `lastPurchasedAt`. Recurring items should only reappear on the list if the current viewing period is after their last purchase date.
+- **AC 1:** Widen and align the date picker to start on Sunday week-by-week (matching the Meal Planner calendar default behavior). Add quick preset buttons/toggles for "This Week" (default), "Next Week", "Rolling 7 Days", and "Custom Range".
+- **AC 2:** Expand the "Add Custom Item" UI to include inputs for exact Quantity (allowing decimals), Unit (e.g., "lbs", "boxes"), and an optional preferred Store selection.
+- **AC 3:** Support manual deletion of custom items. A trash icon is displayed next to each manually added item on the shopping list, allowing users to remove items they don't want to buy.
+- **AC 4:** Support custom recurring interval settings (e.g. "Only buy every 2 weeks", "Every month"). If configured, the item automatically reappears on the shopping list based on the calculated elapsed time since its `lastPurchasedAt` date.

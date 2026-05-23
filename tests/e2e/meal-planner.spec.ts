@@ -32,6 +32,13 @@ test.describe("Meal Planner", () => {
     await page.getByPlaceholder(/custom slot/i).fill(uniqueSlot);
     await page.getByRole("button", { name: /^add$/i }).click();
 
+    // Wait for the Add Recipe modal to be fully open before trying to close it
+    const recipeModal = page.locator(
+      'div[role="dialog"]:has-text("Add Recipe to Meal")',
+    );
+    await expect(recipeModal).toBeVisible({ timeout: 10000 });
+    await recipeModal.getByRole("button", { name: "×" }).click(); // Close recipe modal
+
     // Wait for modal to be removed from DOM
     await expect(page.getByTestId("modal-backdrop")).not.toBeVisible({
       timeout: 15000,
@@ -47,8 +54,11 @@ test.describe("Meal Planner", () => {
     const testId = await newSlot.getAttribute("data-testid");
     const mealId = testId?.replace("meal-slot-", "");
 
-    // Delete the slot
-    await page.getByTestId(`delete-meal-${mealId}`).click();
+    // Hover over the parent calendar slot first to ensure delete button is interactive
+    await newSlot.hover();
+    const delBtn = page.getByTestId(`delete-meal-${mealId}`);
+    await expect(delBtn).toBeVisible({ timeout: 5000 });
+    await delBtn.click();
 
     // Wait for it to disappear
     await expect(newSlot).not.toBeVisible({ timeout: 20000 });
@@ -63,6 +73,14 @@ test.describe("Meal Planner", () => {
       .click();
     await page.getByPlaceholder(/custom slot/i).fill(uniqueSlot);
     await page.getByRole("button", { name: /^add$/i }).click();
+
+    // Wait for the Add Recipe modal to be fully open before trying to close it
+    const recipeModal = page.locator(
+      'div[role="dialog"]:has-text("Add Recipe to Meal")',
+    );
+    await expect(recipeModal).toBeVisible({ timeout: 10000 });
+    await recipeModal.getByRole("button", { name: "×" }).click(); // Close recipe modal
+
     await expect(page.getByTestId("modal-backdrop")).not.toBeVisible({
       timeout: 15000,
     });
@@ -93,11 +111,14 @@ test.describe("Meal Planner", () => {
       await expect(mealSlot.getByText(recipeTitle!.trim())).toBeVisible();
 
       // Adjust scale (multiplier)
-      const scaleInput = mealSlot
+      await mealSlot.getByRole("button", { name: uniqueSlot }).click();
+      const modal = page.getByRole("dialog");
+      const scaleInput = modal
         .locator('input[data-testid^="scale-input-"]')
         .first();
       await scaleInput.fill("2.5");
       await expect(scaleInput).toHaveValue("2.5");
+      await modal.getByRole("button", { name: "Close" }).click();
     }
   });
 
@@ -112,6 +133,14 @@ test.describe("Meal Planner", () => {
       .click();
     await page.getByPlaceholder(/custom slot/i).fill(uniqueSlot1);
     await page.getByRole("button", { name: /^add$/i }).click();
+
+    // Wait for the Add Recipe modal to be fully open before trying to close it
+    const recipeModal1 = page.locator(
+      'div[role="dialog"]:has-text("Add Recipe to Meal")',
+    );
+    await expect(recipeModal1).toBeVisible({ timeout: 10000 });
+    await recipeModal1.getByRole("button", { name: "×" }).click(); // Close recipe modal
+
     await expect(page.getByTestId("modal-backdrop")).not.toBeVisible({
       timeout: 15000,
     });
@@ -134,11 +163,13 @@ test.describe("Meal Planner", () => {
         timeout: 15000,
       });
 
-      // Mark as Leftover Source - use getByRole("button", { name: "LS" })
-      const lsButton = firstSlot.getByRole("button", { name: "LS" });
-      await lsButton.click({ force: true });
-      // Wait for background color change indicating state change
-      await expect(lsButton).toHaveClass(/bg-amber-600/);
+      // Mark as Leftover Source
+      await firstSlot.getByRole("button", { name: uniqueSlot1 }).click();
+      const modal1 = page.getByRole("dialog");
+      const producesLeftoversCheckbox = modal1.getByLabel("Produces Leftovers");
+      await producesLeftoversCheckbox.click();
+      await expect(producesLeftoversCheckbox).toBeChecked({ timeout: 15000 });
+      await modal1.getByRole("button", { name: "Close" }).click();
 
       // Add a second meal on a different day to consume leftovers
       await page
@@ -147,6 +178,14 @@ test.describe("Meal Planner", () => {
         .click();
       await page.getByPlaceholder(/custom slot/i).fill(uniqueSlot2);
       await page.getByRole("button", { name: /^add$/i }).click();
+
+      // Wait for the Add Recipe modal to be fully open before trying to close it
+      const recipeModal2 = page.locator(
+        'div[role="dialog"]:has-text("Add Recipe to Meal")',
+      );
+      await expect(recipeModal2).toBeVisible({ timeout: 10000 });
+      await recipeModal2.getByRole("button", { name: "×" }).click(); // Close recipe modal
+
       await expect(page.getByTestId("modal-backdrop")).not.toBeVisible({
         timeout: 15000,
       });
@@ -172,14 +211,17 @@ test.describe("Meal Planner", () => {
         timeout: 15000,
       });
 
-      // Link leftover
-      const select = secondSlot.locator("select");
+      // Link leftover - open second slot Edit Meal modal
+      await secondSlot.getByRole("button", { name: uniqueSlot2 }).click();
+      const modal2 = page.getByRole("dialog");
+      const select = modal2.locator("select");
       // Wait for options to load (might need a moment for revalidation)
       await expect(select.locator("option").nth(1)).toBeAttached({
         timeout: 10000,
       });
       await select.selectOption({ index: 1 }); // Select the first available source
       await expect(select).toHaveClass(/border-green-500/);
+      await modal2.getByRole("button", { name: "Close" }).click();
     }
   });
 });

@@ -9,10 +9,17 @@ export async function extractTextFromFile(
     return new Promise((resolve, reject) => {
       // @ts-expect-error: pdf2json types are missing or incomplete
       const pdfParser = new PDFParser(null, 1);
-      // @ts-expect-error: pdf2json types are missing or incomplete
-      pdfParser.on("pdfParser_dataError", (errData) =>
-        reject(errData.parserError),
-      );
+      pdfParser.on("pdfParser_dataError", (errData) => {
+        if (
+          errData &&
+          typeof errData === "object" &&
+          "parserError" in errData
+        ) {
+          reject(errData.parserError);
+        } else {
+          reject(errData);
+        }
+      });
       pdfParser.on("pdfParser_dataReady", () => {
         resolve(pdfParser.getRawTextContent());
       });

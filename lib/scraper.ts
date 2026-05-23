@@ -12,6 +12,31 @@ interface LDRecipe {
 }
 
 export async function scrapeRecipe(url: string): Promise<RecipeSaveData> {
+  if (process.env.ENABLE_MSW === "true") {
+    return {
+      title: "MSW Mock Pasta",
+      yieldAmount: 2,
+      yieldUnit: "servings",
+      servings: 2,
+      steps: [
+        { order: 1, instruction: "Boil water" },
+        { order: 2, instruction: "Cook pasta" },
+      ],
+      components: [
+        {
+          type: "ingredient" as const,
+          quantity: 200,
+          unit: "g",
+          ingredientId: null,
+          ingredient: {
+            name: "Pasta",
+          },
+          prepState: "dry",
+        },
+      ],
+    };
+  }
+
   const response = await fetch(url, {
     headers: {
       "User-Agent":

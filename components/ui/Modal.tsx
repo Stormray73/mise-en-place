@@ -33,12 +33,6 @@ export default function Modal({ title, onClose, children }: ModalProps) {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">{children}</div>
-        <button
-          onClick={onClose}
-          className="mt-6 w-full py-2 text-zinc-500 hover:text-zinc-300 text-sm"
-        >
-          Cancel
-        </button>
       </div>
     </div>
   );

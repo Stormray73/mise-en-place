@@ -35,6 +35,7 @@ export default function CloneMealModal({
               weekday: "short",
               month: "short",
               day: "numeric",
+              timeZone: "UTC",
             })}
           </Button>
         ))}

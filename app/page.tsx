@@ -186,7 +186,7 @@ export default function Home() {
       {/* CTA Footer */}
       <section className="py-24 px-8 border-t border-zinc-900 bg-zinc-950 text-center">
         <h2 className="text-4xl font-bold mb-8 italic">
-          &ldquo;Mise-en-place makes me feel like a head chef.&rdquo;
+          &ldquo;KitchenCINC makes me feel like a head chef.&rdquo;
         </h2>
         <p className="text-zinc-500 mb-12">
           — Beta user from the culinary arts
@@ -200,8 +200,8 @@ export default function Home() {
       </section>
 
       <footer className="py-12 px-8 border-t border-zinc-900 text-center text-zinc-600 text-sm">
-        &copy; {new Date().getFullYear()} Mise-en-place. Built for the home
-        cook.
+        &copy; {new Date().getFullYear()} KitchenCINC (Chef-in-Chief). Built for
+        the home cook.
       </footer>
     </div>
   );

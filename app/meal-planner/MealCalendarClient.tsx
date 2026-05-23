@@ -12,6 +12,7 @@ import MealSlot from "@/components/MealSlot";
 import AddMealModal from "@/components/AddMealModal";
 import AddRecipeModal from "@/components/AddRecipeModal";
 import CloneMealModal from "@/components/CloneMealModal";
+import EditMealModal from "@/components/EditMealModal";
 import {
   createMealAction,
   addRecipeToMealAction,
@@ -69,6 +70,8 @@ export default function MealCalendarClient({
   const [isCloningMeal, setIsCloningMeal] = useState<{ mealId: string } | null>(
     null,
   );
+  const [editingMealId, setEditingMealId] = useState<string | null>(null);
+  const activeEditingMeal = initialMeals.find((m) => m.id === editingMealId);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -79,13 +82,14 @@ export default function MealCalendarClient({
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start);
-    d.setDate(d.getDate() + i);
+    d.setUTCDate(d.getUTCDate() + i);
     return d;
   });
 
   const getMealsForDate = (date: Date) => {
+    const dateStr = date.toISOString().split("T")[0];
     return initialMeals.filter(
-      (m) => new Date(m.date).toDateString() === date.toDateString(),
+      (m) => new Date(m.date).toISOString().split("T")[0] === dateStr,
     );
   };
 
@@ -104,10 +108,13 @@ export default function MealCalendarClient({
 
   const handleAddMeal = async (date: Date, slot: string) => {
     const res = await createMealAction(date, slot);
-    if (!res.success) {
-      alert(res.error);
+    if (res.success && res.data) {
+      setIsAddingMeal(null);
+      setIsAddingRecipe({ mealId: res.data.id });
+    } else {
+      if (!res.success) alert(res.error);
+      setIsAddingMeal(null);
     }
-    setIsAddingMeal(null);
   };
 
   const handleAddRecipe = async (mealId: string, recipeId: string) => {
@@ -174,7 +181,7 @@ export default function MealCalendarClient({
 
   const navigateWeek = (weeks: number) => {
     const newDate = new Date(start);
-    newDate.setDate(newDate.getDate() + weeks * 7);
+    newDate.setUTCDate(newDate.getUTCDate() + weeks * 7);
     router.push(`${pathname}?date=${newDate.toISOString().split("T")[0]}`);
   };
 
@@ -214,7 +221,9 @@ export default function MealCalendarClient({
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
         {days.map((day, i) => {
           const dailyMacros = getDailyMacros(day);
-          const isToday = day.toDateString() === new Date().toDateString();
+          const isToday =
+            day.toISOString().split("T")[0] ===
+            new Date().toLocaleDateString("en-CA");
           const meals = getMealsForDate(day);
 
           return (
@@ -226,10 +235,16 @@ export default function MealCalendarClient({
               <div className="p-3 border-b border-zinc-800 bg-zinc-950/50 rounded-t-lg flex justify-between items-start">
                 <div>
                   <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                    {day.toLocaleDateString(undefined, { weekday: "short" })}
+                    {day.toLocaleDateString(undefined, {
+                      weekday: "short",
+                      timeZone: "UTC",
+                    })}
                   </p>
                   <p className="text-lg font-bold">
-                    {day.toLocaleDateString(undefined, { day: "numeric" })}
+                    {day.toLocaleDateString(undefined, {
+                      day: "numeric",
+                      timeZone: "UTC",
+                    })}
                   </p>
                 </div>
                 {dailyMacros.calories > 0 && (
@@ -263,11 +278,7 @@ export default function MealCalendarClient({
                         onDeleteMeal={handleDeleteMeal}
                         onCloneMeal={(mealId) => setIsCloningMeal({ mealId })}
                         onAddRecipe={(mealId) => setIsAddingRecipe({ mealId })}
-                        onRemoveRecipe={handleRemoveRecipe}
-                        onToggleLeftoverSource={handleToggleLeftoverSource}
-                        onUpdatePlannedRecipe={handleUpdatePlannedRecipe}
-                        onLinkLeftover={handleLinkLeftover}
-                        leftoverSourceOptions={leftoverSourceOptions}
+                        onEditMeal={(m) => setEditingMealId(m.id)}
                       />
                     ))}
                   </SortableContext>
@@ -308,6 +319,20 @@ export default function MealCalendarClient({
           days={days}
           onClose={() => setIsCloningMeal(null)}
           onClone={handleCloneMeal}
+        />
+      )}
+
+      {activeEditingMeal && (
+        <EditMealModal
+          meal={activeEditingMeal}
+          onClose={() => setEditingMealId(null)}
+          onAddRecipe={(mealId) => setIsAddingRecipe({ mealId })}
+          onDeleteMeal={handleDeleteMeal}
+          onRemoveRecipe={handleRemoveRecipe}
+          onToggleLeftoverSource={handleToggleLeftoverSource}
+          onUpdatePlannedRecipe={handleUpdatePlannedRecipe}
+          onLinkLeftover={handleLinkLeftover}
+          leftoverSourceOptions={leftoverSourceOptions}
         />
       )}
     </div>

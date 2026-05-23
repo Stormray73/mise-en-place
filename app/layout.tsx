@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mise-en-place",
-  description: "The Chef's One-Stop-Shop",
+  title: "KitchenCINC",
+  description: "The Chef-in-Chief's One-Stop-Shop",
 };
 
 export default function RootLayout({
