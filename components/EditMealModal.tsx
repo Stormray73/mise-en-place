@@ -35,7 +35,11 @@ export default function EditMealModal({
   leftoverSourceOptions,
 }: EditMealModalProps) {
   const handleDeleteMeal = () => {
-    if (confirm("Are you sure you want to delete this meal and all its planned recipes?")) {
+    if (
+      confirm(
+        "Are you sure you want to delete this meal and all its planned recipes?",
+      )
+    ) {
       onDeleteMeal(meal.id);
       onClose();
     }
@@ -67,9 +71,9 @@ export default function EditMealModal({
               <button
                 onClick={() => onRemoveRecipe(pr.id)}
                 className="text-xs px-2.5 py-1.5 bg-red-950/40 text-red-400 hover:bg-red-900/40 rounded transition-colors border border-red-500/20"
-                title="Remove Recipe from Meal"
+                title="Delete Recipe from Meal"
               >
-                Remove
+                Delete Recipe
               </button>
             </div>
 
@@ -118,7 +122,9 @@ export default function EditMealModal({
                 <input
                   type="checkbox"
                   checked={pr.isLeftoverSource}
-                  onChange={() => onToggleLeftoverSource(pr.id, !pr.isLeftoverSource)}
+                  onChange={() =>
+                    onToggleLeftoverSource(pr.id, !pr.isLeftoverSource)
+                  }
                   className="rounded bg-zinc-800 border-zinc-700 text-blue-600 focus:ring-blue-500"
                 />
                 Produces Leftovers (Leftover Source)
@@ -128,7 +134,11 @@ export default function EditMealModal({
                 <input
                   type="checkbox"
                   checked={pr.excludeFromPrep}
-                  onChange={() => onUpdatePlannedRecipe(pr.id, { excludeFromPrep: !pr.excludeFromPrep })}
+                  onChange={() =>
+                    onUpdatePlannedRecipe(pr.id, {
+                      excludeFromPrep: !pr.excludeFromPrep,
+                    })
+                  }
                   className="rounded bg-zinc-800 border-zinc-700 text-blue-600 focus:ring-blue-500"
                 />
                 Exclude from Prep List (NP)
@@ -142,9 +152,13 @@ export default function EditMealModal({
                 </label>
                 <Select
                   value={pr.sourcePlannedRecipeId || ""}
-                  onChange={(e) => onLinkLeftover(pr.id, e.target.value || null)}
+                  onChange={(e) =>
+                    onLinkLeftover(pr.id, e.target.value || null)
+                  }
                   className={`text-xs bg-zinc-850 text-zinc-200 w-full max-w-[240px] ${
-                    pr.sourcePlannedRecipeId ? "border-green-500/50" : "border-zinc-700"
+                    pr.sourcePlannedRecipeId
+                      ? "border-green-500/50"
+                      : "border-zinc-700"
                   }`}
                 >
                   <option value="">None (Cook Fresh)</option>
@@ -176,7 +190,7 @@ export default function EditMealModal({
           onClick={handleDeleteMeal}
           className="w-full sm:w-auto px-4 py-2 bg-red-950/20 text-red-400 hover:bg-red-950/40 rounded transition-colors text-sm font-semibold border border-red-500/20"
         >
-          Delete Entire Meal Slot
+          Delete Meal
         </button>
 
         <div className="flex w-full sm:w-auto gap-3 justify-end">
@@ -185,7 +199,7 @@ export default function EditMealModal({
             onClick={handleAddRecipeClick}
             className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors text-sm font-bold shadow-lg shadow-blue-500/10"
           >
-            + Add Recipe
+            + Add another recipe
           </button>
           <button
             type="button"

@@ -30,7 +30,7 @@ Contains all reusable React components consumed by pages across the app. These a
 | :--------------------- | :----------------------------------------------------------------------------------------------------------------- |
 | `MealSlot.tsx`         | Renders a single meal slot (e.g., Breakfast) within the calendar. Manages drag-and-drop and inline recipe actions. |
 | `PlannedRecipeRow.tsx` | A single planned recipe entry within a `MealSlot`. Shows scale controls, leftover links, and a remove button.      |
-| `AddMealModal.tsx`     | Modal for adding a new meal slot to a calendar day.                                                                |
+| `AddMealModal.tsx`     | Two-stage modal for adding a meal slot and immediately searching/adding the first recipe.                          |
 | `EditMealModal.tsx`    | Modal for editing an existing meal (slot, date, planned recipes).                                                  |
 | `CloneMealModal.tsx`   | Modal for duplicating a meal to another date.                                                                      |
 | `AddRecipeModal.tsx`   | Modal for searching and selecting a recipe to add to a meal.                                                       |

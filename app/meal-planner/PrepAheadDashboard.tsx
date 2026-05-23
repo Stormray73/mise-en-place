@@ -1,6 +1,6 @@
 /**
  * FILE: app/meal-planner/PrepAheadDashboard.tsx
- * DESCRIPTION: Client component for aggregating upcoming ingredient preparation needs.
+ * DESCRIPTION: Client component for aggregating upcoming ingredient preparation needs with premium dismissal workflow.
  * STANDARDS: TDD, Agentic Ergonomics.
  */
 
@@ -12,8 +12,6 @@ import {
   togglePrepCompletionAction,
   dismissPrepItemAction,
 } from "./actions";
-import Modal from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
 
 interface PrepAheadDashboardProps {
   startDate: string;
@@ -40,20 +38,19 @@ export default function PrepAheadDashboard({
   const [isLoading, setIsLoading] = useState(!initialData);
   const [isPending, startTransition] = useTransition();
 
-  const [showDismissModal, setShowDismissModal] = useState(false);
-  const [itemToDismiss, setItemToDismiss] = useState<PrepItem | null>(null);
-  const [dontShowWarningAgain, setDontShowWarningAgain] = useState(false);
-  const [suppressWarning, setSuppressWarning] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = sessionStorage.getItem("suppress-prep-dismiss-warning");
-      if (stored === "true") {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSuppressWarning(true);
-      }
-    }
-  }, []);
+  // Story 3 state: Dismissal confirmation workflow
+  const [confirmDismissItem, setConfirmDismissItem] = useState<PrepItem | null>(
+    null,
+  );
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+  // Read sessionStorage preference on initial render only (no SSR risk since this is a client component)
+  const [skipWarning, setSkipWarning] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return (
+      sessionStorage.getItem("mise-en-place:skip-prep-dismiss-warning") ===
+      "true"
+    );
+  });
 
   // Sync data when initialData prop changes (e.g. parent page revalidates)
   useEffect(() => {
@@ -115,7 +112,7 @@ export default function PrepAheadDashboard({
     });
   };
 
-  const performDismiss = async (item: PrepItem) => {
+  const performDismiss = (item: PrepItem) => {
     startTransition(async () => {
       const ingredientId = item.type === "ingredient" ? item.id : null;
       const childRecipeId = item.type === "recipe" ? item.id : null;
@@ -137,25 +134,25 @@ export default function PrepAheadDashboard({
     });
   };
 
-  const handleDismiss = (item: PrepItem) => {
-    if (suppressWarning) {
+  const handleDismissClick = (item: PrepItem) => {
+    if (skipWarning) {
       performDismiss(item);
     } else {
-      setItemToDismiss(item);
-      setShowDismissModal(true);
+      setConfirmDismissItem(item);
+      setDontShowAgain(false);
     }
   };
 
-  const confirmDismissal = () => {
-    if (itemToDismiss) {
-      if (dontShowWarningAgain) {
-        sessionStorage.setItem("suppress-prep-dismiss-warning", "true");
-        setSuppressWarning(true);
-      }
-      performDismiss(itemToDismiss);
+  const handleConfirmDismiss = () => {
+    if (!confirmDismissItem) return;
+
+    if (dontShowAgain && typeof window !== "undefined") {
+      sessionStorage.setItem("mise-en-place:skip-prep-dismiss-warning", "true");
+      setSkipWarning(true);
     }
-    setShowDismissModal(false);
-    setItemToDismiss(null);
+
+    performDismiss(confirmDismissItem);
+    setConfirmDismissItem(null);
   };
 
   if (isLoading) {
@@ -180,6 +177,7 @@ export default function PrepAheadDashboard({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
+              data-testid="prep-icon-path"
               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
             />
           </svg>
@@ -200,6 +198,7 @@ export default function PrepAheadDashboard({
             <div
               key={i}
               className={`bg-zinc-800/30 p-3 rounded-lg border flex justify-between items-center transition-all group relative ${item.completed ? "border-green-900/50 opacity-60" : "border-zinc-800"}`}
+              data-testid={`prep-item-${item.id}`}
             >
               <div className="flex items-center gap-3">
                 <input
@@ -234,13 +233,14 @@ export default function PrepAheadDashboard({
                   </p>
                 </div>
                 <button
-                  onClick={() => handleDismiss(item)}
-                  className="p-1 text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                  onClick={() => handleDismissClick(item)}
+                  className="p-1.5 text-zinc-500 hover:text-red-400 opacity-80 hover:opacity-100 transition-all ml-1 rounded-md hover:bg-zinc-800/50"
                   title="Dismiss from prep list"
+                  data-testid={`dismiss-prep-${item.id}`}
                   disabled={isPending}
                 >
                   <svg
-                    className="w-4.5 h-4.5"
+                    className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -264,60 +264,79 @@ export default function PrepAheadDashboard({
         selected range.
       </p>
 
-      {showDismissModal && itemToDismiss && (
-        <Modal
-          title="Confirm Dismissal"
-          onClose={() => {
-            setShowDismissModal(false);
-            setItemToDismiss(null);
-          }}
+      {/* Premium custom dismissal warning modal (Story 3 AC 2, 3, 4) */}
+      {confirmDismissItem && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 animate-in fade-in"
+          data-testid="dismiss-modal-backdrop"
         >
-          <div className="space-y-4 pt-2">
-            <p className="text-sm text-zinc-300 text-left">
+          <div
+            className="bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 p-6 rounded-2xl max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+            role="dialog"
+            aria-modal="true"
+            data-testid="dismissal-dialog"
+          >
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 text-red-500 mb-4">
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+
+            <h3 className="text-lg font-bold text-zinc-100 text-center mb-2">
+              Dismiss Prep Item?
+            </h3>
+
+            <p className="text-sm text-zinc-400 text-center mb-6">
               Are you sure you want to dismiss{" "}
-              <span className="font-bold text-zinc-100">
-                &ldquo;{itemToDismiss.name}&rdquo;
+              <span className="font-semibold text-zinc-200">
+                &ldquo;{confirmDismissItem.name}&rdquo;
               </span>{" "}
-              from your prep list? This will remove the item from this view.
+              from your prep list?
             </p>
-            <div className="flex items-center gap-2 pt-2">
+
+            <label className="flex items-center gap-3 bg-zinc-800/40 hover:bg-zinc-800/60 p-3 rounded-lg border border-zinc-800/50 cursor-pointer transition-colors mb-6 select-none">
               <input
                 type="checkbox"
-                id="dont-show-warning-again"
-                checked={dontShowWarningAgain}
-                onChange={(e) => setDontShowWarningAgain(e.target.checked)}
-                className="w-4 h-4 rounded border-zinc-750 bg-zinc-950 text-blue-600 focus:ring-0 cursor-pointer"
+                checked={dontShowAgain}
+                onChange={(e) => setDontShowAgain(e.target.checked)}
+                className="w-4 h-4 rounded bg-zinc-950 border-zinc-700 text-red-500 focus:ring-red-500 focus:ring-offset-zinc-950"
+                data-testid="dont-show-again-checkbox"
               />
-              <label
-                htmlFor="dont-show-warning-again"
-                className="text-xs text-zinc-400 cursor-pointer select-none font-medium"
-              >
+              <span className="text-xs font-semibold text-zinc-300">
                 Do not show this warning again during this session
-              </label>
-            </div>
-            <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
-              <Button
+              </span>
+            </label>
+
+            <div className="flex gap-3">
+              <button
                 type="button"
-                variant="ghost"
-                onClick={() => {
-                  setShowDismissModal(false);
-                  setItemToDismiss(null);
-                }}
-                className="text-xs text-zinc-400 hover:text-zinc-200"
+                onClick={() => setConfirmDismissItem(null)}
+                className="flex-1 py-2 px-4 bg-zinc-850 hover:bg-zinc-800 text-zinc-300 rounded-lg text-sm font-semibold border border-zinc-700 transition-colors"
+                data-testid="cancel-dismiss-btn"
               >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
-                variant="danger"
-                onClick={confirmDismissal}
-                className="text-xs px-4 py-2 font-bold"
+                onClick={handleConfirmDismiss}
+                className="flex-1 py-2 px-4 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm font-bold shadow-lg shadow-red-500/20 transition-all"
+                data-testid="confirm-dismiss-btn"
               >
-                Dismiss Item
-              </Button>
+                Dismiss
+              </button>
             </div>
           </div>
-        </Modal>
+        </div>
       )}
     </div>
   );

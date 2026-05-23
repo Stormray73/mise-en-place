@@ -109,11 +109,12 @@ export default function MealCalendarClient({
   const handleAddMeal = async (date: Date, slot: string) => {
     const res = await createMealAction(date, slot);
     if (res.success && res.data) {
-      setIsAddingMeal(null);
-      setIsAddingRecipe({ mealId: res.data.id });
+      return { success: true, mealId: res.data.id };
     } else {
-      if (!res.success) alert(res.error);
-      setIsAddingMeal(null);
+      return {
+        success: false,
+        error: res.error || "Failed to create meal slot",
+      };
     }
   };
 
@@ -303,8 +304,12 @@ export default function MealCalendarClient({
       {isAddingMeal && (
         <AddMealModal
           date={isAddingMeal.date}
+          allRecipes={allRecipes}
           onClose={() => setIsAddingMeal(null)}
-          onAdd={handleAddMeal}
+          onAddMeal={handleAddMeal}
+          onAddRecipe={async (mealId, recipeId) => {
+            await addRecipeToMealAction(mealId, recipeId);
+          }}
         />
       )}
 
