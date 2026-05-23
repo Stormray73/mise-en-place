@@ -176,6 +176,8 @@ export async function saveRecipe(
         c.type === "sub-recipe" ? c.childRecipeId || undefined : undefined,
       prepState: c.prepState,
       needsReview: c.type === "ingredient" ? c.needsReview || false : false,
+      isToTaste: c.isToTaste || false,
+      isOptional: c.isOptional || false,
     })),
   };
 

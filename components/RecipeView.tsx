@@ -208,7 +208,7 @@ export default function RecipeView({
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-zinc-200">
                       {comp.type === "ingredient"
-                        ? comp.ingredient?.name
+                        ? `${comp.ingredient?.name}${comp.isOptional ? " (optional)" : ""}`
                         : comp.childRecipe?.title}
                     </span>
                     {comp.type === "ingredient" &&
@@ -219,8 +219,14 @@ export default function RecipeView({
                       )}
                   </div>
                   <p className="text-sm text-zinc-500">
-                    {(comp.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}
-                    {comp.unit}
+                    {comp.isToTaste ? (
+                      "To Taste"
+                    ) : (
+                      <>
+                        {(comp.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}
+                        {comp.unit}
+                      </>
+                    )}
                     {comp.prepState && `, ${comp.prepState}`}
                   </p>
                 </div>
