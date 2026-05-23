@@ -7,19 +7,73 @@ import {
 } from "./units";
 import { Macros, Recipe, RecipeSaveData } from "@/types";
 
-const DISCRETE_DESIGNATIONS: Record<
-  string,
-  { singular: string; fallbackWeight: number }
-> = {
-  can: { singular: "can", fallbackWeight: 400 },
-  cans: { singular: "can", fallbackWeight: 400 },
-  packet: { singular: "packet", fallbackWeight: 10 },
-  packets: { singular: "packet", fallbackWeight: 10 },
-  bunch: { singular: "bunch", fallbackWeight: 100 },
-  bunches: { singular: "bunch", fallbackWeight: 100 },
-  sheet: { singular: "sheet", fallbackWeight: 5 },
-  sheets: { singular: "sheet", fallbackWeight: 5 },
-};
+export function getDiscreteWeight(
+  qty: number,
+  unit: string,
+  portions: USDAFoodPortion[] = [],
+  ingredientName: string = "",
+): number | null {
+  const normalizedUnit = unit.toLowerCase().trim();
+  const discreteTerms = [
+    "can",
+    "packet",
+    "bunch",
+    "sheet",
+    "package",
+    "container",
+    "bag",
+    "box",
+  ];
+
+  // Find which term matches the unit
+  const matchedTerm = discreteTerms.find((term) =>
+    normalizedUnit.includes(term),
+  );
+  if (!matchedTerm) return null;
+
+  // AC 2: Check if a direct match is found in the USDA portion modifiers database
+  const directMatch = portions.find((p) => {
+    const mod = (p.modifier || "").toLowerCase();
+    const measureName = (p.measureUnitName || "").toLowerCase();
+    return mod.includes(matchedTerm) || measureName.includes(matchedTerm);
+  });
+
+  if (directMatch) {
+    const portionAmount = directMatch.amount || 1;
+    const gramWeight = directMatch.gramWeight || 0;
+    return qty * (gramWeight / portionAmount);
+  }
+
+  // AC 3: If no match is found, apply a sensible fallback weight
+  let fallbackWeight = 200; // global fallback
+  if (matchedTerm === "can") {
+    const nameLower = ingredientName.toLowerCase();
+    if (nameLower.includes("tuna")) {
+      fallbackWeight = 150;
+    } else if (
+      nameLower.includes("tomato") ||
+      nameLower.includes("beans") ||
+      nameLower.includes("chickpeas")
+    ) {
+      fallbackWeight = 400;
+    } else {
+      fallbackWeight = 400;
+    }
+  } else if (matchedTerm === "packet") {
+    fallbackWeight = 10;
+  } else if (matchedTerm === "bunch") {
+    fallbackWeight = 100;
+  } else if (matchedTerm === "sheet") {
+    fallbackWeight = 10;
+  }
+
+  // AC 4: Log a warning instead of returning zero macros
+  console.warn(
+    `WARNING: Discrete designation '${unit}' for ingredient '${ingredientName}' not found in USDA portions. Applying fallback weight of ${fallbackWeight}g.`,
+  );
+
+  return qty * fallbackWeight;
+}
 
 export async function calculateMacros(
   recipe: Partial<Recipe>,
@@ -51,73 +105,53 @@ export async function calculateMacros(
         const portions = component.ingredient
           .foodPortions as unknown as USDAFoodPortion[];
 
-        const lowerUnit = (component.unit || "").toLowerCase().trim();
-        const discreteInfo = DISCRETE_DESIGNATIONS[lowerUnit];
+        // Check for discrete designations first! (Story 7)
+        const ingredientName = component.ingredient.name || "";
+        const discreteWeight = getDiscreteWeight(
+          component.quantity,
+          component.unit,
+          portions,
+          ingredientName,
+        );
 
-        if (discreteInfo) {
-          // It's a discrete designation!
-          // Try direct match in portions
-          const singularUnit = discreteInfo.singular;
-          const matchingPortion = portions?.find((p) => {
-            const mod = (p.modifier || "").toLowerCase();
-            const meas = (p.measureUnitName || "").toLowerCase();
-            return mod.includes(singularUnit) || meas.includes(singularUnit);
-          });
-
-          let totalGrams = 0;
-          if (matchingPortion) {
-            const amount = matchingPortion.amount || 1;
-            totalGrams =
-              (matchingPortion.gramWeight / amount) * component.quantity;
-          } else {
-            // Apply sensible fallback
-            totalGrams = discreteInfo.fallbackWeight * component.quantity;
-            console.warn(
-              `Warning: Portion unit "${component.unit}" for ingredient "${component.ingredient.name}" matched a discrete designation, but no corresponding entry was found in USDA portions database. Applied a default average fallback of ${discreteInfo.fallbackWeight}g.`,
-            );
-          }
-
-          const baseAmount = component.ingredient.baseAmount || 100;
-          const ratio = totalGrams / baseAmount;
+        if (discreteWeight !== null) {
+          const ingredient = component.ingredient as { baseAmount?: number };
+          const baseAmount = ingredient.baseAmount || 100;
+          const ratio = discreteWeight / baseAmount;
           componentMacros = {
             calories: baseMacros.calories * ratio,
             protein: baseMacros.protein * ratio,
             fat: baseMacros.fat * ratio,
             carbs: baseMacros.carbs * ratio,
           };
-        } else {
-          // Normal unit conversion path
-          if (canConvert(component.unit, "g", portions)) {
-            baseUnit = "g";
-          } else if (canConvert(component.unit, "ml", portions)) {
-            baseUnit = "ml";
-          }
+        } else if (canConvert(component.unit, "g", portions)) {
+          baseUnit = "g";
+        } else if (canConvert(component.unit, "ml", portions)) {
+          baseUnit = "ml";
+        }
 
-          if (baseUnit) {
-            try {
-              const quantityInBase = convert(
-                component.quantity,
-                component.unit,
-                baseUnit,
-                portions,
-              );
-              const ingredient = component.ingredient as {
-                baseAmount?: number;
-              };
-              const baseAmount = ingredient.baseAmount || 100;
-              const ratio = quantityInBase / baseAmount;
-              componentMacros = {
-                calories: baseMacros.calories * ratio,
-                protein: baseMacros.protein * ratio,
-                fat: baseMacros.fat * ratio,
-                carbs: baseMacros.carbs * ratio,
-              };
-            } catch (e) {
-              console.error(
-                `Failed to convert units for macro calculation: ${e}`,
-              );
-              componentMacros = null;
-            }
+        if (baseUnit && discreteWeight === null) {
+          try {
+            const quantityInBase = convert(
+              component.quantity,
+              component.unit,
+              baseUnit,
+              portions,
+            );
+            const ingredient = component.ingredient as { baseAmount?: number };
+            const baseAmount = ingredient.baseAmount || 100;
+            const ratio = quantityInBase / baseAmount;
+            componentMacros = {
+              calories: baseMacros.calories * ratio,
+              protein: baseMacros.protein * ratio,
+              fat: baseMacros.fat * ratio,
+              carbs: baseMacros.carbs * ratio,
+            };
+          } catch (e) {
+            console.error(
+              `Failed to convert units for macro calculation: ${e}`,
+            );
+            componentMacros = null;
           }
         }
       }

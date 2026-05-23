@@ -73,8 +73,8 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
         ? comp.ingredient?.name || ""
         : comp.childRecipe?.title || "",
     );
-    setEditIsToTaste(!!comp.isToTaste);
-    setEditIsOptional(!!comp.isOptional);
+    setEditIsToTaste(comp.isToTaste || false);
+    setEditIsOptional(comp.isOptional || false);
   };
 
   const cancelEditing = () => {
@@ -150,6 +150,7 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                             baseMacros,
                             baseAmount: food.baseAmount || 100,
                           },
+                          needsReview: false,
                         } as Partial<RecipeSaveData["components"][0]>);
                       }}
                       minChars={3}
@@ -223,7 +224,7 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                     onChange={(e) =>
                       setEditQuantity(parseFloat(e.target.value) || 0)
                     }
-                    placeholder={editIsToTaste ? "To Taste" : "Qty"}
+                    placeholder={editIsToTaste ? "To taste" : "Qty"}
                   />
                 </div>
                 <div className="w-28">
@@ -252,6 +253,33 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                     placeholder="diced, minced..."
                   />
                 </div>
+                {c.type === "ingredient" && (
+                  <div className="flex items-center gap-4 h-10 px-1 mb-0.5">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-zinc-400 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={editIsToTaste}
+                        onChange={(e) => {
+                          setEditIsToTaste(e.target.checked);
+                          if (e.target.checked) {
+                            setEditQuantity(0);
+                          }
+                        }}
+                        className="rounded border-zinc-700 bg-zinc-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-zinc-900 w-4 h-4 cursor-pointer"
+                      />
+                      To Taste
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-zinc-400 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={editIsOptional}
+                        onChange={(e) => setEditIsOptional(e.target.checked)}
+                        className="rounded border-zinc-700 bg-zinc-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-zinc-900 w-4 h-4 cursor-pointer"
+                      />
+                      Optional
+                    </label>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -332,15 +360,18 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                     onSave={(macros, ingredientId) => {
                       updateComponent(i, {
                         ingredientId,
-                        quantity: editQuantity,
+                        quantity: editIsToTaste ? 0 : editQuantity,
                         unit: editUnit,
                         prepState: editPrepState || null,
+                        isToTaste: editIsToTaste,
+                        isOptional: editIsOptional,
                         ingredient: {
                           name: editName,
                           usdaId: null,
                           baseAmount: 100,
                           baseMacros: macros,
                         },
+                        needsReview: false,
                       } as Partial<RecipeSaveData["components"][0]>);
                       setEditingIndex(null);
                     }}
@@ -378,7 +409,7 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                 </span>
                 <span className="font-medium text-zinc-100 inline-flex items-center gap-1.5 flex-wrap">
                   {c.type === "ingredient" ? (
-                    c.ingredient?.name || "Ingredient"
+                    `${c.ingredient?.name || "Ingredient"}${c.isOptional ? " (optional)" : ""}`
                   ) : (
                     <>
                       <span>{c.childRecipe?.title || "Sub-recipe"}</span>
@@ -398,12 +429,12 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                         </svg>
                         Linked Sub-Recipe
                       </span>
+                      {c.isOptional && (
+                        <span className="text-zinc-500 font-normal">
+                          (optional)
+                        </span>
+                      )}
                     </>
-                  )}
-                  {c.isOptional && (
-                    <span className="text-zinc-500 font-normal">
-                      (optional)
-                    </span>
                   )}
                 </span>
                 {c.prepState && (

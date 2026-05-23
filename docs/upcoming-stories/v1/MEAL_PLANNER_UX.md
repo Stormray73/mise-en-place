@@ -32,10 +32,11 @@ To simplify the Meal Planner calendar UI, improve accessibility by moving dense 
 - **AC 5:** The "Edit Meal" modal includes a prominent button to "Add another recipe" to that specific meal.
 - **AC 6:** The "Edit Meal" modal includes a "Delete Meal" button that allows the user to remove the entire meal (and all its planned recipes) at once.
 
-### Story 3: Prep List Noise Reduction
+### Story 3: Prep List Noise Reduction & Reworked Dismissal Workflow
 
-**As a user prepping for the week, I want to remove ingredients that don't actually require preparation so my list is actionable.**
+**As a user prepping for the week, I want to remove ingredients that don't actually require preparation without tedious interruptions so my list remains clean and highly actionable.**
 
-- **AC 1:** The `PrepAheadDashboard` is updated to include a "Dismiss" or "Remove" button (e.g., an 'X' or trash icon) next to each aggregated prep item.
-- **AC 2:** Clicking this button hides/removes that specific ingredient from the prep list for the selected timeframe (this will likely require adding a `dismissed` flag to the underlying data model or an ignore list).
-- **AC 3:** (Future AI Integration Note): The system is prepared to eventually use the AI parser to flag non-preppable items automatically to hide them by default.
+- **AC 1:** The `PrepAheadDashboard` is updated to include a "Dismiss" or "Remove" button (an 'X' or trash icon) next to each aggregated prep item.
+- **AC 2:** Clicking "Dismiss" opens a beautifully designed modal dialogue box rather than a generic browser warning window.
+- **AC 3:** The dismissal modal includes a checkbox option: "Do not show this warning again during this session".
+- **AC 4:** If the "Do not show again" option is checked, subsequent dismissals in the same session immediately hide the prep item without opening a modal. This selection is saved in session state and resets on logout/session expiry.

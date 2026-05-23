@@ -1,3 +1,9 @@
+/**
+ * FILE: components/ui/Autocomplete.tsx
+ * DESCRIPTION: Generic autocomplete component for the Kitchen UI.
+ * STANDARDS: TDD, Clean UI.
+ */
+
 import React, { useState, useEffect, useRef } from "react";
 import { Input } from "./Input";
 
@@ -14,6 +20,8 @@ interface AutocompleteProps<T> {
   minChars?: number;
   className?: string;
   footerAction?: (query: string) => React.ReactNode;
+  selectedItem?: T | null;
+  getOptionLabel?: (item: T) => string;
   selectedText?: string;
   onClearSelection?: () => void;
 }
@@ -31,14 +39,26 @@ export function Autocomplete<T>({
   minChars = 2,
   className = "",
   footerAction,
+  selectedItem = null,
+  getOptionLabel,
   selectedText,
   onClearSelection,
 }: AutocompleteProps<T>) {
   const [query, setQuery] = useState(initialValue || "");
   const [results, setResults] = useState<T[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+  const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const hasSelection = !!(selectedItem || selectedText);
+
+  useEffect(() => {
+    if (selectedItem && getOptionLabel) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setQuery(getOptionLabel(selectedItem));
+    }
+  }, [selectedItem, getOptionLabel]);
 
   useEffect(() => {
     if (initialValue !== undefined) {
@@ -49,7 +69,7 @@ export function Autocomplete<T>({
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHighlightedIndex(-1);
+    setFocusedIndex(-1);
   }, [results]);
 
   useEffect(() => {
@@ -59,25 +79,38 @@ export function Autocomplete<T>({
         !containerRef.current.contains(event.target as Node)
       ) {
         setResults([]);
+        setIsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setResults([]);
+        setIsOpen(false);
       }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
+    setIsOpen(true);
     if (onChange) {
       onChange(val);
+    }
+    if (hasSelection && onClearSelection) {
+      onClearSelection();
     }
 
     if (val.length < minChars) {
       setResults([]);
-      setHighlightedIndex(-1);
       return;
     }
 
@@ -85,7 +118,6 @@ export function Autocomplete<T>({
     try {
       const items = await onSearch(val);
       setResults(items);
-      setHighlightedIndex(-1);
     } catch (error) {
       console.error("Autocomplete search error:", error);
     } finally {
@@ -95,18 +127,23 @@ export function Autocomplete<T>({
 
   const handleSelect = (item: T) => {
     onSelect(item);
-    if (clearOnSelect) {
+    if (getOptionLabel) {
+      setQuery(getOptionLabel(item));
+    } else if (clearOnSelect) {
       setQuery("");
     }
     setResults([]);
-    setHighlightedIndex(-1);
+    setFocusedIndex(-1);
+    setIsOpen(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Escape") {
+      e.preventDefault();
       setResults([]);
-      setHighlightedIndex(-1);
-      if (!selectedText) {
+      setFocusedIndex(-1);
+      setIsOpen(false);
+      if (selectedText && !hasSelection) {
         setQuery("");
       }
       return;
@@ -116,26 +153,27 @@ export function Autocomplete<T>({
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setHighlightedIndex((prev) => {
-        const next = prev + 1;
-        return next >= results.length ? 0 : next;
+      setFocusedIndex((prev) => {
+        if (results.length === 0) return -1;
+        return (prev + 1) % results.length;
       });
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setHighlightedIndex((prev) => {
-        const next = prev - 1;
-        return next < 0 ? results.length - 1 : next;
+      setFocusedIndex((prev) => {
+        if (results.length === 0) return -1;
+        if (prev <= 0) return results.length - 1;
+        return prev - 1;
       });
     } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (highlightedIndex >= 0 && highlightedIndex < results.length) {
-        handleSelect(results[highlightedIndex]);
+      if (focusedIndex >= 0 && focusedIndex < results.length) {
+        e.preventDefault();
+        handleSelect(results[focusedIndex]);
       }
     }
   };
 
   const showDropdown =
-    query.length >= minChars && (results.length > 0 || footerAction);
+    isOpen && query.length >= minChars && (results.length > 0 || footerAction);
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
@@ -148,26 +186,30 @@ export function Autocomplete<T>({
           value={selectedText || query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
+          onFocus={() => setIsOpen(true)}
           disabled={!!selectedText}
-          className={`${selectedText ? "border-emerald-500/80 focus:ring-emerald-500/50 pr-10" : ""}`}
+          className={`${hasSelection ? "pr-10" : ""} ${
+            selectedText
+              ? "border-emerald-500/80 focus:ring-emerald-500/50"
+              : ""
+          }`}
         />
-        {selectedText && (
-          <div className="absolute right-2 flex items-center gap-1">
-            <span className="text-emerald-500" title="API Match Successful">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2.5"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </span>
+        {hasSelection && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <svg
+              className="w-5 h-5 text-emerald-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
             {onClearSelection && (
               <button
                 type="button"
@@ -184,7 +226,7 @@ export function Autocomplete<T>({
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth="2"
+                    strokeWidth={2}
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
@@ -192,34 +234,33 @@ export function Autocomplete<T>({
             )}
           </div>
         )}
+        {isSearching && (
+          <div className="absolute right-10 top-1/2 -translate-y-1/2 text-[10px] text-zinc-500 animate-pulse">
+            Searching...
+          </div>
+        )}
       </div>
-      {isSearching && (
-        <div className="absolute right-2 top-8 text-[10px] text-zinc-500 animate-pulse">
-          Searching...
-        </div>
-      )}
       {showDropdown && (
         <div
           role="listbox"
           className="absolute z-50 w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl max-h-60 overflow-auto"
         >
-          {results.map((item, index) => {
-            const isHighlighted = index === highlightedIndex;
-            return (
-              <button
-                key={keyExtractor(item)}
-                role="option"
-                aria-selected={isHighlighted}
-                type="button"
-                onClick={() => handleSelect(item)}
-                className={`w-full text-left px-4 py-2 transition-colors border-b border-zinc-700 last:border-0 ${
-                  isHighlighted ? "bg-zinc-700 text-white" : "hover:bg-zinc-700"
-                }`}
-              >
-                {renderItem(item)}
-              </button>
-            );
-          })}
+          {results.map((item, index) => (
+            <button
+              key={keyExtractor(item)}
+              role="option"
+              aria-selected={focusedIndex === index}
+              type="button"
+              onClick={() => handleSelect(item)}
+              className={`w-full text-left px-4 py-2 transition-colors border-b border-zinc-700 last:border-0 ${
+                focusedIndex === index
+                  ? "bg-zinc-700 text-white"
+                  : "hover:bg-zinc-700 text-zinc-200"
+              }`}
+            >
+              {renderItem(item)}
+            </button>
+          ))}
           {footerAction && (
             <div className="border-t border-zinc-700 bg-zinc-800 sticky bottom-0">
               {footerAction(query)}

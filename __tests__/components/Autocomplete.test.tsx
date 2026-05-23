@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, test, expect, vi } from "vitest";
 import { Autocomplete } from "@/components/ui/Autocomplete";
 
 interface MockItem {
-  id: string;
+  id: string | number;
   name: string;
 }
 
@@ -17,7 +17,16 @@ describe("Autocomplete Keyboard & Match Indicator", () => {
   const onSearch = vi.fn().mockResolvedValue(mockItems);
   const onSelect = vi.fn();
 
-  it("should support keyboard navigation: ArrowDown, ArrowUp, Enter, and Escape", async () => {
+  const defaultProps = {
+    onSelect: vi.fn(),
+    onSearch: vi.fn().mockResolvedValue(mockItems),
+    renderItem: (item: MockItem) => <span>{item.name}</span>,
+    keyExtractor: (item: MockItem) => item.id.toString(),
+    minChars: 1,
+    placeholder: "Search...",
+  };
+
+  it("should support keyboard navigation: ArrowDown, ArrowUp, Enter, and Escape (HEAD spec style)", async () => {
     render(
       <Autocomplete<MockItem>
         label="Search Fruit"
@@ -87,5 +96,101 @@ describe("Autocomplete Keyboard & Match Indicator", () => {
     expect(clearBtn).toBeInTheDocument();
     fireEvent.click(clearBtn);
     expect(onClear).toHaveBeenCalled();
+  });
+
+  test("keyboard navigation moves highlight and selects item on Enter (staging spec style)", async () => {
+    const onSelectMock = vi.fn();
+    render(<Autocomplete {...defaultProps} onSelect={onSelectMock} />);
+
+    const input = screen.getByPlaceholderText("Search...");
+    fireEvent.change(input, { target: { value: "a" } });
+
+    // Wait for dropdown to be populated
+    await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeInTheDocument();
+    });
+
+    // Press ArrowDown once -> highlights "Apple"
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    // Press ArrowDown twice -> highlights "Banana"
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    // Press Enter -> selects "Banana"
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(onSelectMock).toHaveBeenCalledWith(mockItems[1]);
+  });
+
+  test("keyboard navigation wraps around correctly", async () => {
+    const onSelectMock = vi.fn();
+    render(<Autocomplete {...defaultProps} onSelect={onSelectMock} />);
+
+    const input = screen.getByPlaceholderText("Search...");
+    fireEvent.change(input, { target: { value: "a" } });
+
+    await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeInTheDocument();
+    });
+
+    // Press ArrowUp once -> wraps around to the last item ("Cherry")
+    fireEvent.keyDown(input, { key: "ArrowUp" });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(onSelectMock).toHaveBeenCalledWith(mockItems[2]);
+  });
+
+  test("Escape key closes the dropdown results", async () => {
+    render(<Autocomplete {...defaultProps} />);
+
+    const input = screen.getByPlaceholderText("Search...");
+    fireEvent.change(input, { target: { value: "a" } });
+
+    await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(input, { key: "Escape" });
+
+    expect(screen.queryByText("Apple")).not.toBeInTheDocument();
+  });
+
+  test("displays green checkmark success match indicator when selectedItem is provided", () => {
+    const { container } = render(
+      <Autocomplete
+        {...defaultProps}
+        selectedItem={mockItems[0]}
+        getOptionLabel={(item) => item.name}
+      />,
+    );
+
+    // Green checkmark SVG should be visible
+    const svg = container.querySelector("svg.text-emerald-500");
+    expect(svg).toBeInTheDocument();
+
+    const input = screen.getByPlaceholderText("Search...") as HTMLInputElement;
+    expect(input.value).toBe("Apple");
+  });
+
+  test("clears selection when user types into the input field", async () => {
+    const onClearSelection = vi.fn();
+    render(
+      <Autocomplete
+        {...defaultProps}
+        selectedItem={mockItems[0]}
+        getOptionLabel={(item) => item.name}
+        onClearSelection={onClearSelection}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText("Search...");
+    fireEvent.change(input, { target: { value: "Apples" } });
+
+    await waitFor(() => {
+      expect(onClearSelection).toHaveBeenCalled();
+    });
+
+    // Wait for the dropdown results to load to prevent async state updates leaking
+    await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeInTheDocument();
+    });
   });
 });

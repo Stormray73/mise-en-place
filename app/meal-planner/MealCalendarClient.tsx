@@ -108,18 +108,23 @@ export default function MealCalendarClient({
 
   const handleAddMeal = async (date: Date, slot: string) => {
     const res = await createMealAction(date, slot);
-    if (res.success && res.data) {
-      setIsAddingMeal(null);
-      setIsAddingRecipe({ mealId: res.data.id });
+    if (res.success) {
+      return { success: true, mealId: res.data.id };
     } else {
-      if (!res.success) alert(res.error);
-      setIsAddingMeal(null);
+      return {
+        success: false,
+        error: res.error,
+      };
     }
   };
 
   const handleAddRecipe = async (mealId: string, recipeId: string) => {
-    await addRecipeToMealAction(mealId, recipeId);
-    setIsAddingRecipe(null);
+    const res = await addRecipeToMealAction(mealId, recipeId);
+    if (!res.success) {
+      alert(res.error);
+    } else {
+      setIsAddingRecipe(null);
+    }
   };
 
   const handleDeleteMeal = async (mealId: string) => {
@@ -299,8 +304,12 @@ export default function MealCalendarClient({
       {isAddingMeal && (
         <AddMealModal
           date={isAddingMeal.date}
+          allRecipes={allRecipes}
           onClose={() => setIsAddingMeal(null)}
-          onAdd={handleAddMeal}
+          onAddMeal={handleAddMeal}
+          onAddRecipe={async (mealId, recipeId) => {
+            await addRecipeToMealAction(mealId, recipeId);
+          }}
         />
       )}
 

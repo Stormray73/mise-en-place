@@ -217,7 +217,7 @@ export default function RecipeView({
                         >
                           {comp.childRecipe?.title || "Sub-recipe"}
                           <svg
-                            className="w-3 h-3 inline"
+                            className="w-3.5 h-3.5 inline"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"

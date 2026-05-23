@@ -126,7 +126,7 @@ export default function MealSlot({
         {meal.plannedRecipes.map((pr) => (
           <Link
             key={pr.id}
-            href={`/recipes/${pr.recipeId}?scale=${pr.scale}`}
+            href={`/recipes/${pr.recipeId}`}
             className="group/item flex items-center justify-between block truncate text-xs hover:text-blue-400 text-zinc-200 transition-colors py-1 px-1.5 rounded hover:bg-zinc-800/80"
             title={pr.recipe.title}
           >

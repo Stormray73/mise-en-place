@@ -13,6 +13,30 @@ This document serves as the central registry for bugs and regressions. It is des
 
 ## Active Bugs
 
+### BUG-042: Prep-Ahead Aggregator Fails to Update when Recipe is Deleted from Meal Plan
+
+**Status:** Active
+**Description:** Removing a recipe from a planned meal slot does not trigger an update or recalculation in the prep-ahead aggregator, leaving stale prep items visible on the Prep Ahead dashboard.
+**Reproduction:**
+
+1. Navigate to the Meal Planner and add a recipe requiring prep-ahead to any day/slot.
+2. Verify the corresponding items appear on the Prep Ahead dashboard.
+3. Return to the Meal Planner and delete the recipe from that meal.
+4. Open the Prep Ahead dashboard; observe that the deleted recipe's prep items are still listed.
+
+---
+
+### BUG-043: Duplicate Planned Recipes Permitted in Single Meal Slot
+
+**Status:** Active
+**Description:** The Meal Planner allows the user to add the exact same recipe multiple times to the same meal slot on a single day, leading to duplicated database rows and corrupted macro totals.
+**Reproduction:**
+
+1. Open the Meal Planner calendar.
+2. Select a slot (e.g., "Lunch") and add a recipe.
+3. Click the slot again and add the same recipe.
+4. Verify that the recipe is duplicated in the calendar display and its nutritional macros are counted twice.
+
 ---
 
 ## Resolved Bugs
