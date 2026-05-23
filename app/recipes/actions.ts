@@ -18,6 +18,7 @@ import {
   USDAFoodPortion,
 } from "@/types";
 import { upsertIngredient, matchIngredientFuzzy } from "@/lib/ingredients";
+import { parseQuantityUnitAndName } from "@/lib/units";
 import { deductRecipeIngredients } from "@/lib/pantry";
 import { scrapeRecipe } from "@/lib/scraper";
 import { parseBulkRecipes, parseRecipeFromImage } from "@/lib/ai-parser";
@@ -71,14 +72,21 @@ export async function importRecipeAction(
           instruction: s.instruction,
           timerInSeconds: s.timerInSeconds,
         })),
-        components: r.ingredients.map((ing) => ({
-          type: "ingredient" as const,
-          quantity: ing.quantity,
-          unit: ing.unit,
-          ingredientId: null,
-          ingredient: { name: ing.name },
-          prepState: ing.prepState,
-        })),
+        components: r.ingredients.map((ing) => {
+          const normalized = parseQuantityUnitAndName(
+            ing.quantity,
+            ing.unit,
+            ing.name,
+          );
+          return {
+            type: "ingredient" as const,
+            quantity: normalized.quantity,
+            unit: normalized.unit,
+            ingredientId: null,
+            ingredient: { name: normalized.name },
+            prepState: ing.prepState,
+          };
+        }),
       }));
     } else if (type === "file") {
       const file = formData.get("file") as File;
@@ -111,14 +119,21 @@ export async function importRecipeAction(
               instruction: s.instruction,
               timerInSeconds: s.timerInSeconds,
             })),
-            components: r.ingredients.map((ing) => ({
-              type: "ingredient" as const,
-              quantity: ing.quantity,
-              unit: ing.unit,
-              ingredientId: null,
-              ingredient: { name: ing.name },
-              prepState: ing.prepState,
-            })),
+            components: r.ingredients.map((ing) => {
+              const normalized = parseQuantityUnitAndName(
+                ing.quantity,
+                ing.unit,
+                ing.name,
+              );
+              return {
+                type: "ingredient" as const,
+                quantity: normalized.quantity,
+                unit: normalized.unit,
+                ingredientId: null,
+                ingredient: { name: normalized.name },
+                prepState: ing.prepState,
+              };
+            }),
             imageUrl: isR2Configured ? imageUrl : null,
           },
         ];
@@ -137,14 +152,21 @@ export async function importRecipeAction(
             instruction: s.instruction,
             timerInSeconds: s.timerInSeconds,
           })),
-          components: r.ingredients.map((ing) => ({
-            type: "ingredient" as const,
-            quantity: ing.quantity,
-            unit: ing.unit,
-            ingredientId: null,
-            ingredient: { name: ing.name },
-            prepState: ing.prepState,
-          })),
+          components: r.ingredients.map((ing) => {
+            const normalized = parseQuantityUnitAndName(
+              ing.quantity,
+              ing.unit,
+              ing.name,
+            );
+            return {
+              type: "ingredient" as const,
+              quantity: normalized.quantity,
+              unit: normalized.unit,
+              ingredientId: null,
+              ingredient: { name: normalized.name },
+              prepState: ing.prepState,
+            };
+          }),
         }));
       }
     }

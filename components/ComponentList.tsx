@@ -150,6 +150,7 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                             baseMacros,
                             baseAmount: food.baseAmount || 100,
                           },
+                          needsReview: false,
                         } as Partial<RecipeSaveData["components"][0]>);
                       }}
                       minChars={3}
@@ -344,6 +345,7 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                           baseAmount: 100,
                           baseMacros: macros,
                         },
+                        needsReview: false,
                       } as Partial<RecipeSaveData["components"][0]>);
                       setEditingIndex(null);
                     }}

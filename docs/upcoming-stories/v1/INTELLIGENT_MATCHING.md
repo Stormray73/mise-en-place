@@ -53,6 +53,31 @@ Currently, when a recipe is imported via URL, Text, or Image, the AI successfull
 - **AC 3:** Selecting a search result updates the ingredient's name, base macros, food portions, and external ID (FDC ID / OFF ID) immediately in the editor.
 - **AC 4:** Saving the recipe persists these standardized macros and external reference IDs to the database.
 
+### Story 5: Robust Unit Normalization
+
+**As an importing engine, I want to parse case-insensitive abbreviations and tokenization without spaces (e.g., "2T", "1t", "¼ C", "6oz", "1lb.") so that they map cleanly to standard units.**
+
+- **AC 1:** The unit parser supports common case-insensitive shorthand (e.g., "T", "tbsp", "t", "tsp", "c", "oz", "lb").
+- **AC 2:** The unit parser handles ingredients formatted without spaces between the numeric quantity and the unit (e.g. "2T" parsed as quantity `2`, unit `T`).
+- **AC 3:** Standardize unicode fractions (like `¼`, `½`, `¾`) into float values prior to matching.
+
+### Story 6: Noise-Stripped Fuzzy Matching
+
+**As a matching engine, I want to strip extraneous description words, prep states, and parentheticals from ingredient names before similarity matching so that I avoid false-positives and reduce unnecessary user reviews.**
+
+- **AC 1:** Pre-process ingredient names to strip adjectives (e.g., "unsalted", "organic") and prep instructions (e.g., "chopped", "sliced", "drained").
+- **AC 2:** Remove parenthetical text (e.g., "peanuts (raw)", "beans (drained)") from names prior to database similarity comparison.
+- **AC 3:** Run the Levenshtein similarity matching against the cleaned token string, keeping the original raw text for visual display.
+
+### Story 7: Standard Designations in Macro Calculations
+
+**As a macro aggregator, I want to map discrete designations (like "can", "packet", "bunch", "sheet") against USDA portion modifiers or default averages so that their macros are counted rather than silently ignored.**
+
+- **AC 1:** The macro calculator checks if an ingredient has portion modifiers matching terms like "can", "packet", "bunch", or "sheet".
+- **AC 2:** If a direct match is found in the USDA portion modifiers database, calculate the weight accordingly.
+- **AC 3:** If no match is found, apply a sensible fallback weight (default average) based on standard industry volumes for that food category.
+- **AC 4:** Log a warning instead of returning zero macros when a portion matches a discrete designation but is not found in USDA portions.
+
 ## Alternatives Considered
 
 - **Bulk Seeding OFF Data:** Rejected due to massive database storage costs and the complexity of keeping millions of records up to date. Federation (on-the-fly querying) is more scalable.

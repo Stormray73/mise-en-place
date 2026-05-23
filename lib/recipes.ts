@@ -2,6 +2,74 @@ import { prisma } from "./prisma";
 import { convert, canConvert, USDAFoodPortion } from "./units";
 import { Macros, Recipe, RecipeSaveData } from "@/types";
 
+export function getDiscreteWeight(
+  qty: number,
+  unit: string,
+  portions: USDAFoodPortion[] = [],
+  ingredientName: string = "",
+): number | null {
+  const normalizedUnit = unit.toLowerCase().trim();
+  const discreteTerms = [
+    "can",
+    "packet",
+    "bunch",
+    "sheet",
+    "package",
+    "container",
+    "bag",
+    "box",
+  ];
+
+  // Find which term matches the unit
+  const matchedTerm = discreteTerms.find((term) =>
+    normalizedUnit.includes(term),
+  );
+  if (!matchedTerm) return null;
+
+  // AC 2: Check if a direct match is found in the USDA portion modifiers database
+  const directMatch = portions.find((p) => {
+    const mod = (p.modifier || "").toLowerCase();
+    const measureName = (p.measureUnitName || "").toLowerCase();
+    return mod.includes(matchedTerm) || measureName.includes(matchedTerm);
+  });
+
+  if (directMatch) {
+    const portionAmount = directMatch.amount || 1;
+    const gramWeight = directMatch.gramWeight || 0;
+    return qty * (gramWeight / portionAmount);
+  }
+
+  // AC 3: If no match is found, apply a sensible fallback weight
+  let fallbackWeight = 200; // global fallback
+  if (matchedTerm === "can") {
+    const nameLower = ingredientName.toLowerCase();
+    if (nameLower.includes("tuna")) {
+      fallbackWeight = 150;
+    } else if (
+      nameLower.includes("tomato") ||
+      nameLower.includes("beans") ||
+      nameLower.includes("chickpeas")
+    ) {
+      fallbackWeight = 400;
+    } else {
+      fallbackWeight = 400;
+    }
+  } else if (matchedTerm === "packet") {
+    fallbackWeight = 10;
+  } else if (matchedTerm === "bunch") {
+    fallbackWeight = 100;
+  } else if (matchedTerm === "sheet") {
+    fallbackWeight = 10;
+  }
+
+  // AC 4: Log a warning instead of returning zero macros
+  console.warn(
+    `WARNING: Discrete designation '${unit}' for ingredient '${ingredientName}' not found in USDA portions. Applying fallback weight of ${fallbackWeight}g.`,
+  );
+
+  return qty * fallbackWeight;
+}
+
 export async function calculateMacros(
   recipe: Partial<Recipe>,
 ): Promise<Macros> {
@@ -32,13 +100,32 @@ export async function calculateMacros(
         const portions = component.ingredient
           .foodPortions as unknown as USDAFoodPortion[];
 
-        if (canConvert(component.unit, "g", portions)) {
+        // Check for discrete designations first! (Story 7)
+        const ingredientName = component.ingredient.name || "";
+        const discreteWeight = getDiscreteWeight(
+          component.quantity,
+          component.unit,
+          portions,
+          ingredientName,
+        );
+
+        if (discreteWeight !== null) {
+          const ingredient = component.ingredient as { baseAmount?: number };
+          const baseAmount = ingredient.baseAmount || 100;
+          const ratio = discreteWeight / baseAmount;
+          componentMacros = {
+            calories: baseMacros.calories * ratio,
+            protein: baseMacros.protein * ratio,
+            fat: baseMacros.fat * ratio,
+            carbs: baseMacros.carbs * ratio,
+          };
+        } else if (canConvert(component.unit, "g", portions)) {
           baseUnit = "g";
         } else if (canConvert(component.unit, "ml", portions)) {
           baseUnit = "ml";
         }
 
-        if (baseUnit) {
+        if (baseUnit && discreteWeight === null) {
           try {
             const quantityInBase = convert(
               component.quantity,
