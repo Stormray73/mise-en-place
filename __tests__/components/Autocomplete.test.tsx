@@ -76,7 +76,7 @@ describe("Autocomplete Keyboard Navigation & Selection Matcher", () => {
   });
 
   test("displays green checkmark success match indicator when selectedItem is provided", () => {
-    render(
+    const { container } = render(
       <Autocomplete
         {...defaultProps}
         selectedItem={items[0]}
@@ -85,14 +85,14 @@ describe("Autocomplete Keyboard Navigation & Selection Matcher", () => {
     );
 
     // Green checkmark SVG should be visible
-    const svg = document.querySelector("svg.text-emerald-500");
+    const svg = container.querySelector("svg.text-emerald-500");
     expect(svg).toBeInTheDocument();
 
     const input = screen.getByPlaceholderText("Search...") as HTMLInputElement;
     expect(input.value).toBe("Apple");
   });
 
-  test("clears selection when user types into the input field", () => {
+  test("clears selection when user types into the input field", async () => {
     const onClearSelection = vi.fn();
     render(
       <Autocomplete
@@ -106,6 +106,13 @@ describe("Autocomplete Keyboard Navigation & Selection Matcher", () => {
     const input = screen.getByPlaceholderText("Search...");
     fireEvent.change(input, { target: { value: "Apples" } });
 
-    expect(onClearSelection).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onClearSelection).toHaveBeenCalled();
+    });
+
+    // Wait for the dropdown results to load to prevent async state updates leaking
+    await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeInTheDocument();
+    });
   });
 });
