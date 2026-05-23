@@ -20,6 +20,9 @@ interface AutocompleteProps<T> {
   minChars?: number;
   className?: string;
   footerAction?: (query: string) => React.ReactNode;
+  selectedItem?: T | null;
+  getOptionLabel?: (item: T) => string;
+  onClearSelection?: () => void;
 }
 
 export function Autocomplete<T>({
@@ -35,11 +38,22 @@ export function Autocomplete<T>({
   minChars = 2,
   className = "",
   footerAction,
+  selectedItem = null,
+  getOptionLabel,
+  onClearSelection,
 }: AutocompleteProps<T>) {
   const [query, setQuery] = useState(initialValue || "");
   const [results, setResults] = useState<T[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedItem && getOptionLabel) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setQuery(getOptionLabel(selectedItem));
+    }
+  }, [selectedItem, getOptionLabel]);
 
   useEffect(() => {
     if (initialValue !== undefined) {
@@ -47,6 +61,11 @@ export function Autocomplete<T>({
       setQuery(initialValue);
     }
   }, [initialValue]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFocusedIndex(-1);
+  }, [results]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -61,7 +80,6 @@ export function Autocomplete<T>({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setResults([]);
-        setQuery("");
       }
     }
 
@@ -78,6 +96,9 @@ export function Autocomplete<T>({
     setQuery(val);
     if (onChange) {
       onChange(val);
+    }
+    if (selectedItem && onClearSelection) {
+      onClearSelection();
     }
 
     if (val.length < minChars) {
@@ -98,10 +119,41 @@ export function Autocomplete<T>({
 
   const handleSelect = (item: T) => {
     onSelect(item);
-    if (clearOnSelect) {
+    if (getOptionLabel) {
+      setQuery(getOptionLabel(item));
+    } else if (clearOnSelect) {
       setQuery("");
     }
     setResults([]);
+    setFocusedIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showDropdown) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedIndex((prev) => {
+        if (results.length === 0) return -1;
+        return (prev + 1) % results.length;
+      });
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedIndex((prev) => {
+        if (results.length === 0) return -1;
+        if (prev <= 0) return results.length - 1;
+        return prev - 1;
+      });
+    } else if (e.key === "Enter") {
+      if (focusedIndex >= 0 && focusedIndex < results.length) {
+        e.preventDefault();
+        handleSelect(results[focusedIndex]);
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setResults([]);
+      setFocusedIndex(-1);
+    }
   };
 
   const showDropdown =
@@ -112,29 +164,55 @@ export function Autocomplete<T>({
       {label && (
         <label className="text-xs text-zinc-500 mb-1 block">{label}</label>
       )}
-      <Input
-        placeholder={placeholder}
-        value={query}
-        onChange={handleInputChange}
-      />
-      {isSearching && (
-        <div className="absolute right-2 top-8 text-[10px] text-zinc-500 animate-pulse">
-          Searching...
-        </div>
-      )}
+      <div className="relative">
+        <Input
+          placeholder={placeholder}
+          value={query}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          className={selectedItem ? "pr-10" : ""}
+        />
+        {selectedItem && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+            <svg
+              className="w-5 h-5 text-emerald-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+        )}
+        {isSearching && (
+          <div className="absolute right-10 top-1/2 -translate-y-1/2 text-[10px] text-zinc-500 animate-pulse">
+            Searching...
+          </div>
+        )}
+      </div>
       {showDropdown && (
         <div
           role="listbox"
           className="absolute z-50 w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-md shadow-xl max-h-60 overflow-auto"
         >
-          {results.map((item) => (
+          {results.map((item, index) => (
             <button
               key={keyExtractor(item)}
               role="option"
-              aria-selected={false}
+              aria-selected={focusedIndex === index}
               type="button"
               onClick={() => handleSelect(item)}
-              className="w-full text-left px-4 py-2 hover:bg-zinc-700 transition-colors border-b border-zinc-700 last:border-0"
+              className={`w-full text-left px-4 py-2 transition-colors border-b border-zinc-700 last:border-0 ${
+                focusedIndex === index
+                  ? "bg-zinc-700 text-white"
+                  : "hover:bg-zinc-700 text-zinc-200"
+              }`}
             >
               {renderItem(item)}
             </button>
