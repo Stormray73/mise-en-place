@@ -47,6 +47,7 @@ export async function addManualShoppingItemAction(
   unit?: string,
   isRecurring: boolean = false,
   storeId?: string | null,
+  recurringInterval?: string | null,
 ): Promise<ActionResult<void>> {
   try {
     const session = await auth();
@@ -59,6 +60,7 @@ export async function addManualShoppingItemAction(
       unit,
       isRecurring,
       storeId,
+      recurringInterval,
     );
 
     revalidatePath("/dashboard/shopping-list");
@@ -100,7 +102,7 @@ export async function completeShopAction(
     quantity: number;
     unit: string;
     reason: "meal-plan" | "low-stock" | "manual";
-  }[]
+  }[],
 ): Promise<ActionResult<void>> {
   try {
     const session = await auth();
@@ -120,7 +122,9 @@ export async function completeShopAction(
   }
 }
 
-export async function getStoresAction(): Promise<ActionResult<{ id: string; name: string }[]>> {
+export async function getStoresAction(): Promise<
+  ActionResult<{ id: string; name: string }[]>
+> {
   try {
     const session = await auth();
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
@@ -140,7 +144,9 @@ export async function getStoresAction(): Promise<ActionResult<{ id: string; name
   }
 }
 
-export async function createStoreAction(name: string): Promise<ActionResult<{ id: string; name: string }>> {
+export async function createStoreAction(
+  name: string,
+): Promise<ActionResult<{ id: string; name: string }>> {
   try {
     const session = await auth();
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
@@ -163,7 +169,9 @@ export async function createStoreAction(name: string): Promise<ActionResult<{ id
   }
 }
 
-export async function deleteStoreAction(id: string): Promise<ActionResult<void>> {
+export async function deleteStoreAction(
+  id: string,
+): Promise<ActionResult<void>> {
   try {
     const session = await auth();
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };

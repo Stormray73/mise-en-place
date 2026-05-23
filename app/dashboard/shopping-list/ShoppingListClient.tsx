@@ -57,6 +57,8 @@ export default function ShoppingListClient({
   const [newItemUnit, setNewItemUnit] = useState("item");
   const [newItemStoreId, setNewItemStoreId] = useState<string>("");
   const [isRecurring, setIsRecurring] = useState(false);
+  const [newItemRecurringInterval, setNewItemRecurringInterval] =
+    useState<string>("");
   const [isAdding, setIsAdding] = useState(false);
 
   // Fetch stores on mount
@@ -70,11 +72,91 @@ export default function ShoppingListClient({
     loadStores();
   }, []);
 
+  const formatDateStr = (d: Date) => d.toISOString().split("T")[0];
+
   const updateRangeWithDates = (start: string, end: string) => {
     const params = new URLSearchParams();
     params.set("start", start);
     params.set("end", end);
     router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const getPresetRanges = () => {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    const thisWeekStart = new Date(today);
+    thisWeekStart.setUTCDate(
+      thisWeekStart.getUTCDate() - thisWeekStart.getUTCDay(),
+    );
+    const thisWeekEnd = new Date(thisWeekStart);
+    thisWeekEnd.setUTCDate(thisWeekEnd.getUTCDate() + 7);
+
+    const nextWeekStart = new Date(thisWeekStart);
+    nextWeekStart.setUTCDate(nextWeekStart.getUTCDate() + 7);
+    const nextWeekEnd = new Date(nextWeekStart);
+    nextWeekEnd.setUTCDate(nextWeekEnd.getUTCDate() + 7);
+
+    const rollingStart = new Date(today);
+    const rollingEnd = new Date(rollingStart);
+    rollingEnd.setUTCDate(rollingEnd.getUTCDate() + 7);
+
+    return {
+      thisWeek: {
+        start: formatDateStr(thisWeekStart),
+        end: formatDateStr(thisWeekEnd),
+      },
+      nextWeek: {
+        start: formatDateStr(nextWeekStart),
+        end: formatDateStr(nextWeekEnd),
+      },
+      rolling: {
+        start: formatDateStr(rollingStart),
+        end: formatDateStr(rollingEnd),
+      },
+    };
+  };
+
+  const presets = getPresetRanges();
+
+  let activePreset = "custom";
+  if (
+    startDate === presets.thisWeek.start &&
+    endDate === presets.thisWeek.end
+  ) {
+    activePreset = "this-week";
+  } else if (
+    startDate === presets.nextWeek.start &&
+    endDate === presets.nextWeek.end
+  ) {
+    activePreset = "next-week";
+  } else if (
+    startDate === presets.rolling.start &&
+    endDate === presets.rolling.end
+  ) {
+    activePreset = "rolling-7-days";
+  }
+
+  const handlePresetSelect = (preset: string) => {
+    let start = startDate;
+    let end = endDate;
+
+    if (preset === "this-week") {
+      start = presets.thisWeek.start;
+      end = presets.thisWeek.end;
+    } else if (preset === "next-week") {
+      start = presets.nextWeek.start;
+      end = presets.nextWeek.end;
+    } else if (preset === "rolling-7-days") {
+      start = presets.rolling.start;
+      end = presets.rolling.end;
+    } else {
+      return;
+    }
+
+    setStartDate(start);
+    setEndDate(end);
+    updateRangeWithDates(start, end);
   };
 
   const handlePrevWeek = () => {
@@ -103,18 +185,6 @@ export default function ShoppingListClient({
     updateRangeWithDates(startStr, endStr);
   };
 
-  const handleCurrentWeek = () => {
-    const today = new Date();
-    const future = new Date();
-    future.setDate(today.getDate() + 7);
-
-    const startStr = today.toISOString().split("T")[0];
-    const endStr = future.toISOString().split("T")[0];
-    setStartDate(startStr);
-    setEndDate(endStr);
-    updateRangeWithDates(startStr, endStr);
-  };
-
   const handleQuickAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemName.trim() || isAdding) return;
@@ -126,6 +196,7 @@ export default function ShoppingListClient({
       newItemUnit || undefined,
       isRecurring,
       newItemStoreId || undefined,
+      isRecurring ? newItemRecurringInterval || null : null,
     );
     if (res.success) {
       setNewItemName("");
@@ -133,6 +204,7 @@ export default function ShoppingListClient({
       setNewItemUnit("item");
       setNewItemStoreId("");
       setIsRecurring(false);
+      setNewItemRecurringInterval("");
       router.refresh();
     } else {
       alert(res.error || "Failed to add item");
@@ -303,21 +375,70 @@ export default function ShoppingListClient({
     <div className="space-y-8 pb-24">
       {/* Date Navigation & Actions */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900/60 p-4 rounded-xl border border-zinc-800 backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={handlePrevWeek}>
-            &larr; Prev Week
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCurrentWeek}
-            className="border border-zinc-700 bg-zinc-800 hover:bg-zinc-700"
-          >
-            Current Week
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleNextWeek}>
-            Next Week &rarr;
-          </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Preset Buttons */}
+          <div className="flex bg-zinc-950 p-1 rounded-lg border border-zinc-800">
+            <button
+              onClick={() => handlePresetSelect("this-week")}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                activePreset === "this-week"
+                  ? "bg-blue-600 text-white shadow"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              This Week
+            </button>
+            <button
+              onClick={() => handlePresetSelect("next-week")}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                activePreset === "next-week"
+                  ? "bg-blue-600 text-white shadow"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              Next Week
+            </button>
+            <button
+              onClick={() => handlePresetSelect("rolling-7-days")}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                activePreset === "rolling-7-days"
+                  ? "bg-blue-600 text-white shadow"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              Rolling 7 Days
+            </button>
+            <button
+              onClick={() => handlePresetSelect("custom")}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                activePreset === "custom"
+                  ? "bg-blue-600 text-white shadow"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              Custom Range
+            </button>
+          </div>
+
+          {/* Quick Prev/Next buttons */}
+          <div className="flex items-center gap-1 ml-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handlePrevWeek}
+              className="text-zinc-400 hover:text-zinc-200 h-8 px-2"
+            >
+              &larr; Prev Week
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleNextWeek}
+              className="text-zinc-400 hover:text-zinc-200 h-8 px-2"
+            >
+              Next Week &rarr;
+            </Button>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -432,20 +553,34 @@ export default function ShoppingListClient({
               label="Start Date"
               type="date"
               value={startDate}
+              disabled={activePreset !== "custom"}
               onChange={(e) => setStartDate(e.target.value)}
+              className={
+                activePreset !== "custom" ? "opacity-60 cursor-not-allowed" : ""
+              }
             />
             <Input
               label="End Date"
               type="date"
               value={endDate}
+              disabled={activePreset !== "custom"}
               onChange={(e) => setEndDate(e.target.value)}
+              className={
+                activePreset !== "custom" ? "opacity-60 cursor-not-allowed" : ""
+              }
             />
-            <Button
-              onClick={() => updateRangeWithDates(startDate, endDate)}
-              className="w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 font-bold"
-            >
-              Update List
-            </Button>
+            {activePreset === "custom" ? (
+              <Button
+                onClick={() => updateRangeWithDates(startDate, endDate)}
+                className="w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 font-bold"
+              >
+                Update List
+              </Button>
+            ) : (
+              <div className="text-xs text-zinc-500 italic text-center pt-2">
+                Dates locked by preset. Select &quot;Custom Range&quot; to edit.
+              </div>
+            )}
           </div>
         </Card>
 
@@ -505,18 +640,44 @@ export default function ShoppingListClient({
                   ))}
                 </Select>
               </div>
-              <div className="flex items-center h-full pt-5">
+              <div className="flex flex-col justify-center space-y-2 pt-2">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={isRecurring}
-                    onChange={(e) => setIsRecurring(e.target.checked)}
+                    onChange={(e) => {
+                      setIsRecurring(e.target.checked);
+                      if (!e.target.checked) {
+                        setNewItemRecurringInterval("");
+                      }
+                    }}
                     className="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-blue-600 focus:ring-0"
                   />
-                  <span className="text-sm text-zinc-400">
-                    Recurring item (Auto-restocks every cycle)
+                  <span className="text-sm text-zinc-400 font-medium">
+                    Recurring item (Auto-restocks)
                   </span>
                 </label>
+
+                {isRecurring && (
+                  <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                      Restock Interval
+                    </label>
+                    <Select
+                      value={newItemRecurringInterval}
+                      onChange={(e) =>
+                        setNewItemRecurringInterval(e.target.value)
+                      }
+                      className="text-xs h-8 bg-zinc-850 border-zinc-700 text-zinc-300"
+                    >
+                      <option value="">Always (every cycle)</option>
+                      <option value="1_week">Every week</option>
+                      <option value="2_weeks">Every 2 weeks</option>
+                      <option value="3_weeks">Every 3 weeks</option>
+                      <option value="monthly">Every month</option>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -632,6 +793,14 @@ export default function ShoppingListClient({
                             {item.isRecurring && (
                               <span className="text-[9px] px-1.5 py-0.2 bg-teal-900/20 border border-teal-500/30 text-teal-400 rounded uppercase font-bold tracking-tight">
                                 Recurring
+                                {item.recurringInterval === "1_week" &&
+                                  " (Weekly)"}
+                                {item.recurringInterval === "2_weeks" &&
+                                  " (Bi-weekly)"}
+                                {item.recurringInterval === "3_weeks" &&
+                                  " (3-weekly)"}
+                                {item.recurringInterval === "monthly" &&
+                                  " (Monthly)"}
                               </span>
                             )}
                           </div>
