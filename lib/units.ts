@@ -177,60 +177,73 @@ export function convert(
   throw new Error(`Incompatible units: cannot convert ${from} to ${to}`);
 }
 
-const UNICODE_FRACTIONS: Record<string, number> = {
-  "¼": 0.25,
-  "½": 0.5,
-  "¾": 0.75,
-  "⅓": 0.333,
-  "⅔": 0.667,
-  "⅛": 0.125,
-  "⅜": 0.375,
-  "⅝": 0.625,
-  "⅞": 0.875,
-};
-
 const SHORTHAND_UNITS: Record<string, string> = {
   t: "tsp",
   tsp: "tsp",
   tsps: "tsp",
   teaspoon: "tsp",
   teaspoons: "tsp",
-
+  "t.": "tsp",
+  "tsp.": "tsp",
+  T: "tbsp",
   tbs: "tbsp",
   tbsp: "tbsp",
   tbsps: "tbsp",
   tablespoon: "tbsp",
   tablespoons: "tbsp",
-
+  "T.": "tbsp",
+  "tbsp.": "tbsp",
   c: "cup",
   cup: "cup",
   cups: "cup",
-
+  "c.": "cup",
   oz: "oz",
   ozs: "oz",
   ounce: "oz",
   ounces: "oz",
-
+  "oz.": "oz",
   lb: "lb",
   lbs: "lb",
   pound: "lb",
   pounds: "lb",
-
+  "lb.": "lb",
   g: "g",
   gram: "g",
   grams: "g",
-
   kg: "kg",
   kilogram: "kg",
   kilograms: "kg",
-
   ml: "ml",
   milliliter: "ml",
   milliliters: "ml",
-
   l: "L",
   liter: "L",
   liters: "L",
+  ea: "item",
+  each: "item",
+  item: "item",
+  items: "item",
+};
+
+const UNICODE_FRACTIONS: Record<string, number> = {
+  "¼": 0.25,
+  "½": 0.5,
+  "¾": 0.75,
+  "⅐": 0.142,
+  "⅑": 0.111,
+  "⅒": 0.1,
+  "⅓": 0.333,
+  "⅔": 0.667,
+  "⅕": 0.2,
+  "⅖": 0.4,
+  "⅗": 0.6,
+  "⅘": 0.8,
+  "⅙": 0.167,
+  "⅚": 0.833,
+  "⅛": 0.125,
+  "⅜": 0.375,
+  "⅝": 0.625,
+  "⅞": 0.875,
 };
 
 export function normalizeUnicodeFractions(str: string): string {
@@ -245,7 +258,77 @@ export function normalizeUnit(unit: string): string {
   if (unit === "T") return "tbsp";
   if (unit === "t") return "tsp";
   const clean = unit.trim().toLowerCase().replace(/\.$/, "");
+  if (clean === "ea" || clean === "each") return "ea";
   return SHORTHAND_UNITS[clean] || clean;
+}
+
+export function parseUnicodeFractions(input: string): number {
+  let text = input.trim();
+  let total = 0;
+
+  for (const [unicode, val] of Object.entries(UNICODE_FRACTIONS)) {
+    if (text.includes(unicode)) {
+      text = text.replace(new RegExp(unicode, "g"), ` ${val} `);
+    }
+  }
+
+  const tokens = text.split(/\s+/).filter(Boolean);
+  for (const token of tokens) {
+    if (token.includes("/")) {
+      const parts = token.split("/");
+      if (parts.length === 2) {
+        const num = parseFloat(parts[0]);
+        const den = parseFloat(parts[1]);
+        if (!isNaN(num) && !isNaN(den) && den !== 0) {
+          total += num / den;
+        }
+      }
+    } else {
+      const val = parseFloat(token);
+      if (!isNaN(val)) {
+        total += val;
+      }
+    }
+  }
+
+  return total || 0;
+}
+
+export function normalizeUnitAndQuantity(
+  rawQty: string | number,
+  rawUnit: string,
+): { quantity: number; unit: string } {
+  let qtyStr = typeof rawQty === "number" ? rawQty.toString() : rawQty;
+  let unitStr = rawUnit ? rawUnit.trim() : "";
+
+  if (!qtyStr.trim()) {
+    const match = unitStr.match(/^([\d¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞/\s.-]+)(.*)$/);
+    if (match) {
+      qtyStr = match[1];
+      unitStr = match[2];
+    }
+  }
+
+  const noSpaceMatch = qtyStr.match(
+    /^([\d¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞/.-]+)([a-zA-Z.‌​]+)$/,
+  );
+  if (noSpaceMatch) {
+    qtyStr = noSpaceMatch[1];
+    unitStr = noSpaceMatch[2];
+  }
+
+  unitStr = unitStr.replace(/\.$/, "").trim();
+
+  const quantity = parseUnicodeFractions(qtyStr);
+  const mappedUnit =
+    SHORTHAND_UNITS[unitStr] ||
+    SHORTHAND_UNITS[unitStr.toLowerCase()] ||
+    "item";
+
+  return {
+    quantity: quantity || 0,
+    unit: mappedUnit,
+  };
 }
 
 export function parseQuantityUnitAndName(
@@ -260,7 +343,7 @@ export function parseQuantityUnitAndName(
   // 1. If unit contains starting number/fraction: e.g. "2T" or "¼ C"
   const unitMatch = unit
     .trim()
-    .match(/^(\d+(?:\.\d+)?|[¼½¾⅓⅔⅛⅜⅝⅞])\s*([a-zA-Z]+(?:\.)?)$/);
+    .match(/^(\d+(?:\.\d+)?|[¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])\s*([a-zA-Z]+(?:\.)?)$/);
   if (unitMatch) {
     const qStr = unitMatch[1];
     if (UNICODE_FRACTIONS[qStr] !== undefined) {
@@ -273,7 +356,7 @@ export function parseQuantityUnitAndName(
 
   // 2. If unit is empty/generic, or name starts with a quantity & unit (e.g. "2T flour", "½ cup flour", "6oz chicken", "1 1/2 tsp salt")
   const qtyUnitRegex =
-    /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?|[¼½¾⅓⅔⅛⅜⅝⅞])\s*([a-zA-Z]+(?:\.)?)\s+(.+)$/;
+    /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?|[¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])\s*([a-zA-Z]+(?:\.)?)\s+(.+)$/;
   const nameMatch = finalName.trim().match(qtyUnitRegex);
   if (nameMatch && (finalUnit === "ea" || finalUnit === "" || !finalUnit)) {
     let qStr = nameMatch[1];
@@ -316,7 +399,7 @@ export function parseQuantityUnitAndName(
 
   // 3. If name starts with just a number (e.g. "2 carrots"), and unit is generic
   const qtyOnlyRegex =
-    /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?|[¼½¾⅓⅔⅛⅜⅝⅞])\s+(.+)$/;
+    /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?|[¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])\s+(.+)$/;
   const qtyOnlyMatch = finalName.trim().match(qtyOnlyRegex);
   if (qtyOnlyMatch && (finalUnit === "ea" || finalUnit === "" || !finalUnit)) {
     let qStr = qtyOnlyMatch[1];
@@ -350,7 +433,7 @@ export function parseQuantityUnitAndName(
   if (finalUnit) {
     const unicodeMatch = finalUnit
       .trim()
-      .match(/^([¼½¾⅓⅔⅛⅜⅝⅞])\s*([a-zA-Z]+(?:\.)?)$/);
+      .match(/^([¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])\s*([a-zA-Z]+(?:\.)?)$/);
     if (unicodeMatch) {
       finalQty = UNICODE_FRACTIONS[unicodeMatch[1]] || 1;
       finalUnit = unicodeMatch[2];

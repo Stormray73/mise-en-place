@@ -219,16 +219,43 @@ export async function generateShoppingList(
 
   const results: ShoppingListItem[] = [];
 
+  function parseIntervalUnit(rawUnit: string | null): {
+    unit: string;
+    intervalDays: number;
+  } {
+    if (!rawUnit) return { unit: "item", intervalDays: 0 };
+    if (rawUnit.includes("::interval:")) {
+      const parts = rawUnit.split("::interval:");
+      const unit = parts[0] || "item";
+      const intervalDays = parseInt(parts[1], 10) || 0;
+      return { unit, intervalDays };
+    }
+    return { unit: rawUnit, intervalDays: 0 };
+  }
+
   for (const item of manualItems) {
-    // Filter out recurring items whose lastPurchasedAt is within or after the current viewing window (startDate)
-    const startOfDayDate = new Date(startDate);
-    startOfDayDate.setHours(0, 0, 0, 0);
-    if (
-      item.isRecurring &&
-      item.lastPurchasedAt &&
-      item.lastPurchasedAt >= startOfDayDate
-    ) {
-      continue;
+    const { unit: displayUnit, intervalDays } = parseIntervalUnit(item.unit);
+
+    if (item.isRecurring && item.lastPurchasedAt) {
+      if (intervalDays > 0) {
+        const startOfDayStart = new Date(startDate);
+        startOfDayStart.setHours(0, 0, 0, 0);
+        const startOfDayPurchased = new Date(item.lastPurchasedAt);
+        startOfDayPurchased.setHours(0, 0, 0, 0);
+        const elapsedMs =
+          startOfDayStart.getTime() - startOfDayPurchased.getTime();
+        const elapsedDays = Math.round(elapsedMs / (1000 * 60 * 60 * 24));
+        if (elapsedDays < intervalDays) {
+          continue;
+        }
+      } else {
+        // Default standard recurring logic: filter out if purchased within the current view window
+        const startOfDayDate = new Date(startDate);
+        startOfDayDate.setHours(0, 0, 0, 0);
+        if (item.lastPurchasedAt >= startOfDayDate) {
+          continue;
+        }
+      }
     }
 
     results.push({
@@ -237,7 +264,7 @@ export async function generateShoppingList(
       requiredQuantity: item.quantity,
       availableQuantity: 0,
       neededQuantity: item.quantity,
-      unit: item.unit || "item",
+      unit: displayUnit,
       reason: "manual",
       department: determineDepartment(item.name),
       storeId: item.storeId,

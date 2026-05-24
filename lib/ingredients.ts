@@ -127,7 +127,6 @@ export function getLevenshteinDistance(a: string, b: string): number {
 
 export function cleanIngredientName(name: string): string {
   if (!name) return "";
-
   let cleaned = name.toLowerCase();
 
   // 1. Remove parenthetical text (e.g. "peanuts (raw)" -> "peanuts")
@@ -148,15 +147,15 @@ export function cleanIngredientName(name: string): string {
     "chopped",
     "sliced",
     "drained",
-    "minced",
+    "peeled",
     "diced",
+    "minced",
     "melted",
     "warm",
     "cold",
     "hot",
     "crushed",
     "grated",
-    "peeled",
     "toasted",
     "cooked",
     "raw",
@@ -175,9 +174,11 @@ export function cleanIngredientName(name: string): string {
     "unbleached",
     "bleached",
     "natural",
-    "sliced",
-    "diced",
     "pieces",
+    "baked",
+    "roasted",
+    "boneless",
+    "skinless",
   ]);
 
   // Tokenize and filter noise words
@@ -191,12 +192,11 @@ export function cleanIngredientName(name: string): string {
 }
 
 export function getSimilarity(s1: string, s2: string): number {
-  const m = Math.max(s1.length, s2.length);
+  const clean1 = cleanIngredientName(s1);
+  const clean2 = cleanIngredientName(s2);
+  const m = Math.max(clean1.length, clean2.length);
   if (m === 0) return 1;
-  const dist = getLevenshteinDistance(
-    s1.trim().toLowerCase(),
-    s2.trim().toLowerCase(),
-  );
+  const dist = getLevenshteinDistance(clean1, clean2);
   return 1 - dist / m;
 }
 

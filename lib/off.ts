@@ -45,6 +45,31 @@ function parseServingSizeToGrams(servingSize: string): number {
 export async function searchOpenFoodFacts(
   query: string,
 ): Promise<OFFNormalizedFood[]> {
+  if (process.env.ENABLE_MSW === "true") {
+    return [
+      {
+        fdcId: "off-mock-123",
+        description: "Mock Branded Item",
+        foodCategory: "Branded / Open Food Facts",
+        source: "OFF",
+        baseAmount: 100,
+        foodPortions: [
+          {
+            modifier: "1 serving",
+            gramWeight: 100,
+            amount: 1,
+          },
+        ],
+        foodNutrients: [
+          { nutrientName: "Energy", value: 150 },
+          { nutrientName: "Protein", value: 5 },
+          { nutrientName: "Total lipid (fat)", value: 2 },
+          { nutrientName: "Carbohydrate, by difference", value: 30 },
+        ],
+      },
+    ];
+  }
+
   try {
     const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
       query,

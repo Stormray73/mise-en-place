@@ -1,5 +1,10 @@
 import { prisma } from "./prisma";
-import { convert, canConvert, USDAFoodPortion } from "./units";
+import {
+  convert,
+  canConvert,
+  USDAFoodPortion,
+  normalizeUnitAndQuantity,
+} from "./units";
 import { Macros, Recipe, RecipeSaveData } from "@/types";
 
 export function getDiscreteWeight(
@@ -254,18 +259,21 @@ export async function saveRecipe(
   };
 
   const componentsPayload = {
-    create: components?.map((c) => ({
-      quantity: c.quantity,
-      unit: c.unit,
-      ingredientId:
-        c.type === "ingredient" ? c.ingredientId || undefined : undefined,
-      childRecipeId:
-        c.type === "sub-recipe" ? c.childRecipeId || undefined : undefined,
-      prepState: c.prepState,
-      needsReview: c.type === "ingredient" ? c.needsReview || false : false,
-      isToTaste: c.isToTaste || false,
-      isOptional: c.isOptional || false,
-    })),
+    create: components?.map((c) => {
+      const normalized = normalizeUnitAndQuantity(c.quantity, c.unit);
+      return {
+        quantity: normalized.quantity,
+        unit: normalized.unit,
+        ingredientId:
+          c.type === "ingredient" ? c.ingredientId || undefined : undefined,
+        childRecipeId:
+          c.type === "sub-recipe" ? c.childRecipeId || undefined : undefined,
+        prepState: c.prepState,
+        needsReview: c.type === "ingredient" ? c.needsReview || false : false,
+        isToTaste: !!c.isToTaste,
+        isOptional: !!c.isOptional,
+      };
+    }),
   };
 
   const tagsPayload = tags

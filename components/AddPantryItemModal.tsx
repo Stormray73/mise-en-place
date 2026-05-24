@@ -112,6 +112,7 @@ export default function AddPantryItemModal({
               <div className="text-xs text-zinc-400">{food.foodCategory}</div>
             </>
           )}
+          selectedText={selectedFood?.description}
         />
 
         <div className="border-t border-zinc-800 pt-4 mt-4">

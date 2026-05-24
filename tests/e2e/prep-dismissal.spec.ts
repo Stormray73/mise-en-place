@@ -1,7 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { resetDatabase } from "./db-helper";
 
 test.describe("Meal Planner UX & Prep Dismissal", () => {
   test.beforeEach(async ({ page }) => {
+    await resetDatabase();
     // Auth is handled by auth.setup.ts
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/dashboard/);
@@ -39,6 +41,7 @@ test.describe("Meal Planner UX & Prep Dismissal", () => {
     while ((await deleteButtons.count()) > 0) {
       const btn = deleteButtons.first();
       const testId = await btn.getAttribute("data-testid");
+      await btn.hover();
       await btn.click({ force: true });
       if (testId) {
         await expect(page.getByTestId(testId)).not.toBeVisible({

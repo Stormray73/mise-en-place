@@ -128,7 +128,6 @@ test.describe("Pantry & Shopping List", () => {
     page,
   }) => {
     await page.goto("/dashboard/shopping-list");
-    await page.getByRole("button", { name: /Update List/i }).click();
 
     // Check if there are items to buy in Active Shopping mode
     const goShoppingBtn = page.getByRole("button", { name: /Go Shopping/i });

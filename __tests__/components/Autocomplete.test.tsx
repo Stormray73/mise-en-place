@@ -1,28 +1,106 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, test, expect, vi } from "vitest";
 import { Autocomplete } from "@/components/ui/Autocomplete";
-import { expect, test, vi, describe } from "vitest";
 
-describe("Autocomplete Keyboard Navigation & Selection Matcher", () => {
-  const items = [
-    { id: 1, name: "Apple" },
-    { id: 2, name: "Banana" },
-    { id: 3, name: "Cherry" },
+interface MockItem {
+  id: string | number;
+  name: string;
+}
+
+describe("Autocomplete Keyboard & Match Indicator", () => {
+  const mockItems: MockItem[] = [
+    { id: "1", name: "Apple" },
+    { id: "2", name: "Banana" },
+    { id: "3", name: "Cherry" },
   ];
+
+  const onSearch = vi.fn().mockResolvedValue(mockItems);
+  const onSelect = vi.fn();
 
   const defaultProps = {
     onSelect: vi.fn(),
-    onSearch: vi.fn().mockResolvedValue(items),
-    renderItem: (item: { id: number; name: string }) => (
-      <span>{item.name}</span>
-    ),
-    keyExtractor: (item: { id: number; name: string }) => item.id.toString(),
+    onSearch: vi.fn().mockResolvedValue(mockItems),
+    renderItem: (item: MockItem) => <span>{item.name}</span>,
+    keyExtractor: (item: MockItem) => item.id.toString(),
     minChars: 1,
     placeholder: "Search...",
   };
 
-  test("keyboard navigation moves highlight and selects item on Enter", async () => {
-    const onSelect = vi.fn();
-    render(<Autocomplete {...defaultProps} onSelect={onSelect} />);
+  it("should support keyboard navigation: ArrowDown, ArrowUp, Enter, and Escape (HEAD spec style)", async () => {
+    render(
+      <Autocomplete<MockItem>
+        label="Search Fruit"
+        placeholder="Type to search..."
+        onSearch={onSearch}
+        onSelect={onSelect}
+        minChars={1}
+        keyExtractor={(item) => item.id}
+        renderItem={(item) => <div>{item.name}</div>}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText("Type to search...");
+
+    // Type something to trigger search
+    fireEvent.change(input, { target: { value: "a" } });
+
+    // Wait for search results
+    const option1 = await screen.findByText("Apple");
+    expect(option1).toBeInTheDocument();
+
+    // Press ArrowDown to highlight first item (Apple)
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    await waitFor(() => {
+      const appleBtn = screen.getByRole("option", { name: /Apple/i });
+      expect(appleBtn.getAttribute("aria-selected")).toBe("true");
+    });
+
+    // Press ArrowDown to highlight second item (Banana)
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    await waitFor(() => {
+      const bananaBtn = screen.getByRole("option", { name: /Banana/i });
+      expect(bananaBtn.getAttribute("aria-selected")).toBe("true");
+    });
+
+    // Press Enter to select the highlighted item
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(onSelect).toHaveBeenCalledWith(mockItems[1]); // Banana (index 1)
+  });
+
+  it("should display a green checkmark when selectedText is provided", () => {
+    const onClear = vi.fn();
+    render(
+      <Autocomplete<MockItem>
+        label="Search Fruit"
+        placeholder="Type to search..."
+        onSearch={onSearch}
+        onSelect={onSelect}
+        minChars={1}
+        keyExtractor={(item) => item.id}
+        renderItem={(item) => <div>{item.name}</div>}
+        selectedText="Banana"
+        onClearSelection={onClear}
+      />,
+    );
+
+    // Should display selected text in input
+    const input = screen.getByPlaceholderText(
+      "Type to search...",
+    ) as HTMLInputElement;
+    expect(input.value).toBe("Banana");
+    expect(input).toBeDisabled();
+
+    // Clear selection should call onClear selection
+    const clearBtn = screen.getByTitle("Clear selection");
+    expect(clearBtn).toBeInTheDocument();
+    fireEvent.click(clearBtn);
+    expect(onClear).toHaveBeenCalled();
+  });
+
+  test("keyboard navigation moves highlight and selects item on Enter (staging spec style)", async () => {
+    const onSelectMock = vi.fn();
+    render(<Autocomplete {...defaultProps} onSelect={onSelectMock} />);
 
     const input = screen.getByPlaceholderText("Search...");
     fireEvent.change(input, { target: { value: "a" } });
@@ -34,17 +112,33 @@ describe("Autocomplete Keyboard Navigation & Selection Matcher", () => {
 
     // Press ArrowDown once -> highlights "Apple"
     fireEvent.keyDown(input, { key: "ArrowDown" });
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("option", { name: /Apple/i })
+          .getAttribute("aria-selected"),
+      ).toBe("true");
+    });
+
     // Press ArrowDown twice -> highlights "Banana"
     fireEvent.keyDown(input, { key: "ArrowDown" });
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("option", { name: /Banana/i })
+          .getAttribute("aria-selected"),
+      ).toBe("true");
+    });
+
     // Press Enter -> selects "Banana"
     fireEvent.keyDown(input, { key: "Enter" });
 
-    expect(onSelect).toHaveBeenCalledWith(items[1]);
+    expect(onSelectMock).toHaveBeenCalledWith(mockItems[1]);
   });
 
   test("keyboard navigation wraps around correctly", async () => {
-    const onSelect = vi.fn();
-    render(<Autocomplete {...defaultProps} onSelect={onSelect} />);
+    const onSelectMock = vi.fn();
+    render(<Autocomplete {...defaultProps} onSelect={onSelectMock} />);
 
     const input = screen.getByPlaceholderText("Search...");
     fireEvent.change(input, { target: { value: "a" } });
@@ -55,9 +149,16 @@ describe("Autocomplete Keyboard Navigation & Selection Matcher", () => {
 
     // Press ArrowUp once -> wraps around to the last item ("Cherry")
     fireEvent.keyDown(input, { key: "ArrowUp" });
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("option", { name: /Cherry/i })
+          .getAttribute("aria-selected"),
+      ).toBe("true");
+    });
     fireEvent.keyDown(input, { key: "Enter" });
 
-    expect(onSelect).toHaveBeenCalledWith(items[2]);
+    expect(onSelectMock).toHaveBeenCalledWith(mockItems[2]);
   });
 
   test("Escape key closes the dropdown results", async () => {
@@ -79,7 +180,7 @@ describe("Autocomplete Keyboard Navigation & Selection Matcher", () => {
     const { container } = render(
       <Autocomplete
         {...defaultProps}
-        selectedItem={items[0]}
+        selectedItem={mockItems[0]}
         getOptionLabel={(item) => item.name}
       />,
     );
@@ -97,7 +198,7 @@ describe("Autocomplete Keyboard Navigation & Selection Matcher", () => {
     render(
       <Autocomplete
         {...defaultProps}
-        selectedItem={items[0]}
+        selectedItem={mockItems[0]}
         getOptionLabel={(item) => item.name}
         onClearSelection={onClearSelection}
       />,

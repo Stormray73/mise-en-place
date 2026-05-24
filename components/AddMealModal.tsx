@@ -41,10 +41,11 @@ export default function AddMealModal({
   const [createdMealId, setCreatedMealId] = useState<string>("");
   const [customSlot, setCustomSlot] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isSlotPending, startSlotTransition] = useTransition();
+  const [isRecipePending, startRecipeTransition] = useTransition();
 
   const handleSelectSlot = (slot: string) => {
-    startTransition(async () => {
+    startSlotTransition(async () => {
       const res = await onAddMeal(date, slot);
       if (res.success && res.mealId) {
         setCreatedMealId(res.mealId);
@@ -56,7 +57,7 @@ export default function AddMealModal({
   };
 
   const handleSelectRecipe = (recipeId: string) => {
-    startTransition(async () => {
+    startRecipeTransition(async () => {
       await onAddRecipe(createdMealId, recipeId);
       onClose();
     });
@@ -78,7 +79,7 @@ export default function AddMealModal({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search recipes..."
             className="text-sm bg-zinc-850 border-zinc-700 text-zinc-200 w-full"
-            disabled={isPending}
+            disabled={isRecipePending}
             autoFocus
           />
           <div className="max-h-[350px] overflow-y-auto pr-1 space-y-2">
@@ -88,9 +89,9 @@ export default function AddMealModal({
                 onClick={() => handleSelectRecipe(recipe.id)}
                 variant="ghost"
                 className="w-full text-left justify-start p-4 hover:bg-zinc-800 transition-colors"
-                disabled={isPending}
+                disabled={isRecipePending}
               >
-                {isPending ? "Adding..." : recipe.title}
+                {isRecipePending ? "Adding..." : recipe.title}
               </Button>
             ))}
             {filteredRecipes.length === 0 && (
@@ -121,9 +122,9 @@ export default function AddMealModal({
             onClick={() => handleSelectSlot(slot)}
             variant="ghost"
             className="py-6 text-lg"
-            disabled={isPending}
+            disabled={isSlotPending}
           >
-            {isPending ? "Adding..." : slot}
+            {isSlotPending ? "Adding..." : slot}
           </Button>
         ))}
       </div>
@@ -132,13 +133,13 @@ export default function AddMealModal({
           value={customSlot}
           onChange={(e) => setCustomSlot(e.target.value)}
           placeholder="Custom Slot..."
-          disabled={isPending}
+          disabled={isSlotPending}
         />
         <Button
           onClick={() => handleSelectSlot(customSlot)}
-          disabled={!customSlot || isPending}
+          disabled={!customSlot || isSlotPending}
         >
-          {isPending ? "Adding..." : "Add"}
+          {isSlotPending ? "Adding..." : "Add"}
         </Button>
       </div>
     </Modal>

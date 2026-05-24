@@ -17,6 +17,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     recipe: {
       findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
     },
     tag: {
       findMany: vi.fn().mockResolvedValue([]),

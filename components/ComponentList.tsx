@@ -220,11 +220,11 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                   <Input
                     type="number"
                     value={editIsToTaste ? "" : editQuantity}
+                    disabled={editIsToTaste}
                     onChange={(e) =>
                       setEditQuantity(parseFloat(e.target.value) || 0)
                     }
-                    placeholder={editIsToTaste ? "To Taste" : "Qty"}
-                    disabled={editIsToTaste}
+                    placeholder={editIsToTaste ? "To taste" : "Qty"}
                   />
                 </div>
                 <div className="w-28">
@@ -324,6 +324,32 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                 </div>
               </div>
 
+              <div className="flex items-center gap-4 bg-zinc-800/30 p-2.5 rounded-lg border border-zinc-700/50 w-fit">
+                <label className="flex items-center gap-2 text-xs font-bold text-zinc-300 hover:text-white cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={editIsToTaste}
+                    onChange={(e) => {
+                      setEditIsToTaste(e.target.checked);
+                      if (e.target.checked) {
+                        setEditQuantity(0);
+                      }
+                    }}
+                    className="rounded border-zinc-700 bg-zinc-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-zinc-900 w-4 h-4 cursor-pointer"
+                  />
+                  <span>To Taste</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs font-bold text-zinc-300 hover:text-white cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={editIsOptional}
+                    onChange={(e) => setEditIsOptional(e.target.checked)}
+                    className="rounded border-zinc-700 bg-zinc-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-zinc-900 w-4 h-4 cursor-pointer"
+                  />
+                  <span>Optional</span>
+                </label>
+              </div>
+
               {/* Dummy ingredient conversion section */}
               {c.type === "ingredient" &&
                 !c.ingredient?.usdaId &&
@@ -381,10 +407,35 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                 <span className="font-semibold text-zinc-400 mr-2">
                   {c.isToTaste ? "To Taste" : `${c.quantity} ${c.unit}`}
                 </span>
-                <span className="font-medium text-zinc-100">
-                  {c.type === "ingredient"
-                    ? `${c.ingredient?.name || "Ingredient"}${c.isOptional ? " (optional)" : ""}`
-                    : c.childRecipe?.title || "Sub-recipe"}
+                <span className="font-medium text-zinc-100 inline-flex items-center gap-1.5 flex-wrap">
+                  {c.type === "ingredient" ? (
+                    `${c.ingredient?.name || "Ingredient"}${c.isOptional ? " (optional)" : ""}`
+                  ) : (
+                    <>
+                      <span>{c.childRecipe?.title || "Sub-recipe"}</span>
+                      <span className="inline-flex items-center gap-1 text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded border border-blue-500/30 font-bold tracking-wide">
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2.5}
+                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                          />
+                        </svg>
+                        Linked Sub-Recipe
+                      </span>
+                      {c.isOptional && (
+                        <span className="text-zinc-500 font-normal">
+                          (optional)
+                        </span>
+                      )}
+                    </>
+                  )}
                 </span>
                 {c.prepState && (
                   <span className="text-zinc-500 text-sm ml-2 font-normal">

@@ -22,6 +22,7 @@ interface AutocompleteProps<T> {
   footerAction?: (query: string) => React.ReactNode;
   selectedItem?: T | null;
   getOptionLabel?: (item: T) => string;
+  selectedText?: string;
   onClearSelection?: () => void;
 }
 
@@ -40,6 +41,7 @@ export function Autocomplete<T>({
   footerAction,
   selectedItem = null,
   getOptionLabel,
+  selectedText,
   onClearSelection,
 }: AutocompleteProps<T>) {
   const [query, setQuery] = useState(initialValue || "");
@@ -48,6 +50,8 @@ export function Autocomplete<T>({
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const hasSelection = !!(selectedItem || selectedText);
 
   useEffect(() => {
     if (selectedItem && getOptionLabel) {
@@ -101,7 +105,7 @@ export function Autocomplete<T>({
     if (onChange) {
       onChange(val);
     }
-    if (selectedItem && onClearSelection) {
+    if (hasSelection && onClearSelection) {
       onClearSelection();
     }
 
@@ -134,6 +138,17 @@ export function Autocomplete<T>({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setResults([]);
+      setFocusedIndex(-1);
+      setIsOpen(false);
+      if (selectedText && !hasSelection) {
+        setQuery("");
+      }
+      return;
+    }
+
     if (!showDropdown) return;
 
     if (e.key === "ArrowDown") {
@@ -154,11 +169,6 @@ export function Autocomplete<T>({
         e.preventDefault();
         handleSelect(results[focusedIndex]);
       }
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      setResults([]);
-      setFocusedIndex(-1);
-      setIsOpen(false);
     }
   };
 
@@ -170,17 +180,22 @@ export function Autocomplete<T>({
       {label && (
         <label className="text-xs text-zinc-500 mb-1 block">{label}</label>
       )}
-      <div className="relative">
+      <div className="relative flex items-center w-full">
         <Input
           placeholder={placeholder}
-          value={query}
+          value={selectedText || query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsOpen(true)}
-          className={selectedItem ? "pr-10" : ""}
+          disabled={!!selectedText}
+          className={`${hasSelection ? "pr-10" : ""} ${
+            selectedText
+              ? "border-emerald-500/80 focus:ring-emerald-500/50"
+              : ""
+          }`}
         />
-        {selectedItem && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+        {hasSelection && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
             <svg
               className="w-5 h-5 text-emerald-500"
               fill="none"
@@ -195,6 +210,28 @@ export function Autocomplete<T>({
                 d="M5 13l4 4L19 7"
               />
             </svg>
+            {onClearSelection && (
+              <button
+                type="button"
+                onClick={onClearSelection}
+                className="text-zinc-500 hover:text-zinc-300 transition-colors focus:outline-none cursor-pointer"
+                title="Clear selection"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
           </div>
         )}
         {isSearching && (
