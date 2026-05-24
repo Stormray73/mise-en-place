@@ -265,11 +265,31 @@ export async function importRecipeAction(
       // Save draft recipes in DB
       const savedRecipes = await Promise.all(
         recipes.map(async (r) => {
+          const componentsWithIngredients = await Promise.all(
+            r.components.map(async (c) => {
+              if (c.type === "ingredient" && c.ingredient && !c.ingredientId) {
+                const ingredient = await upsertIngredient({
+                  name: c.ingredient.name,
+                  usdaId: c.ingredient.usdaId as string,
+                  baseMacros: c.ingredient.baseMacros as unknown as Macros,
+                  baseAmount: c.ingredient.baseAmount as unknown as number,
+                  foodPortions: c.ingredient
+                    .foodPortions as unknown as USDAFoodPortion[],
+                });
+                return {
+                  ...c,
+                  ingredientId: ingredient.id,
+                };
+              }
+              return c;
+            }),
+          );
+
           const recipeData = {
             ...r,
             userId: session.user.id!,
             status: "DRAFT" as RecipeStatus,
-            components: r.components.map((c) => ({
+            components: componentsWithIngredients.map((c) => ({
               ...c,
               ingredientId:
                 c.type === "ingredient" ? c.ingredientId || null : null,

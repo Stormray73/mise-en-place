@@ -1,8 +1,12 @@
 import { test as setup, expect } from "@playwright/test";
+import { resetDatabase } from "./db-helper";
 
 const authFile = "playwright/.auth/user.json";
 
 setup("authenticate", async ({ page }) => {
+  // Clear the database to ensure deterministic, clean test environment
+  await resetDatabase();
+
   // In our MSW environment, the auth() function is wrapped to provide a mock session
   // whenever ENABLE_MSW=true is set. This allows us to bypass the external Google
   // redirect loop which is extremely brittle in CI/headless environments.

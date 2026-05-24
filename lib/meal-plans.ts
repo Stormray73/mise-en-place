@@ -249,7 +249,7 @@ async function aggregateRecipe(
           id: ingredient.id,
           type: "ingredient",
           name: ingredient.name,
-          quantity: 0,
+          quantity: quantity,
           unit: unit,
           prepState: component.prepState || undefined,
         };

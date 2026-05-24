@@ -1,7 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { resetDatabase } from "./db-helper";
 
 test.describe("Bulk Ingestion & Draft Recipes Workflow", () => {
   test.beforeEach(async ({ page }) => {
+    await resetDatabase();
     // Authenticate and go to dashboard
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
@@ -64,10 +66,9 @@ test.describe("Bulk Ingestion & Draft Recipes Workflow", () => {
     // 8. Open the "MSW Mock Bulk Sauce" draft to review it (which has MSW Mock Bulk Pasta as an ingredient)
     // The link text in the card for draft says "Review & Publish →"
     const reviewLink = page
-      .locator("div")
+      .locator("div.bg-zinc-900")
       .filter({ hasText: "MSW Mock Bulk Sauce" })
-      .getByText("Review & Publish →")
-      .first();
+      .getByText("Review & Publish →");
     await expect(reviewLink).toBeVisible();
     await reviewLink.click();
 
