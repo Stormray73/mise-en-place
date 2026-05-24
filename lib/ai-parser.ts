@@ -1,6 +1,115 @@
-import { openai } from "@ai-sdk/openai";
+import { openai, createOpenAI } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
+
+const getOpenAIModel = () => {
+  if (process.env.ENABLE_MSW === "true") {
+    const customOpenAI = createOpenAI({
+      apiKey: "mock-key",
+      fetch: async (url, options) => {
+        const body = JSON.parse(options?.body as string);
+        const messages = body.messages || [];
+        const lastMsg = messages[messages.length - 1]?.content || "";
+        const promptText =
+          typeof lastMsg === "string" ? lastMsg : JSON.stringify(lastMsg);
+
+        let contentObj: unknown;
+
+        if (
+          promptText.includes("recipes") ||
+          promptText.includes("Extract all recipes") ||
+          promptText.includes("bulk") ||
+          promptText.includes("Pasta and Sauce")
+        ) {
+          contentObj = {
+            recipes: [
+              {
+                title: "MSW Mock Bulk Pasta",
+                yieldAmount: 2,
+                yieldUnit: "servings",
+                servings: null,
+                steps: [{ instruction: "Boil water", timerInSeconds: 600 }],
+                ingredients: [
+                  { quantity: 200, unit: "g", name: "Pasta", prepState: "dry" },
+                ],
+              },
+              {
+                title: "MSW Mock Bulk Sauce",
+                yieldAmount: 4,
+                yieldUnit: "servings",
+                servings: null,
+                steps: [
+                  { instruction: "Simmer tomatoes", timerInSeconds: 300 },
+                ],
+                ingredients: [
+                  {
+                    quantity: 400,
+                    unit: "g",
+                    name: "Tomatoes",
+                    prepState: "crushed",
+                  },
+                  {
+                    quantity: 1,
+                    unit: "ea",
+                    name: "MSW Mock Bulk Pasta",
+                    prepState: null,
+                  },
+                ],
+              },
+            ],
+          };
+        } else if (
+          promptText.includes("Parse the following list of ingredient strings")
+        ) {
+          contentObj = {
+            ingredients: [
+              { quantity: 200, unit: "g", name: "Pasta", prepState: "dry" },
+            ],
+          };
+        } else {
+          contentObj = {
+            title: "MSW Mock Pasta",
+            yieldAmount: 2,
+            yieldUnit: "servings",
+            servings: null,
+            steps: [
+              { instruction: "Boil water", timerInSeconds: 600 },
+              { instruction: "Cook pasta", timerInSeconds: null },
+            ],
+            ingredients: [
+              { quantity: 200, unit: "g", name: "Pasta", prepState: "dry" },
+            ],
+          };
+        }
+
+        const mockResponse = {
+          id: "chatcmpl-mock",
+          object: "chat.completion",
+          created: Date.now(),
+          model: "gpt-4o-mini",
+          choices: [
+            {
+              index: 0,
+              message: {
+                role: "assistant",
+                content: JSON.stringify(contentObj),
+              },
+              finish_reason: "stop",
+            },
+          ],
+        };
+
+        return new Response(JSON.stringify(mockResponse), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      },
+    });
+    return customOpenAI("gpt-4o-mini");
+  }
+
+  return openai("gpt-4o-mini");
+};
 
 const IngredientSchema = z.object({
   quantity: z.number().describe("The numeric quantity of the ingredient"),
@@ -43,7 +152,7 @@ export async function parseIngredients(rawIngredients: string[]) {
 
   try {
     const { object } = await generateObject({
-      model: openai("gpt-4o-mini"),
+      model: getOpenAIModel(),
       schema: z.object({
         ingredients: z.array(IngredientSchema),
       }),
@@ -70,7 +179,7 @@ export async function parseIngredients(rawIngredients: string[]) {
 export async function parseRecipe(text: string) {
   try {
     const { object } = await generateObject({
-      model: openai("gpt-4o-mini"),
+      model: getOpenAIModel(),
       schema: RecipeSchema,
       prompt: `Extract the recipe details from the following text. 
       Look for cooking times in the instructions and convert them to seconds for the 'timerInSeconds' field.
@@ -90,7 +199,7 @@ export async function parseRecipe(text: string) {
 export async function parseBulkRecipes(text: string) {
   try {
     const { object } = await generateObject({
-      model: openai("gpt-4o-mini"),
+      model: getOpenAIModel(),
       schema: z.object({
         recipes: z.array(RecipeSchema),
       }),
@@ -113,7 +222,7 @@ export async function parseBulkRecipes(text: string) {
 export async function parseRecipeFromImage(imageUrl: string) {
   try {
     const { object } = await generateObject({
-      model: openai("gpt-4o-mini"),
+      model: getOpenAIModel(),
       schema: RecipeSchema,
       messages: [
         {
