@@ -78,7 +78,7 @@ test.describe("Bulk Ingestion & Draft Recipes Workflow", () => {
 
     // 9. Verify Sub-Recipe Auto-linking occurred:
     // The component list should display the sub-recipe "MSW Mock Bulk Pasta" as a "Linked Sub-Recipe"
-    const linkedBadge = page.getByText("Linked Sub-Recipe");
+    const linkedBadge = page.getByText("Linked Sub-Recipe").first();
     await expect(linkedBadge).toBeVisible({ timeout: 15000 });
 
     const linkedSubRecipeText = page.getByText("MSW Mock Bulk Pasta");

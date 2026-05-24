@@ -238,8 +238,13 @@ export async function generateShoppingList(
 
     if (item.isRecurring && item.lastPurchasedAt) {
       if (intervalDays > 0) {
-        const elapsedMs = new Date().getTime() - item.lastPurchasedAt.getTime();
-        const elapsedDays = Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
+        const startOfDayStart = new Date(startDate);
+        startOfDayStart.setHours(0, 0, 0, 0);
+        const startOfDayPurchased = new Date(item.lastPurchasedAt);
+        startOfDayPurchased.setHours(0, 0, 0, 0);
+        const elapsedMs =
+          startOfDayStart.getTime() - startOfDayPurchased.getTime();
+        const elapsedDays = Math.round(elapsedMs / (1000 * 60 * 60 * 24));
         if (elapsedDays < intervalDays) {
           continue;
         }

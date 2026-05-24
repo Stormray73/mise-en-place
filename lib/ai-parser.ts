@@ -1,4 +1,4 @@
-import { openai, createOpenAI } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 
@@ -8,10 +8,26 @@ const getOpenAIModel = () => {
       apiKey: "mock-key",
       fetch: async (url, options) => {
         const body = JSON.parse(options?.body as string);
-        const messages = body.messages || [];
-        const lastMsg = messages[messages.length - 1]?.content || "";
-        const promptText =
-          typeof lastMsg === "string" ? lastMsg : JSON.stringify(lastMsg);
+
+        let promptText = "";
+        const messages = body.input || body.messages || [];
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg) {
+          if (typeof lastMsg.content === "string") {
+            promptText = lastMsg.content;
+          } else if (Array.isArray(lastMsg.content)) {
+            for (const part of lastMsg.content) {
+              if (typeof part === "string") {
+                promptText += part + " ";
+              } else if (part && typeof part === "object" && "text" in part) {
+                promptText += (part.text || "") + " ";
+              }
+            }
+          }
+        }
+        if (!promptText && typeof body.prompt === "string") {
+          promptText = body.prompt;
+        }
 
         let contentObj: unknown;
 
@@ -82,21 +98,31 @@ const getOpenAIModel = () => {
           };
         }
 
+        // Return a mock response that conforms to the OpenAI Responses API schema
         const mockResponse = {
-          id: "chatcmpl-mock",
-          object: "chat.completion",
-          created: Date.now(),
+          id: "resp_mock",
+          created_at: Math.floor(Date.now() / 1000),
           model: "gpt-4o-mini",
-          choices: [
+          output: [
             {
-              index: 0,
-              message: {
-                role: "assistant",
-                content: JSON.stringify(contentObj),
-              },
-              finish_reason: "stop",
+              type: "message",
+              role: "assistant",
+              id: "msg_mock",
+              content: [
+                {
+                  type: "output_text",
+                  text: JSON.stringify(contentObj),
+                  annotations: [],
+                },
+              ],
             },
           ],
+          usage: {
+            input_tokens: 10,
+            output_tokens: 10,
+            input_token_details: { cached_tokens: 0 },
+            output_token_details: { reasoning_tokens: 0 },
+          },
         };
 
         return new Response(JSON.stringify(mockResponse), {
@@ -108,6 +134,8 @@ const getOpenAIModel = () => {
     return customOpenAI("gpt-4o-mini");
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { openai } = require("@ai-sdk/openai");
   return openai("gpt-4o-mini");
 };
 

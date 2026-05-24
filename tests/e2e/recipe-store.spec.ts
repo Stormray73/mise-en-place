@@ -130,14 +130,14 @@ test.describe("Recipe Store User Journeys", () => {
 
     // Edit Tomatoes to be Optional
     await page.getByTitle("Edit inline").first().click();
-    const optionalCheckbox = page.getByLabel("Optional");
+    const optionalCheckbox = page.getByLabel("Optional").first();
     await expect(optionalCheckbox).toBeVisible();
     await optionalCheckbox.check();
     await page.getByTitle("Apply changes").click();
 
     // Edit Salt to be To Taste
     await page.getByTitle("Edit inline").nth(1).click();
-    const toTasteCheckbox = page.getByLabel("To Taste");
+    const toTasteCheckbox = page.getByLabel("To Taste").first();
     await expect(toTasteCheckbox).toBeVisible();
     await toTasteCheckbox.check();
 
