@@ -112,8 +112,24 @@ describe("Autocomplete Keyboard & Match Indicator", () => {
 
     // Press ArrowDown once -> highlights "Apple"
     fireEvent.keyDown(input, { key: "ArrowDown" });
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("option", { name: /Apple/i })
+          .getAttribute("aria-selected"),
+      ).toBe("true");
+    });
+
     // Press ArrowDown twice -> highlights "Banana"
     fireEvent.keyDown(input, { key: "ArrowDown" });
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("option", { name: /Banana/i })
+          .getAttribute("aria-selected"),
+      ).toBe("true");
+    });
+
     // Press Enter -> selects "Banana"
     fireEvent.keyDown(input, { key: "Enter" });
 
@@ -133,6 +149,13 @@ describe("Autocomplete Keyboard & Match Indicator", () => {
 
     // Press ArrowUp once -> wraps around to the last item ("Cherry")
     fireEvent.keyDown(input, { key: "ArrowUp" });
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("option", { name: /Cherry/i })
+          .getAttribute("aria-selected"),
+      ).toBe("true");
+    });
     fireEvent.keyDown(input, { key: "Enter" });
 
     expect(onSelectMock).toHaveBeenCalledWith(mockItems[2]);
