@@ -2,28 +2,104 @@ import { http, HttpResponse } from "msw";
 
 export const handlers = [
   // 1. OpenAI (Recipe & Ingredient Parsing)
-  http.post("https://api.openai.com/v1/chat/completions", () => {
-    return HttpResponse.json({
-      choices: [
-        {
-          message: {
-            content: JSON.stringify({
-              title: "MSW Mock Pasta",
-              yieldAmount: 2,
-              yieldUnit: "servings",
-              steps: [
-                { instruction: "Boil water", timerInSeconds: 600 },
-                { instruction: "Cook pasta", timerInSeconds: 0 },
-              ],
-              ingredients: [
-                { quantity: 200, unit: "g", name: "Pasta", prepState: "dry" },
-              ],
-            }),
+  http.post(
+    "https://api.openai.com/v1/chat/completions",
+    async ({ request }) => {
+      try {
+        const body = (await request.json()) as {
+          messages?: { content: unknown }[];
+        };
+        const messages = body.messages || [];
+        const lastMsg = messages[messages.length - 1]?.content || "";
+        const promptText =
+          typeof lastMsg === "string" ? lastMsg : JSON.stringify(lastMsg);
+
+        if (
+          promptText.includes("recipes") ||
+          promptText.includes("Extract all recipes") ||
+          promptText.includes("bulk") ||
+          promptText.includes("Pasta and Sauce")
+        ) {
+          return HttpResponse.json({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    recipes: [
+                      {
+                        title: "MSW Mock Bulk Pasta",
+                        yieldAmount: 2,
+                        yieldUnit: "servings",
+                        steps: [
+                          { instruction: "Boil water", timerInSeconds: 600 },
+                        ],
+                        ingredients: [
+                          {
+                            quantity: 200,
+                            unit: "g",
+                            name: "Pasta",
+                            prepState: "dry",
+                          },
+                        ],
+                      },
+                      {
+                        title: "MSW Mock Bulk Sauce",
+                        yieldAmount: 4,
+                        yieldUnit: "servings",
+                        steps: [
+                          {
+                            instruction: "Simmer tomatoes",
+                            timerInSeconds: 300,
+                          },
+                        ],
+                        ingredients: [
+                          {
+                            quantity: 400,
+                            unit: "g",
+                            name: "Tomatoes",
+                            prepState: "crushed",
+                          },
+                          {
+                            quantity: 1,
+                            unit: "ea",
+                            name: "MSW Mock Bulk Pasta",
+                            prepState: null,
+                          },
+                        ],
+                      },
+                    ],
+                  }),
+                },
+              },
+            ],
+          });
+        }
+      } catch (e) {
+        console.error("Error reading request body in mock", e);
+      }
+
+      return HttpResponse.json({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                title: "MSW Mock Pasta",
+                yieldAmount: 2,
+                yieldUnit: "servings",
+                steps: [
+                  { instruction: "Boil water", timerInSeconds: 600 },
+                  { instruction: "Cook pasta", timerInSeconds: 0 },
+                ],
+                ingredients: [
+                  { quantity: 200, unit: "g", name: "Pasta", prepState: "dry" },
+                ],
+              }),
+            },
           },
-        },
-      ],
-    });
-  }),
+        ],
+      });
+    },
+  ),
 
   // 2. USDA FDC API (Ingredient Search)
   http.get("https://api.nal.usda.gov/fdc/v1/foods/search", () => {

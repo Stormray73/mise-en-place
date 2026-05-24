@@ -258,6 +258,7 @@ export function normalizeUnit(unit: string): string {
   if (unit === "T") return "tbsp";
   if (unit === "t") return "tsp";
   const clean = unit.trim().toLowerCase().replace(/\.$/, "");
+  if (clean === "ea" || clean === "each") return "ea";
   return SHORTHAND_UNITS[clean] || clean;
 }
 
