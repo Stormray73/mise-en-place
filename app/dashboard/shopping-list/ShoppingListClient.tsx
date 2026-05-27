@@ -34,6 +34,59 @@ export default function ShoppingListClient({
   const pathname = usePathname();
   const [startDate, setStartDate] = useState(initialStart);
   const [endDate, setEndDate] = useState(initialEnd);
+  const [recurrenceInterval, setRecurrenceInterval] = useState("7");
+
+  const getThisWeek = () => {
+    const today = new Date();
+    const start = new Date(today.setDate(today.getDate() - today.getDay()));
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return {
+      start: start.toISOString().split("T")[0],
+      end: end.toISOString().split("T")[0],
+    };
+  };
+
+  const getNextWeek = () => {
+    const today = new Date();
+    const start = new Date(today.setDate(today.getDate() - today.getDay() + 7));
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return {
+      start: start.toISOString().split("T")[0],
+      end: end.toISOString().split("T")[0],
+    };
+  };
+
+  const getRolling7Days = () => {
+    const today = new Date();
+    const start = today.toISOString().split("T")[0];
+    const end = new Date(today.setDate(today.getDate() + 6))
+      .toISOString()
+      .split("T")[0];
+    return { start, end };
+  };
+
+  const isThisWeekActive = () => {
+    const tw = getThisWeek();
+    return startDate === tw.start && endDate === tw.end;
+  };
+
+  const isNextWeekActive = () => {
+    const nw = getNextWeek();
+    return startDate === nw.start && endDate === nw.end;
+  };
+
+  const isRolling7DaysActive = () => {
+    const r7 = getRolling7Days();
+    return startDate === r7.start && endDate === r7.end;
+  };
+
+  const isCustomActive = () => {
+    return (
+      !isThisWeekActive() && !isNextWeekActive() && !isRolling7DaysActive()
+    );
+  };
 
   // Stores State
   const [stores, setStores] = useState<{ id: string; name: string }[]>([]);
@@ -907,7 +960,9 @@ export default function ShoppingListClient({
                               type="button"
                               onClick={() => {
                                 if (confirm(`Remove "${item.name}"?`)) {
-                                  deleteManualShoppingItemAction(item.id!);
+                                  deleteManualShoppingItemAction(item.id!).then(
+                                    () => router.refresh(),
+                                  );
                                 }
                               }}
                               className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"

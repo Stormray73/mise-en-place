@@ -60,7 +60,7 @@ export default function ImportRecipeModal({ onClose }: ImportRecipeModalProps) {
 
     if (result.success) {
       if (result.data.type === "bulk") {
-        router.push("/dashboard?review=drafts");
+        router.push("/recipes?drafts=true");
         onClose();
       } else if (result.data.recipes.length > 0) {
         // For single recipe, we don't have an ID yet if it wasn't saved.

@@ -1,7 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { resetDatabase } from "./db-helper";
 
 test.describe("Story 12: Advanced Scheduling User Journeys", () => {
   test.beforeEach(async ({ page }) => {
+    await resetDatabase();
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/dashboard/);
     // Handle confirmation dialogs
@@ -35,6 +37,7 @@ test.describe("Story 12: Advanced Scheduling User Journeys", () => {
     while ((await deleteButtons.count()) > 0) {
       const btn = deleteButtons.first();
       const testId = await btn.getAttribute("data-testid");
+      await btn.hover();
       await btn.click({ force: true });
       if (testId) {
         await expect(page.getByTestId(testId)).not.toBeVisible({

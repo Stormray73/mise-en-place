@@ -98,4 +98,91 @@ test.describe("Recipe Store User Journeys", () => {
       page.getByRole("heading", { name: "Updated Marinara" }).first(),
     ).toBeVisible({ timeout: 15000 });
   });
+
+  test("Story 4: Qualitative ingredient states (optional and to taste)", async ({
+    page,
+  }) => {
+    await page.getByRole("link", { name: /Add Recipe/i }).click();
+    await expect(page).toHaveURL(/\/recipes\/new/);
+
+    // Fill title
+    await page.getByLabel(/recipe title/i).fill("Qualitative Test Recipe");
+
+    // Add first ingredient (Tomatoes)
+    await page.getByPlaceholder(/search ingredients/i).fill("Tomatoes");
+    const tomatoesBtn = page
+      .locator("button")
+      .filter({ hasText: /Tomatoes, red, ripe/i })
+      .first();
+    await expect(tomatoesBtn).toBeVisible({ timeout: 20000 });
+    await tomatoesBtn.click();
+    await expect(page.getByText(/Tomatoes, red, ripe/i)).toBeVisible();
+
+    // Add second ingredient (Salt)
+    await page.getByPlaceholder(/search ingredients/i).fill("Salt");
+    const saltBtn = page
+      .locator("button")
+      .filter({ hasText: /Salt, table/i })
+      .first();
+    await expect(saltBtn).toBeVisible({ timeout: 20000 });
+    await saltBtn.click();
+    await expect(page.getByText(/Salt, table/i)).toBeVisible();
+
+    // Edit Tomatoes to be Optional
+    await page.getByTitle("Edit inline").first().click();
+    const optionalCheckbox = page.getByLabel("Optional").first();
+    await expect(optionalCheckbox).toBeVisible();
+    await optionalCheckbox.check();
+    await page.getByTitle("Apply changes").click();
+
+    // Edit Salt to be To Taste
+    await page.getByTitle("Edit inline").nth(1).click();
+    const toTasteCheckbox = page.getByLabel("To Taste").first();
+    await expect(toTasteCheckbox).toBeVisible();
+    await toTasteCheckbox.check();
+
+    // Verify Quantity is disabled when To Taste is checked
+    const quantityInput = page.getByPlaceholder("To Taste");
+    await expect(quantityInput).toBeDisabled();
+    await page.getByTitle("Apply changes").click();
+
+    // Verify inline render
+    await expect(
+      page.getByText(/Tomatoes, red, ripe.*\(optional\)/i),
+    ).toBeVisible();
+    await expect(page.getByText("To Taste", { exact: true })).toBeVisible();
+
+    // Add a step
+    await page.getByRole("button", { name: /add step/i }).click();
+    await page
+      .getByPlaceholder(/instruction for step 1/i)
+      .fill("Sprinkle salt to taste over optional tomatoes.");
+
+    // Save recipe
+    await page.getByRole("button", { name: /save recipe/i }).click();
+    await expect(page).toHaveURL(/\/recipes/, { timeout: 15000 });
+
+    // Open recipe details
+    await page
+      .getByRole("heading", { name: "Qualitative Test Recipe" })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/recipes\/[a-zA-Z0-9_-]+/);
+
+    // Verify details render "To Taste" and "optional"
+    await expect(
+      page.getByText(/Tomatoes, red, ripe.*\(optional\)/i),
+    ).toBeVisible();
+    await expect(page.getByText("To Taste", { exact: true })).toBeVisible();
+
+    // Start play mode
+    await page.getByRole("link", { name: /Cook it!/i }).click();
+    await expect(page).toHaveURL(/\/play/);
+
+    // Verify play mode renders "To Taste" and "optional"
+    await expect(
+      page.getByText(/Tomatoes, red, ripe.*\(optional\)/i),
+    ).toBeVisible();
+    await expect(page.getByText("To Taste", { exact: true })).toBeVisible();
+  });
 });

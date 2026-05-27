@@ -159,4 +159,59 @@ describe("MealCalendarClient", () => {
       scale: 2,
     });
   });
+
+  test("two-stage AddMealModal workflow and recipe search filtering", async () => {
+    // Mock actions
+    vi.mocked(actions.createMealAction).mockResolvedValue({
+      success: true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: { id: "new-meal-id", slot: "Lunch" } as any,
+    });
+    vi.mocked(actions.addRecipeToMealAction).mockResolvedValue({
+      success: true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: { id: "new-pr-id", recipeId: "r1" } as any,
+    });
+
+    render(
+      <MealCalendarClient
+        initialMeals={[]}
+        startDate={mockStartDate}
+        allRecipes={mockAllRecipes}
+      />,
+    );
+
+    // 1. Open the modal
+    const addButtons = screen.getAllByText(/\+ Add Meal/i);
+    fireEvent.click(addButtons[0]);
+
+    expect(screen.getByText("Add Meal Slot")).toBeInTheDocument();
+
+    // 2. Select a slot (e.g. Lunch)
+    fireEvent.click(screen.getByText("Lunch"));
+
+    // 3. Verify it transitioned to the recipe stage and did not close
+    await waitFor(() => {
+      expect(screen.getByText("Add Recipe to Meal")).toBeInTheDocument();
+    });
+
+    // 4. Test recipe search bar filtering
+    const searchInput = screen.getByPlaceholderText("Search recipes...");
+    expect(screen.getByText("Pasta")).toBeInTheDocument();
+    expect(screen.getByText("Salad")).toBeInTheDocument();
+
+    // Type "Pas"
+    fireEvent.change(searchInput, { target: { value: "Pas" } });
+    expect(screen.getByText("Pasta")).toBeInTheDocument();
+    expect(screen.queryByText("Salad")).not.toBeInTheDocument();
+
+    // 5. Select recipe and check callback is invoked
+    fireEvent.click(screen.getByText("Pasta"));
+    await waitFor(() => {
+      expect(actions.addRecipeToMealAction).toHaveBeenCalledWith(
+        "new-meal-id",
+        "r1",
+      );
+    });
+  });
 });

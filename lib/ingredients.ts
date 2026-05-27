@@ -125,17 +125,84 @@ export function getLevenshteinDistance(a: string, b: string): number {
   return tmp[a.length][b.length];
 }
 
+export function cleanIngredientName(name: string): string {
+  if (!name) return "";
+  let cleaned = name.toLowerCase();
+
+  // 1. Remove parenthetical text (e.g. "peanuts (raw)" -> "peanuts")
+  cleaned = cleaned.replace(/\([^)]*\)/g, "");
+
+  // 2. Strip punctuation (commas, colons, dashes, etc.) to spaces
+  cleaned = cleaned.replace(/[,;:\-\.]/g, " ");
+
+  const noiseWords = new Set([
+    "unsalted",
+    "salted",
+    "organic",
+    "fresh",
+    "dried",
+    "ground",
+    "powdered",
+    "powder",
+    "chopped",
+    "sliced",
+    "drained",
+    "peeled",
+    "diced",
+    "minced",
+    "melted",
+    "warm",
+    "cold",
+    "hot",
+    "crushed",
+    "grated",
+    "toasted",
+    "cooked",
+    "raw",
+    "canned",
+    "packed",
+    "large",
+    "medium",
+    "small",
+    "whole",
+    "shredded",
+    "pure",
+    "extra",
+    "virgin",
+    "all-purpose",
+    "all purpose",
+    "unbleached",
+    "bleached",
+    "natural",
+    "pieces",
+    "baked",
+    "roasted",
+    "boneless",
+    "skinless",
+  ]);
+
+  // Tokenize and filter noise words
+  const tokens = cleaned.split(/\s+/).filter((token) => {
+    const t = token.trim();
+    if (!t) return false;
+    return !noiseWords.has(t);
+  });
+
+  return tokens.join(" ").trim();
+}
+
 export function getSimilarity(s1: string, s2: string): number {
-  const m = Math.max(s1.length, s2.length);
+  const clean1 = cleanIngredientName(s1);
+  const clean2 = cleanIngredientName(s2);
+  const m = Math.max(clean1.length, clean2.length);
   if (m === 0) return 1;
-  const dist = getLevenshteinDistance(
-    s1.trim().toLowerCase(),
-    s2.trim().toLowerCase(),
-  );
+  const dist = getLevenshteinDistance(clean1, clean2);
   return 1 - dist / m;
 }
 
 export async function matchIngredientFuzzy(name: string) {
+  const cleanedQuery = cleanIngredientName(name);
+
   // 1. Search local DB
   const dbIngredients = await prisma.ingredient.findMany({
     select: {
@@ -152,7 +219,8 @@ export async function matchIngredientFuzzy(name: string) {
   let highestSimilarity = 0;
 
   for (const dbIng of dbIngredients) {
-    const similarity = getSimilarity(name, dbIng.name);
+    const cleanedDbName = cleanIngredientName(dbIng.name);
+    const similarity = getSimilarity(cleanedQuery, cleanedDbName);
     if (similarity > highestSimilarity) {
       highestSimilarity = similarity;
       bestMatch = dbIng;
@@ -183,7 +251,8 @@ export async function matchIngredientFuzzy(name: string) {
         const data = await res.json();
         const usdaFoods = data.foods || [];
         for (const food of usdaFoods) {
-          const similarity = getSimilarity(name, food.description);
+          const cleanedUsdaName = cleanIngredientName(food.description);
+          const similarity = getSimilarity(cleanedQuery, cleanedUsdaName);
           if (similarity >= 0.85) {
             const kcal =
               food.foodNutrients?.find(
@@ -243,7 +312,8 @@ export async function matchIngredientFuzzy(name: string) {
     const { searchOpenFoodFacts } = await import("./off");
     const offFoods = await searchOpenFoodFacts(name);
     for (const food of offFoods) {
-      const similarity = getSimilarity(name, food.description);
+      const cleanedOffName = cleanIngredientName(food.description);
+      const similarity = getSimilarity(cleanedQuery, cleanedOffName);
       if (similarity >= 0.85) {
         const kcal =
           food.foodNutrients.find((n) => n.nutrientName === "Energy")?.value ||

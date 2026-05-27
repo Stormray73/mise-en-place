@@ -102,4 +102,39 @@ describe("RecipeView", () => {
       expect(screen.getByText("1000 g")).toBeInTheDocument();
     });
   });
+
+  test("renders 'To Taste' and '(optional)' qualitative states correctly", () => {
+    const qualitativeRecipe = {
+      ...mockRecipe,
+      components: [
+        {
+          type: "ingredient",
+          ingredientId: "i1",
+          id: "c1",
+          quantity: 0,
+          unit: "g",
+          ingredient: { id: "i1", name: "Salt" },
+          recipeId: "r1",
+          isToTaste: true,
+        },
+        {
+          type: "ingredient",
+          ingredientId: "i2",
+          id: "c2",
+          quantity: 100,
+          unit: "g",
+          ingredient: { id: "i2", name: "Tomatoes" },
+          recipeId: "r1",
+          isOptional: true,
+        },
+      ] as RecipeComponent[],
+    };
+
+    render(<RecipeView recipe={qualitativeRecipe} macros={mockMacros} />);
+
+    expect(screen.getByText("To Taste")).toBeInTheDocument();
+    expect(screen.getByText("Salt")).toBeInTheDocument();
+    expect(screen.getByText("Tomatoes (optional)")).toBeInTheDocument();
+    expect(screen.getByText("100 g")).toBeInTheDocument();
+  });
 });

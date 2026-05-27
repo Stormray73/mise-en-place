@@ -160,12 +160,18 @@ export function RecipePlayMode({ recipe, scale = 1 }: RecipePlayModeProps) {
                   >
                     <span>
                       {c.type === "ingredient"
-                        ? c.ingredient?.name
+                        ? `${c.ingredient?.name}${c.isOptional ? " (optional)" : ""}`
                         : c.childRecipe?.title || "Sub-recipe"}
                     </span>
                     <span className="text-zinc-500">
-                      {(c.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}
-                      {c.unit}
+                      {c.isToTaste ? (
+                        "To Taste"
+                      ) : (
+                        <>
+                          {(c.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}
+                          {c.unit}
+                        </>
+                      )}
                     </span>
                   </li>
                 ))
@@ -176,12 +182,18 @@ export function RecipePlayMode({ recipe, scale = 1 }: RecipePlayModeProps) {
                   >
                     <span>
                       {c.type === "ingredient"
-                        ? c.ingredient?.name
+                        ? `${c.ingredient?.name}${c.isOptional ? " (optional)" : ""}`
                         : c.childRecipe?.title || "Sub-recipe"}
                     </span>
                     <span className="text-zinc-500">
-                      {(c.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}
-                      {c.unit}
+                      {c.isToTaste ? (
+                        "To Taste"
+                      ) : (
+                        <>
+                          {(c.quantity * scale).toFixed(1).replace(/\.0$/, "")}{" "}
+                          {c.unit}
+                        </>
+                      )}
                     </span>
                   </li>
                 ))}

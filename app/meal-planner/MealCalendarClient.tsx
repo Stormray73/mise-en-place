@@ -108,33 +108,42 @@ export default function MealCalendarClient({
 
   const handleAddMeal = async (date: Date, slot: string) => {
     const res = await createMealAction(date, slot);
-    if (res.success && res.data) {
-      setIsAddingMeal(null);
-      setIsAddingRecipe({ mealId: res.data.id });
+    if (res.success) {
+      return { success: true, mealId: res.data.id };
     } else {
-      if (!res.success) alert(res.error);
-      setIsAddingMeal(null);
+      return {
+        success: false,
+        error: res.error,
+      };
     }
   };
 
   const handleAddRecipe = async (mealId: string, recipeId: string) => {
-    await addRecipeToMealAction(mealId, recipeId);
-    setIsAddingRecipe(null);
+    const res = await addRecipeToMealAction(mealId, recipeId);
+    if (!res.success) {
+      alert(res.error);
+    } else {
+      setIsAddingRecipe(null);
+      router.refresh();
+    }
   };
 
   const handleDeleteMeal = async (mealId: string) => {
     if (confirm("Are you sure you want to delete this meal?")) {
       await deleteMealAction(mealId);
+      router.refresh();
     }
   };
 
   const handleRemoveRecipe = async (plannedRecipeId: string) => {
     await removeRecipeFromMealAction(plannedRecipeId);
+    router.refresh();
   };
 
   const handleCloneMeal = async (mealId: string, targetDate: Date) => {
     await cloneMealAction(mealId, targetDate);
     setIsCloningMeal(null);
+    router.refresh();
   };
 
   const handleToggleLeftoverSource = async (
@@ -142,6 +151,7 @@ export default function MealCalendarClient({
     isSource: boolean,
   ) => {
     await setLeftoverSourceAction(plannedRecipeId, isSource);
+    router.refresh();
   };
 
   const handleLinkLeftover = async (
@@ -149,6 +159,7 @@ export default function MealCalendarClient({
     sourceId: string | null,
   ) => {
     await linkLeftoverConsumptionAction(plannedRecipeId, sourceId);
+    router.refresh();
   };
 
   const handleUpdatePlannedRecipe = async (
@@ -158,6 +169,8 @@ export default function MealCalendarClient({
     const res = await updatePlannedRecipeAction(id, updates);
     if (!res.success) {
       alert(res.error || "Failed to update recipe");
+    } else {
+      router.refresh();
     }
   };
 
@@ -176,6 +189,7 @@ export default function MealCalendarClient({
       for (let i = 0; i < newMeals.length; i++) {
         await reorderMealAction(newMeals[i].id, i);
       }
+      router.refresh();
     }
   };
 
@@ -299,8 +313,13 @@ export default function MealCalendarClient({
       {isAddingMeal && (
         <AddMealModal
           date={isAddingMeal.date}
+          allRecipes={allRecipes}
           onClose={() => setIsAddingMeal(null)}
-          onAdd={handleAddMeal}
+          onAddMeal={handleAddMeal}
+          onAddRecipe={async (mealId, recipeId) => {
+            await addRecipeToMealAction(mealId, recipeId);
+            router.refresh();
+          }}
         />
       )}
 

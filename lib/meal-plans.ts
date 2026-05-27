@@ -51,6 +51,12 @@ export async function addRecipeToMeal(
   scale: number = 1.0,
   prepState?: string,
 ) {
+  const existing = await prisma.plannedRecipe.findFirst({
+    where: { mealId, recipeId },
+  });
+  if (existing) {
+    throw new Error("This recipe is already in this meal slot.");
+  }
   return prisma.plannedRecipe.create({
     data: {
       mealId,
@@ -243,7 +249,7 @@ async function aggregateRecipe(
           id: ingredient.id,
           type: "ingredient",
           name: ingredient.name,
-          quantity: 0,
+          quantity: quantity,
           unit: unit,
           prepState: component.prepState || undefined,
         };
@@ -329,7 +335,7 @@ export async function getPrepAheadData(
       (c) =>
         c.dismissed &&
         ((item.type === "ingredient" && c.ingredientId === item.id) ||
-         (item.type === "recipe" && c.childRecipeId === item.id))
+          (item.type === "recipe" && c.childRecipeId === item.id)),
     );
     return !isDismissed;
   });
@@ -340,7 +346,7 @@ export async function getPrepAheadData(
       (c) =>
         c.completed &&
         ((item.type === "ingredient" && c.ingredientId === item.id) ||
-         (item.type === "recipe" && c.childRecipeId === item.id)),
+          (item.type === "recipe" && c.childRecipeId === item.id)),
     ),
   }));
 }
@@ -352,14 +358,14 @@ export async function togglePrepCompletion(
   completed: boolean,
 ) {
   const existing = await prisma.prepCompletion.findFirst({
-    where: { userId, ingredientId, childRecipeId }
+    where: { userId, ingredientId, childRecipeId },
   });
 
   if (completed) {
     if (existing) {
       return prisma.prepCompletion.update({
         where: { id: existing.id },
-        data: { completed: true }
+        data: { completed: true },
       });
     }
     return prisma.prepCompletion.create({
@@ -374,7 +380,7 @@ export async function togglePrepCompletion(
     if (existing && existing.dismissed) {
       return prisma.prepCompletion.update({
         where: { id: existing.id },
-        data: { completed: false }
+        data: { completed: false },
       });
     }
     return prisma.prepCompletion.deleteMany({
@@ -394,14 +400,14 @@ export async function dismissPrepItem(
   dismissed: boolean,
 ) {
   const existing = await prisma.prepCompletion.findFirst({
-    where: { userId, ingredientId, childRecipeId }
+    where: { userId, ingredientId, childRecipeId },
   });
 
   if (dismissed) {
     if (existing) {
       return prisma.prepCompletion.update({
         where: { id: existing.id },
-        data: { dismissed: true }
+        data: { dismissed: true },
       });
     }
     return prisma.prepCompletion.create({
@@ -417,11 +423,11 @@ export async function dismissPrepItem(
       if (existing.completed) {
         return prisma.prepCompletion.update({
           where: { id: existing.id },
-          data: { dismissed: false }
+          data: { dismissed: false },
         });
       }
       return prisma.prepCompletion.delete({
-        where: { id: existing.id }
+        where: { id: existing.id },
       });
     }
   }
