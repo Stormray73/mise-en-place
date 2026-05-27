@@ -16,6 +16,7 @@ export interface ShoppingListItem {
   storeId: string | null;
   storeName: string | null;
   isRecurring: boolean;
+  recurringInterval?: string | null;
   lastPurchasedAt?: Date | null;
 }
 
@@ -219,40 +220,32 @@ export async function generateShoppingList(
 
   const results: ShoppingListItem[] = [];
 
-  function parseIntervalUnit(rawUnit: string | null): {
-    unit: string;
-    intervalDays: number;
-  } {
-    if (!rawUnit) return { unit: "item", intervalDays: 0 };
-    if (rawUnit.includes("::interval:")) {
-      const parts = rawUnit.split("::interval:");
-      const unit = parts[0] || "item";
-      const intervalDays = parseInt(parts[1], 10) || 0;
-      return { unit, intervalDays };
-    }
-    return { unit: rawUnit, intervalDays: 0 };
-  }
-
   for (const item of manualItems) {
-    const { unit: displayUnit, intervalDays } = parseIntervalUnit(item.unit);
-
+    // Filter out recurring items based on the calculated elapsed time since lastPurchasedAt.
+    // If no custom recurringInterval is configured, fall back to default behavior (hide if purchased on or after current viewing window's startDate).
     if (item.isRecurring && item.lastPurchasedAt) {
-      if (intervalDays > 0) {
-        const startOfDayStart = new Date(startDate);
-        startOfDayStart.setHours(0, 0, 0, 0);
-        const startOfDayPurchased = new Date(item.lastPurchasedAt);
-        startOfDayPurchased.setHours(0, 0, 0, 0);
-        const elapsedMs =
-          startOfDayStart.getTime() - startOfDayPurchased.getTime();
-        const elapsedDays = Math.round(elapsedMs / (1000 * 60 * 60 * 24));
-        if (elapsedDays < intervalDays) {
+      const startOfDayDate = new Date(startDate);
+      startOfDayDate.setHours(0, 0, 0, 0);
+
+      const lastPurchasedDate = new Date(item.lastPurchasedAt);
+      lastPurchasedDate.setHours(0, 0, 0, 0);
+
+      if (!item.recurringInterval) {
+        if (lastPurchasedDate >= startOfDayDate) {
           continue;
         }
       } else {
-        // Default standard recurring logic: filter out if purchased within the current view window
-        const startOfDayDate = new Date(startDate);
-        startOfDayDate.setHours(0, 0, 0, 0);
-        if (item.lastPurchasedAt >= startOfDayDate) {
+        const elapsedMs =
+          startOfDayDate.getTime() - lastPurchasedDate.getTime();
+        const elapsedDays = Math.round(elapsedMs / (1000 * 60 * 60 * 24));
+
+        let daysNeeded = 0;
+        if (item.recurringInterval === "1_week") daysNeeded = 7;
+        else if (item.recurringInterval === "2_weeks") daysNeeded = 14;
+        else if (item.recurringInterval === "3_weeks") daysNeeded = 21;
+        else if (item.recurringInterval === "monthly") daysNeeded = 30;
+
+        if (elapsedDays < daysNeeded) {
           continue;
         }
       }
@@ -264,12 +257,13 @@ export async function generateShoppingList(
       requiredQuantity: item.quantity,
       availableQuantity: 0,
       neededQuantity: item.quantity,
-      unit: displayUnit,
+      unit: item.unit || "item",
       reason: "manual",
       department: determineDepartment(item.name),
       storeId: item.storeId,
       storeName: item.store?.name || null,
       isRecurring: item.isRecurring,
+      recurringInterval: item.recurringInterval,
       lastPurchasedAt: item.lastPurchasedAt,
     });
   }
@@ -288,6 +282,7 @@ export async function addManualShoppingItem(
   unit?: string,
   isRecurring: boolean = false,
   storeId?: string | null,
+  recurringInterval?: string | null,
 ) {
   return prisma.manualShoppingItem.create({
     data: {
@@ -297,6 +292,7 @@ export async function addManualShoppingItem(
       unit,
       isRecurring,
       storeId: storeId || null,
+      recurringInterval: recurringInterval || null,
     },
   });
 }

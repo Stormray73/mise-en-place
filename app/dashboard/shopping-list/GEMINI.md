@@ -11,7 +11,8 @@ Generates aggregated purchase lists based on upcoming meal plans and low pantry 
 - **Deficit Calculation:** Subtracts current total pantry stock from meal plan requirements.
 - **Manual Items:** Supports `ManualShoppingItem` for non-food or non-recipe needs (e.g., "Paper Towels").
 - **Custom Items & Manual Deletion:** Supports "Add Custom Item" with inputs for Quantity (decimal support), Unit, and Store. Custom items can be manually deleted via a trash icon button.
-- **Advanced Recurring Intervals:** Supports custom recurring interval settings (e.g. weekly, every 2 weeks, monthly) in addition to basic `isRecurring`. If configured, items are automatically populated onto the shopping list if the elapsed time since their `lastPurchasedAt` date exceeds the interval.
+- **Recurring Items:** Manual items can be marked as `isRecurring` with a custom `recurringInterval` (e.g. weekly, every 2 weeks, every 3 weeks, monthly). The system automatically calculates whether they should reappear based on elapsed days since `lastPurchasedAt` compared to the viewing window's start date.
+- **Date Presets:** UI supports quick presets ("This Week", "Next Week", "Rolling 7 Days", "Custom Range") with timezone-neutral UTC Sunday start dates by default.
 
 ## Invariants & Constraints
 
@@ -22,5 +23,5 @@ Generates aggregated purchase lists based on upcoming meal plans and low pantry 
 
 ## Testing Strategy
 
-- **Unit Tests:** `__tests__/lib/shopping-list.test.ts` covers list generation, deficit calculation, and recurring item logic.
-- **E2E Tests:** `tests/e2e/pantry-shopping-list.spec.ts` verifies the full loop from meal plan -> shopping list -> pantry stock.
+- **Unit Tests:** `__tests__/lib/shopping-list.count.test.ts` covers count-based aggregation, and `__tests__/lib/shopping-list.recurring.test.ts` covers the custom recurring interval and date window logic.
+- **E2E Tests:** `tests/e2e/pantry-shopping-list.spec.ts` verifies the full loop from meal plan -> shopping list -> pantry stock, date preset clicks, and recurring manual item visibility filtering.

@@ -199,4 +199,90 @@ test.describe("Pantry & Shopping List", () => {
       timeout: 20000,
     });
   });
+
+  test("Story 4: Date Presets and Recurring intervals manual items", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard/shopping-list");
+
+    // 1. Verify Date Presets
+    const thisWeekBtn = page.getByRole("button", {
+      name: "This Week",
+      exact: true,
+    });
+    const nextWeekBtn = page.getByRole("button", {
+      name: "Next Week",
+      exact: true,
+    });
+    const rollingBtn = page.getByRole("button", {
+      name: "Rolling 7 Days",
+      exact: true,
+    });
+    const customBtn = page.getByRole("button", {
+      name: "Custom Range",
+      exact: true,
+    });
+
+    await expect(thisWeekBtn).toBeVisible();
+    await expect(nextWeekBtn).toBeVisible();
+    await expect(rollingBtn).toBeVisible();
+    await expect(customBtn).toBeVisible();
+
+    // Click Next Week and check that URL has "start" and "end" params
+    await nextWeekBtn.click();
+    await expect(page).toHaveURL(/start=/);
+    await expect(page).toHaveURL(/end=/);
+
+    // Click This Week (default)
+    await thisWeekBtn.click();
+
+    // 2. Add custom recurring item with 2 weeks interval
+    const uniqueItemName = `RecurringTrash-${Math.random().toString(36).substring(7)}`;
+    await page.getByLabel("Name").fill(uniqueItemName);
+    await page.getByLabel("Quantity").fill("1");
+    await page.getByLabel("Unit").fill("pack");
+
+    // Check "Recurring item"
+    const recurringCheckbox = page.locator('input[type="checkbox"]');
+    await recurringCheckbox.check();
+
+    // Select interval of 2 weeks
+    const intervalSelect = page.locator("select").nth(1);
+    await expect(intervalSelect).toBeVisible();
+    await intervalSelect.selectOption("2_weeks");
+
+    // Add to list
+    await page.getByRole("button", { name: /Add to List/i }).click();
+
+    // Verify it is on the list
+    await expect(page.getByText(uniqueItemName).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.getByText(/Bi-weekly/i).first()).toBeVisible();
+
+    // 3. Complete shop with it
+    await page.getByRole("button", { name: /Go Shopping/i }).click();
+
+    // Locate row and check it
+    const itemRow = page
+      .locator("div.flex.justify-between.items-center")
+      .filter({ hasText: uniqueItemName })
+      .first();
+    const checkbox = itemRow.locator('input[type="checkbox"]');
+    await checkbox.click();
+
+    // Click Complete Shop
+    await page.getByRole("button", { name: /Complete Shop/i }).click();
+
+    // Confirm checkout in modal
+    await page.getByRole("button", { name: /Yes, Commit to Pantry/i }).click();
+
+    // Wait for it to be completed (Go Shopping is visible again)
+    await expect(
+      page.getByRole("button", { name: /Go Shopping/i }),
+    ).toBeVisible({ timeout: 15000 });
+
+    // Item should now be hidden in "This Week" view because lastPurchasedAt is today and it only recurs every 2 weeks!
+    await expect(page.getByText(uniqueItemName)).not.toBeVisible();
+  });
 });

@@ -15,17 +15,24 @@ export default async function ShoppingListPage({
 
   const { start, end } = await searchParams;
 
-  const today = new Date();
-  const defaultStart = new Date(
-    today.setDate(today.getDate() - today.getDay()),
-  );
-  defaultStart.setHours(0, 0, 0, 0);
-  const defaultEnd = new Date(defaultStart);
-  defaultEnd.setDate(defaultStart.getDate() + 6);
-  defaultEnd.setHours(23, 59, 59, 999);
+  let startDate: Date;
+  let endDate: Date;
 
-  const startDate = start ? new Date(start) : defaultStart;
-  const endDate = end ? new Date(end) : defaultEnd;
+  if (start) {
+    startDate = new Date(start);
+  } else {
+    const initialDate = new Date();
+    startDate = new Date(initialDate);
+    startDate.setUTCHours(0, 0, 0, 0);
+    startDate.setUTCDate(startDate.getUTCDate() - startDate.getUTCDay());
+  }
+
+  if (end) {
+    endDate = new Date(end);
+  } else {
+    endDate = new Date(startDate);
+    endDate.setUTCDate(endDate.getUTCDate() + 7);
+  }
 
   const shoppingList = await generateShoppingList(
     session.user.id,

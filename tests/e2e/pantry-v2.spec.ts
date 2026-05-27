@@ -75,7 +75,7 @@ test.describe("Story 14: Pantry & Shopping v2 User Journeys", () => {
     });
 
     // Go to next week - it should reappear!
-    await page.getByRole("button", { name: /Next Week/i }).click();
+    await page.getByRole("button", { name: "Next Week", exact: true }).click();
     await expect(page.getByText(recurringItem)).toBeVisible({ timeout: 15000 });
   });
 });
