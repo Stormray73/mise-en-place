@@ -5,18 +5,19 @@ description: Fully autonomous implementation pipeline. Orchestrates feature buil
 
 # Autonomous Feature Pipeline
 
-This skill acts as a high-level orchestrator to move a feature from "Story" to "Push-Ready" through an iterative, quality-gated process.
+This skill acts as a high-level orchestrator to move a feature from "Story" to "Push-Ready" through an iterative, quality-gated process with isolated Gitflow branch management and PR generation.
 
 > **Recommended invocation:** Ask the user to prefix their request with `/goal` to ensure the agent runs persistently end-to-end without stopping for non-blocking questions.
 
 ## Pipeline Workflow
 
-### Phase 1: Planning & Implementation
+### Phase 1: Branch Planning & Implementation
 
-1. **Structured Planning:** Create an `implementation_plan.md` artifact to detail architecture, database migrations, and testing strategies. Seek user review before starting implementation.
-2. **Task Tracking:** Initialize a `task.md` artifact to track task checkboxes as progress is made.
-3. **Activate `feature-implementer`**: Once the plan is approved, implement the feature, unit tests, and E2E tests following the approved story requirements using the `feature-implementer` skill.
-4. **Modular Docs**: Ensure `GEMINI.md` files are created/updated in all touched directories.
+1. **Branch Isolation:** Before writing code, checkout a dedicated branch from `main` named `feat/<feature-slug>` (e.g. `feat/pantry-leftovers-integration`).
+2. **Structured Planning:** Create an `implementation_plan.md` artifact to detail architecture, database migrations, and testing strategies. Seek user review before starting implementation.
+3. **Task Tracking:** Initialize a `task.md` artifact to track task checkboxes as progress is made.
+4. **Activate `feature-implementer`**: Once the plan is approved, implement the feature, unit tests, and E2E tests following the approved story requirements using the `feature-implementer` skill.
+5. **Modular Docs**: Ensure `GEMINI.md` files are created/updated in all touched directories.
 
 ### Phase 2: Unit Verification
 
@@ -28,7 +29,7 @@ This skill acts as a high-level orchestrator to move a feature from "Story" to "
 1. **Invoke Reviewer**: Use `invoke_subagent` with the `peer-reviewer` skill to spawn a **fresh, independent agent**.
    - **Context**: Pass the story requirements and the list of modified files.
    - **Mandate**: Review for AC fulfillment, code quality, and edge cases.
-   - **Output**: The subagent writes its findings to its own `walkthrough.md` artifact, which you can access via the conversation artifacts system using the returned subagent conversation ID.
+   - **Token Optimization:** Instruct the subagent to prefix its `walkthrough.md` response with a structured JSON status verdict (e.g., `{"status": "PASS"}`). Read only this block to verify status instead of parsing the entire walkthrough document.
 2. **Evaluate Report**:
    - **If PASS**: Proceed to Phase 5.
    - **If FAIL/NEEDS WORK**: Proceed to Phase 4.
@@ -50,16 +51,14 @@ This skill acts as a high-level orchestrator to move a feature from "Story" to "
 4. **Static Analysis (Push-Ready Check)**:
    - **Linter**: Run `npm run lint`. If fails, use `eslint --fix` or fix manually.
    - **Type Check**: Run `npx tsc --noEmit`. Fix any type errors.
-5. **Documentation Sync**: Perform a final pass on all local `GEMINI.md` files to ensure they match the post-fix implementation.
-6. **Handoff**: Update `task.md` to mark all items complete and report to the user that the feature is "Push-Ready".
+5. **PR Creation**:
+   - Push the branch to remote.
+   - Generate a draft Pull Request: `gh pr create --title "[Feat] <Feature Title>" --body "Implements <Feature Title>." --draft`.
+6. **Documentation Sync**: Perform a final pass on all local `GEMINI.md` files to ensure they match the post-fix implementation.
+7. **Handoff**: Update `task.md` to mark all items complete, checkout back to `main`, and report to the user that the Pull Request is open and ready.
 
 ## Rules & Constraints
 
 - **Push-Ready Standard**: All gates in [quality-gates.md](references/quality-gates.md) must be satisfied.
 - **Independence**: The `peer-reviewer` MUST be a fresh agent via `invoke_subagent` to ensure unbiased analysis.
-- **Persistence**: Do not stop until Phase 5 is completed or a blocker is reached that requires human decision (e.g., conflicting requirements). For truly autonomous runs, the user should invoke with `/goal`.
-
-## When to Use
-
-- When given a user story and asked to "fully implement" or "handle the end-to-end delivery."
-- For complex features where multi-stage quality control is required to prevent regressions.
+- **Persistence**: Do not stop until Phase 5 is completed or a blocker is reached. For truly autonomous runs, the user should invoke with `/goal`.

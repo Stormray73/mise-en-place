@@ -52,6 +52,17 @@ The goal of v1.0 is to refine the existing feature set into a rock-solid experie
 - **Constraints:** Keep layouts, colors, and walkthrough page sections intact.
 - **Documentation:** [v1/REBRANDING.md](docs/upcoming-stories/v1/REBRANDING.md)
 
+### 8. Recipe Editor & Search Enhancements
+
+- **Ergonomics:** Add inline parameter settings (measurements, optional status, and "to taste") directly inside ingredient autocomplete lists to avoid subsequent clicks.
+- **Documentation:** [v1/RECIPE_EDITOR_ENHANCEMENTS.md](docs/upcoming-stories/v1/RECIPE_EDITOR_ENHANCEMENTS.md)
+
+### 9. Pantry Leftovers Integration
+
+- **Flow Integration:** Automatically prompt/save leftovers into the pantry when a planned meal is cooked.
+- **Pantry Checks:** Automatically check the pantry and adjust/exclude sub-recipe prep and shopping lists if cooked leftovers are available.
+- **Documentation:** [v1/PANTRY_LEFTOVERS_INTEGRATION.md](docs/upcoming-stories/v1/PANTRY_LEFTOVERS_INTEGRATION.md)
+
 ---
 
 ## v2.0: Stretch Features (Lower Priority)

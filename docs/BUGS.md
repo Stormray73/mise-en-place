@@ -39,6 +39,31 @@ This document serves as the central registry for bugs and regressions. It is des
 
 ---
 
+### BUG-044: LLM Recipe Document Import Truncates to 4 Recipes
+
+**Status:** Active
+**Description:** When importing a large document (e.g., a Word document containing multiple recipes like College Recipes.txt), only the first 3-4 recipes get imported and added to the drafts workspace.
+**Reproduction:**
+
+1. Go to the Recipe Store and open the Import Document dialog.
+2. Select a Word document containing 5 or more recipes (e.g., matching the contents of `./docs/scratch/College Recipes.txt`).
+3. Run the import process.
+4. Check the drafts workspace; observe that only the first 4 recipes have been successfully drafted (as shown in `./docs/scratch/draft-recipes-import.png`).
+
+---
+
+### BUG-045: Custom Range Date Picker in Shopping List Inoperative
+
+**Status:** Active
+**Description:** In the Shopping List view, clicking the "Custom Range" button does not successfully trigger the date picker or allow the user to modify the start and end dates.
+**Reproduction:**
+
+1. Navigate to the Shopping List dashboard page.
+2. Click on the "Custom Range" filter/button.
+3. Observe that no date range selection/picker opens and it is impossible to change the active date range.
+
+---
+
 ## Resolved Bugs
 
 ### BUG-039: Extraneous Cancel Button in Modals

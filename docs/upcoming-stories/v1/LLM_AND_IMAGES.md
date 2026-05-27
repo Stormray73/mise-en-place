@@ -26,6 +26,8 @@ As a user, I want a single text/file intake form to import recipes so that I can
 
 - **AC 1:** Build a single `/recipes/import` interface accepting URLs, pasted text, PDF/Word documents, and image files.
 - **AC 2:** Parse the content into a standard recipe schema using structured Vercel AI SDK outputs.
+- **AC 3:** Replace the import dialog contents with an interactive loading spinner displaying real-time processing updates as the AI reads and structure-parses the file.
+- **AC 4:** Implement robust size validation and render coherent, actionable error messages in the dialog in case of failure (e.g., if files exceed size/token/image limitations).
 
 ### Story 3: Dedicated "Draft Recipes" Workspace for Bulk Imports
 
