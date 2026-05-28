@@ -72,7 +72,7 @@ export default async function Dashboard({
   });
 
   return (
-    <div className="w-full px-4 md:px-8 py-8">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
         <div className="flex-1 min-w-0">
           <h1
@@ -159,7 +159,7 @@ export default async function Dashboard({
           recipes.map((recipe) => (
             <div
               key={recipe.id}
-              className={`group relative bg-zinc-900 border rounded-xl overflow-hidden transition-all aspect-square flex flex-col ${
+              className={`group relative bg-zinc-900 border rounded-xl overflow-hidden transition-all min-h-[280px] flex flex-col ${
                 isDrafts
                   ? "border-purple-900/30 hover:border-purple-500/50 bg-gradient-to-b from-zinc-900 to-purple-950/10"
                   : "border-zinc-800 hover:border-zinc-600"
