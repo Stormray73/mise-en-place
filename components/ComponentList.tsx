@@ -253,33 +253,7 @@ export function ComponentList({ components, onChange }: ComponentListProps) {
                     placeholder="diced, minced..."
                   />
                 </div>
-                {c.type === "ingredient" && (
-                  <div className="flex items-center gap-4 h-10 px-1 mb-0.5">
-                    <label className="flex items-center gap-2 text-xs font-semibold text-zinc-400 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={editIsToTaste}
-                        onChange={(e) => {
-                          setEditIsToTaste(e.target.checked);
-                          if (e.target.checked) {
-                            setEditQuantity(0);
-                          }
-                        }}
-                        className="rounded border-zinc-700 bg-zinc-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-zinc-900 w-4 h-4 cursor-pointer"
-                      />
-                      To Taste
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-semibold text-zinc-400 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={editIsOptional}
-                        onChange={(e) => setEditIsOptional(e.target.checked)}
-                        className="rounded border-zinc-700 bg-zinc-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-zinc-900 w-4 h-4 cursor-pointer"
-                      />
-                      Optional
-                    </label>
-                  </div>
-                )}
+
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
