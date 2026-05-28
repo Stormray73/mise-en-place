@@ -12,8 +12,8 @@ test("BUG-045: Custom Range Date Picker is operative in Shopping List", async ({
     page.getByRole("heading", { name: /Shopping List/i }),
   ).toBeVisible({ timeout: 15000 });
 
-  const startDateInput = page.getByLabel("Start Date");
-  const endDateInput = page.getByLabel("End Date");
+  const startDateInput = page.getByLabel("Start Date").first();
+  const endDateInput = page.getByLabel("End Date").first();
 
   // By default, a preset is active, so date inputs are disabled
   await expect(startDateInput).toBeDisabled();
