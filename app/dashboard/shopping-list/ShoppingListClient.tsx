@@ -34,6 +34,7 @@ export default function ShoppingListClient({
   const pathname = usePathname();
   const [startDate, setStartDate] = useState(initialStart);
   const [endDate, setEndDate] = useState(initialEnd);
+  const [isCustomMode, setIsCustomMode] = useState(false);
   const [recurrenceInterval, setRecurrenceInterval] = useState("7");
 
   const getThisWeek = () => {
@@ -173,24 +174,31 @@ export default function ShoppingListClient({
   const presets = getPresetRanges();
 
   let activePreset = "custom";
-  if (
-    startDate === presets.thisWeek.start &&
-    endDate === presets.thisWeek.end
-  ) {
-    activePreset = "this-week";
-  } else if (
-    startDate === presets.nextWeek.start &&
-    endDate === presets.nextWeek.end
-  ) {
-    activePreset = "next-week";
-  } else if (
-    startDate === presets.rolling.start &&
-    endDate === presets.rolling.end
-  ) {
-    activePreset = "rolling-7-days";
+  if (!isCustomMode) {
+    if (
+      startDate === presets.thisWeek.start &&
+      endDate === presets.thisWeek.end
+    ) {
+      activePreset = "this-week";
+    } else if (
+      startDate === presets.nextWeek.start &&
+      endDate === presets.nextWeek.end
+    ) {
+      activePreset = "next-week";
+    } else if (
+      startDate === presets.rolling.start &&
+      endDate === presets.rolling.end
+    ) {
+      activePreset = "rolling-7-days";
+    }
   }
 
   const handlePresetSelect = (preset: string) => {
+    if (preset === "custom") {
+      setIsCustomMode(true);
+      return;
+    }
+
     let start = startDate;
     let end = endDate;
 
@@ -207,6 +215,7 @@ export default function ShoppingListClient({
       return;
     }
 
+    setIsCustomMode(false);
     setStartDate(start);
     setEndDate(end);
     updateRangeWithDates(start, end);

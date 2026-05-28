@@ -27,12 +27,14 @@ describe("Autocomplete Keyboard & Match Indicator", () => {
   };
 
   it("should support keyboard navigation: ArrowDown, ArrowUp, Enter, and Escape (HEAD spec style)", async () => {
+    const onSearchLocal = vi.fn().mockResolvedValue(mockItems);
+    const onSelectLocal = vi.fn();
     render(
       <Autocomplete<MockItem>
         label="Search Fruit"
         placeholder="Type to search..."
-        onSearch={onSearch}
-        onSelect={onSelect}
+        onSearch={onSearchLocal}
+        onSelect={onSelectLocal}
         minChars={1}
         keyExtractor={(item) => item.id}
         renderItem={(item) => <div>{item.name}</div>}
@@ -65,7 +67,7 @@ describe("Autocomplete Keyboard & Match Indicator", () => {
     // Press Enter to select the highlighted item
     fireEvent.keyDown(input, { key: "Enter" });
 
-    expect(onSelect).toHaveBeenCalledWith(mockItems[1]); // Banana (index 1)
+    expect(onSelectLocal).toHaveBeenCalledWith(mockItems[1]); // Banana (index 1)
   });
 
   it("should display a green checkmark when selectedText is provided", () => {
