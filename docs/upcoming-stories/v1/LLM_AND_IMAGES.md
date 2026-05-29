@@ -17,8 +17,9 @@ To enable rich multimedia recipe support and streamline bulk recipe ingestion by
 
 As a user, I want my recipe images to be uploaded to and served from Cloudflare R2 so that pages load instantly and we stay within storage limit allocations.
 
-- **AC 1:** Configure a secure client-side R2 upload endpoint using pre-signed URLs.
-- **AC 2:** When a user uploads a recipe image, the upload is sent directly to R2 and its public URL is saved in the recipe record.
+- **AC 1:** Configure a secure server-side endpoint to generate pre-signed upload URLs for Cloudflare R2.
+- **AC 2:** When a user uploads a recipe image, the client-side browser fetches the pre-signed URL and uploads the file directly to the Cloudflare R2 bucket. This bypasses the Next.js/Vercel serverless function payload size limits (avoiding 413 Payload Too Large errors for files up to 5MB). The resulting R2 image URL is then passed to the recipe parser and saved.
+- **AC 3:** Files uploaded via client-side pre-signed URLs are placed inside a `tmp/` folder inside the R2 bucket. When a recipe import is finalized and successfully saved, the image is moved to a persistent `images/` directory in R2, or a server-side action copies it to a persistent key (the `tmp/` folder is subject to external auto-clearing).
 
 ### Story 2: Unified AI Import Parser
 
@@ -26,8 +27,8 @@ As a user, I want a single text/file intake form to import recipes so that I can
 
 - **AC 1:** Build a single `/recipes/import` interface accepting URLs, pasted text, PDF/Word documents, and image files.
 - **AC 2:** Parse the content into a standard recipe schema using structured Vercel AI SDK outputs.
-- **AC 3:** Replace the import dialog contents with an interactive loading spinner displaying real-time processing updates as the AI reads and structure-parses the file.
-- **AC 4:** Implement robust size validation and render coherent, actionable error messages in the dialog in case of failure (e.g., if files exceed size/token/image limitations).
+- **AC 3:** Replace the content _locally_ inside the import modal container with an interactive loading spinner and helper text (e.g., "Processing...") displaying real-time processing updates as the AI reads and structure-parses the file, without taking over the entire screen.
+- **AC 4:** Implement robust size validation and render coherent, user-friendly error messages _within_ the import modal in case of failure, removing the loading spinner and allowing the user to retry.
 
 ### Story 3: Dedicated "Draft Recipes" Workspace for Bulk Imports
 

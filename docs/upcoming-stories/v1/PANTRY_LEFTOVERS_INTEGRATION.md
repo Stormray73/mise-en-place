@@ -19,7 +19,7 @@ Rework leftovers logic so that when a recipe is planned and cooked, any marked l
 As a chef finishing a recipe, I want a prompt to save my leftovers to the pantry so that I can automatically track my prepared food without manual logging.
 
 - **AC 1:** Finishing a recipe in Play Mode opens a modal asking if the user has leftovers.
-- **AC 2:** The modal includes input fields for `portionsCount`, a custom conversion factor (e.g., `1 portion = 250 g`), and custom shelf life in days.
+- **AC 2:** The modal includes mandatory input fields for `portionsCount` and a custom portion-to-weight conversion factor (e.g., `1 portion = 250 g`), along with custom shelf life in days, to ensure all leftovers can be accurately converted to standard sub-recipe ingredients.
 - **AC 3:** Saving creates a new `PantryItem` record linked to the `Recipe` with a calculated `expiresAt` field.
 
 ### Story 2: Spoilage & Visual Expiration Alerts

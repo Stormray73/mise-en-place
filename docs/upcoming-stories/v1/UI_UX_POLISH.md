@@ -17,7 +17,7 @@ To refine the user interface and overall user experience to ensure a premium, po
 As a user, I want the core planners and store to have consistent width and positioning so that the visual presentation is seamless across all features.
 
 - **AC 1:** Widen the Meal Planner and Recipe Store page containers to match the layouts of the Pantry and Shopping List.
-- **AC 2:** Add a "Current Week" button to the calendar and swap the previous/next week button positions for standard ergonomics.
+- **AC 2:** Add a "Current Week" button to the calendar, and ensure that the Previous Week button is on the left and the Next Week button is on the right for standard calendar ergonomics.
 - **AC 3:** Fix hover icon overlap issues on recipe grid square cards.
 
 ### Story 2: Ingredient Editor Layout Polish
@@ -27,3 +27,11 @@ As a user editing a recipe, I want a clean, non-repetitive layout for the ingred
 - **AC 1:** Remove the duplicate ingredient layout checkboxes outlined in `./docs/scratch/additional-ingredient-checkboxes.png`.
 - **AC 2:** Move the action buttons below directly into the vacant slot left by the removed checkboxes, ensuring proper alignment.
 - **AC 3:** Keep the other standard ingredient property checkboxes intact and properly spaced.
+
+### Story 3: Recipe Editor Yield & Servings UX Polish
+
+As a user creating a new recipe, I want portions and yield fields to have no pre-selected/pre-filled default values, so that I am clearly prompted to enter accurate numbers and units required for precise nutrition and leftovers scaling.
+
+- **AC 1:** In the recipe editor form, the `Servings` input should have no default number (i.e. empty or undefined, not defaulting to 1 or 4), and the `Yield Amount` input should default to empty/undefined when creating a new recipe.
+- **AC 2:** The `Yield Unit` dropdown should have an empty/unselected first option (e.g. "Select Unit...") as the default selection, rather than defaulting to "servings", forcing the user to explicitly select the appropriate unit.
+- **AC 3:** Ensure that client-side validation displays a clear error warning if the user attempts to save a recipe with an empty yield amount or unselected yield unit, helping maintain high data quality for downstream prep-ahead and leftover allocations.

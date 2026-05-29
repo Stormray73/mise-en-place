@@ -64,6 +64,30 @@ This document serves as the central registry for bugs and regressions. It is des
 
 ---
 
+### BUG-046: Open Food Facts Results Lack "OFF" Tag/Badge in Ingredient Autocomplete Dropdowns
+
+**Status:** Active
+**Description:** The autocomplete/search dropdown components when editing ingredients (e.g., in `AddPantryItemModal.tsx` and related recipe ingredient editors) do not display the expected "OFF" source badge for ingredients returned from the Open Food Facts API waterfall fallback, violating Story 3 AC 3 requirements.
+**Reproduction:**
+
+1. Open the "Add Pantry Item" modal from the Pantry dashboard.
+2. Search for a branded product that falls back to the Open Food Facts API.
+3. Observe the search dropdown items; they lack the "OFF" source badge next to the descriptions, making it unclear that the data came from Open Food Facts.
+
+---
+
+### BUG-047: Large Image Import Fails with 413 Payload Too Large on Vercel
+
+**Status:** Active
+**Description:** Importing recipes using larger images (e.g., 4.5 MB) fails on Vercel serverless environment with a `413 Payload Too Large` error due to Vercel's serverless function payload size limitations (max 4.5 MB). We must bypass this limit by implementing a pre-signed URL direct browser-to-R2 upload workflow.
+**Reproduction:**
+
+1. Go to the Recipe Store and open the recipe import interface.
+2. Try importing a recipe by uploading an image larger than 4.5 MB.
+3. The upload process crashes or fails with a `413 Payload Too Large` server error.
+
+---
+
 ## Resolved Bugs
 
 ### BUG-039: Extraneous Cancel Button in Modals
