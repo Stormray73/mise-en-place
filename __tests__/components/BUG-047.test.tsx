@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { RecipeEditor } from "@/components/RecipeEditor";
 import * as actions from "@/app/recipes/actions";
