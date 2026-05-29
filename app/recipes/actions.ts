@@ -126,22 +126,23 @@ export async function importRecipeAction(
         }),
       }));
     } else if (type === "file") {
-      const file = formData.get("file") as File;
-      if (!file) return { success: false, error: "No file provided" };
+      const file = formData.get("file") as File | null;
+      const imageUrlParam = formData.get("imageUrl") as string | null;
+      if (!file && !imageUrlParam)
+        return { success: false, error: "No file or image URL provided" };
 
-      if (file.type.startsWith("image/")) {
+      if (imageUrlParam || (file && file.type.startsWith("image/"))) {
         // Handle image with Vision AI
-        // First upload to R2 if configured, or use base64 (AI SDK supports both)
-        // For simplicity with AI SDK, we'll use base64 or a temp URL if we had one.
-        // Actually uploadToR2 is already there.
-        let imageUrl: string | undefined;
-        if (isR2Configured) {
-          const buffer = Buffer.from(await file.arrayBuffer());
-          imageUrl = await uploadToR2(buffer, file.name, file.type);
-        } else {
-          // Fallback to base64 for AI SDK if R2 is not configured
-          const buffer = Buffer.from(await file.arrayBuffer());
-          imageUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
+        let imageUrl = imageUrlParam;
+        if (!imageUrl && file) {
+          if (isR2Configured) {
+            const buffer = Buffer.from(await file.arrayBuffer());
+            imageUrl = await uploadToR2(buffer, file.name, file.type);
+          } else {
+            // Fallback to base64 for AI SDK if R2 is not configured
+            const buffer = Buffer.from(await file.arrayBuffer());
+            imageUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
+          }
         }
 
         const r = await parseRecipeFromImage(imageUrl!);
@@ -174,7 +175,7 @@ export async function importRecipeAction(
             imageUrl: isR2Configured ? imageUrl : null,
           },
         ];
-      } else {
+      } else if (file) {
         // Handle document extraction
         const buffer = Buffer.from(await file.arrayBuffer());
         const text = await extractTextFromFile(buffer, file.type);
