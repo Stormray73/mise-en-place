@@ -6,6 +6,7 @@ import {
   getTagsAction,
   checkR2ConfiguredAction,
   importRecipeAction,
+  getPresignedUploadUrlAction,
 } from "@/app/recipes/actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getUnits } from "@/lib/units";
@@ -93,21 +94,37 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      // Bypasses Next.js serverless payload limits by uploading directly to R2
+      const presignedRes = await getPresignedUploadUrlAction(
+        file.name,
+        file.type,
+      );
+      if (!presignedRes.success || !presignedRes.data) {
+        setError(presignedRes.error || "Failed to generate upload URL");
+        setIsUploading(false);
+        return;
+      }
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
+      const { uploadUrl, publicUrl } = presignedRes.data;
+
+      // Upload file directly to R2 bucket
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
       });
 
-      const data = await res.json();
-      if (data.imageUrl) {
-        setImageUrl(data.imageUrl);
-      } else {
-        setError(data.error || "Upload failed");
+      if (!uploadRes.ok) {
+        setError("Direct upload to R2 failed");
+        setIsUploading(false);
+        return;
       }
-    } catch {
+
+      setImageUrl(publicUrl);
+    } catch (err) {
+      console.error(err);
       setError("Failed to upload image");
     } finally {
       setIsUploading(false);
