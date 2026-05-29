@@ -213,22 +213,22 @@ export default function MealCalendarClient({
     <div className="space-y-6">
       <div className="flex justify-between items-center bg-zinc-900 p-4 rounded-lg border border-zinc-800">
         <button
-          onClick={() => navigateWeek(-1)}
+          onClick={() => navigateWeek(1)}
           className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded font-bold"
         >
-          &larr; Prev Week
+          Next Week &rarr;
         </button>
         <button
           onClick={() => router.push(pathname)}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded font-bold transition-colors text-white"
         >
-          Back to Current Week
+          Current Week
         </button>
         <button
-          onClick={() => navigateWeek(1)}
+          onClick={() => navigateWeek(-1)}
           className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded font-bold"
         >
-          Next Week &rarr;
+          &larr; Prev Week
         </button>
       </div>
 

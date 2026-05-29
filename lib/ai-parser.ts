@@ -224,27 +224,74 @@ export async function parseRecipe(text: string) {
   }
 }
 
-export async function parseBulkRecipes(text: string) {
-  try {
-    const { object } = await generateObject({
-      model: getOpenAIModel(),
-      schema: z.object({
-        recipes: z.array(RecipeSchema),
-      }),
-      prompt: `Extract all recipes found in the following text. 
-      Look for cooking times in the instructions and convert them to seconds for the 'timerInSeconds' field.
-      Handle fractions in ingredient quantities by converting to decimals.
-      If only one recipe is found, return it in the 'recipes' array.
-      
-      Text:
-      ${text}`,
-    });
-
-    return object.recipes;
-  } catch (error) {
-    console.error("AI Bulk Recipe Parsing failed:", error);
-    throw error;
+export function chunkText(text: string, maxChunkSize = 6000): string[] {
+  if (text.length <= maxChunkSize) {
+    return [text];
   }
+
+  const paragraphs = text.split(/\n\s*\n/);
+  const chunks: string[] = [];
+  let currentChunk: string[] = [];
+  let currentLength = 0;
+
+  for (const paragraph of paragraphs) {
+    const trimmed = paragraph.trim();
+    if (!trimmed) continue;
+
+    const additionLength = trimmed.length + (currentChunk.length > 0 ? 2 : 0);
+
+    if (
+      currentLength + additionLength > maxChunkSize &&
+      currentChunk.length > 0
+    ) {
+      chunks.push(currentChunk.join("\n\n"));
+      currentChunk = [trimmed];
+      currentLength = trimmed.length;
+    } else {
+      currentChunk.push(trimmed);
+      currentLength += additionLength;
+    }
+  }
+
+  if (currentChunk.length > 0) {
+    chunks.push(currentChunk.join("\n\n"));
+  }
+
+  return chunks;
+}
+
+export async function parseBulkRecipes(
+  text: string,
+): Promise<z.infer<typeof RecipeSchema>[]> {
+  const chunks = chunkText(text, 6000);
+  const allRecipes: z.infer<typeof RecipeSchema>[] = [];
+
+  for (const chunk of chunks) {
+    try {
+      const { object } = await generateObject({
+        model: getOpenAIModel(),
+        schema: z.object({
+          recipes: z.array(RecipeSchema),
+        }),
+        prompt: `Extract all recipes found in the following text. 
+        Look for cooking times in the instructions and convert them to seconds for the 'timerInSeconds' field.
+        Handle fractions in ingredient quantities by converting to decimals.
+        If only one recipe is found, return it in the 'recipes' array.
+        
+        Text:
+        ${chunk}`,
+      });
+
+      if (object.recipes && Array.isArray(object.recipes)) {
+        allRecipes.push(...object.recipes);
+      }
+    } catch (error) {
+      console.error("AI Bulk Recipe Parsing failed for chunk:", error);
+      throw error;
+    }
+  }
+
+  return allRecipes;
 }
 
 export async function parseRecipeFromImage(imageUrl: string) {

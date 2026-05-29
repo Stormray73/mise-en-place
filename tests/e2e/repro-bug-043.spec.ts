@@ -1,8 +1,30 @@
 import { test, expect } from "@playwright/test";
+import { resetDatabase } from "./db-helper";
 
 test("BUG-043: Duplicate planned recipes are prevented in a single meal slot", async ({
   page,
 }) => {
+  await resetDatabase();
+
+  // Create a recipe first to ensure at least one recipe exists
+  await page.goto("/recipes/new");
+  const uniqueTitle = `UXRecipe${Date.now()}`;
+  await page.getByLabel(/Recipe Title/i).fill(uniqueTitle);
+
+  // Add tomatoes as an ingredient
+  await page.getByPlaceholder(/search ingredients/i).fill("Tomatoes");
+  const tomatoesBtn = page
+    .locator("button")
+    .filter({ hasText: /Tomatoes, red, ripe/i })
+    .first();
+  await expect(tomatoesBtn).toBeVisible({ timeout: 20000 });
+  await tomatoesBtn.click();
+
+  // Save recipe
+  await page.getByRole("button", { name: /save recipe/i }).click();
+  await expect(page).toHaveURL(/\/recipes/);
+
+  // Go to meal planner
   await page.goto("/meal-planner");
 
   // Wait for the calendar to load
