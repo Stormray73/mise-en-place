@@ -30,10 +30,43 @@ import { extractTextFromFile } from "@/lib/file-extractor";
 import { checkRecipeLimit, checkAiLimit, incrementAiUsage } from "@/lib/limits";
 import { Tier, RecipeStatus } from "@prisma/client";
 
-import { isR2Configured, uploadImage as uploadToR2 } from "@/lib/r2";
+import {
+  isR2Configured,
+  uploadImage as uploadToR2,
+  getPresignedUploadUrl,
+  persistR2Image,
+  extractR2KeyFromUrl,
+} from "@/lib/r2";
 
 export async function checkR2ConfiguredAction(): Promise<boolean> {
   return isR2Configured;
+}
+
+export async function getPresignedUploadUrlAction(
+  fileName: string,
+  contentType: string,
+): Promise<
+  ActionResult<{ uploadUrl: string; publicUrl: string; key: string }>
+> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    if (!isR2Configured) {
+      return { success: false, error: "Cloudflare R2 is not configured" };
+    }
+
+    const data = await getPresignedUploadUrl(fileName, contentType);
+    return { success: true, data };
+  } catch (err) {
+    console.error("Failed to generate presigned upload URL:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
 export async function importRecipeAction(
@@ -506,8 +539,21 @@ export async function saveRecipeAction(
       }),
     );
 
+    let finalImageUrl = data.imageUrl;
+    if (isR2Configured && data.imageUrl) {
+      const tmpKey = extractR2KeyFromUrl(data.imageUrl);
+      if (tmpKey && tmpKey.startsWith("tmp/")) {
+        try {
+          finalImageUrl = await persistR2Image(tmpKey);
+        } catch (err) {
+          console.error("Failed to persist temp R2 image:", err);
+        }
+      }
+    }
+
     const recipeData = {
       ...data,
+      imageUrl: finalImageUrl,
       status: "PUBLISHED" as RecipeStatus,
       userId: session.user.id,
       components: componentsWithIngredients.map((c) => ({
