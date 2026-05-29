@@ -108,7 +108,22 @@ export default function AddPantryItemModal({
           keyExtractor={(food) => food.fdcId.toString()}
           renderItem={(food) => (
             <>
-              <div className="font-medium">{food.description}</div>
+              <div className="font-medium flex items-center gap-2">
+                <span>{food.description}</span>
+                {food.source && (
+                  <span
+                    className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
+                      food.source === "USDA"
+                        ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                        : food.source === "OFF"
+                          ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                          : "bg-zinc-500/20 text-zinc-400 border border-zinc-500/30"
+                    }`}
+                  >
+                    {food.source}
+                  </span>
+                )}
+              </div>
               <div className="text-xs text-zinc-400">{food.foodCategory}</div>
             </>
           )}
