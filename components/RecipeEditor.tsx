@@ -99,7 +99,7 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
         file.name,
         file.type,
       );
-      if (!presignedRes.success || !presignedRes.data) {
+      if (!presignedRes.success) {
         setError(presignedRes.error || "Failed to generate upload URL");
         setIsUploading(false);
         return;
