@@ -84,14 +84,14 @@ export default function ImportRecipeModal({ onClose }: ImportRecipeModalProps) {
             });
 
             if (!uploadRes.ok) {
-              throw new Error("Direct R2 upload failed");
+              throw new Error("Direct storage upload failed");
             }
             formData.append("imageUrl", publicUrl);
           } else {
             // Fallback for smaller files if R2 isn't configured
             if (file.size > 1 * 1024 * 1024) {
               setError(
-                "Cloudflare R2 is not configured to handle large file uploads.",
+                "Storage service is not configured to handle large file uploads.",
               );
               setLoading(false);
               return;
