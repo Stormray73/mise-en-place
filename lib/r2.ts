@@ -6,10 +6,16 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
+const R2_ACCOUNT_ID =
+  process.env.R2_ACCOUNT_ID ||
+  (process.env.AWS_ENDPOINT_URL
+    ? process.env.AWS_ENDPOINT_URL.split("/")[2]?.split(".")[0]
+    : undefined);
+const R2_ACCESS_KEY_ID =
+  process.env.R2_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+const R2_SECRET_ACCESS_KEY =
+  process.env.R2_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || process.env.BUCKET_NAME;
 const R2_PUBLIC_CUSTOM_DOMAIN = process.env.R2_PUBLIC_CUSTOM_DOMAIN;
 
 export const isR2Configured = !!(
