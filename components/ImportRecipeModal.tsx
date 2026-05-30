@@ -65,7 +65,10 @@ export default function ImportRecipeModal({ onClose }: ImportRecipeModalProps) {
         return;
       }
 
-      if (file.type.startsWith("image/")) {
+      const isImage =
+        file.type.startsWith("image/") ||
+        /\.(jpg|jpeg|png|webp|gif|heic)$/i.test(file.name);
+      if (isImage) {
         // Try direct client-to-R2 upload to bypass Vercel 4.5MB payload limit
         try {
           setProcessingStatus("Uploading image to storage...");
