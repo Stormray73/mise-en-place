@@ -76,19 +76,27 @@ This document serves as the central registry for bugs and regressions. It is des
 
 ---
 
-### BUG-047: Large Image Import Fails with 413 Payload Too Large on Vercel
+### BUG-048: Aggressive Noise-Word Stripping Causes False Positives in Sub-Recipe Auto-linking
 
 **Status:** Active
-**Description:** Importing recipes using larger images (e.g., 4.5 MB) fails on Vercel serverless environment with a `413 Payload Too Large` error due to Vercel's serverless function payload size limitations (max 4.5 MB). We must bypass this limit by implementing a pre-signed URL direct browser-to-R2 upload workflow.
+**Description:** When importing recipes, the sub-recipe auto-linking matching engine uses the aggressive `cleanIngredientName` utility which strips state/texture descriptors like `"powder"` from ingredient names. This causes basic pantry staples (like `"Chili Powder"`) to clean down to `"chili"`, which matches existing complex cooked recipes (like a `"Chili"` recipe) case-insensitively, resulting in incorrect sub-recipe links.
 **Reproduction:**
 
-1. Go to the Recipe Store and open the recipe import interface.
-2. Try importing a recipe by uploading an image larger than 4.5 MB.
-3. The upload process crashes or fails with a `413 Payload Too Large` server error.
+1. Import or create a recipe titled `"Chili"`.
+2. Import a new recipe containing `"Chili Powder"` as an ingredient.
+3. Observe that `"Chili Powder"` is automatically converted into a `sub-recipe` linked to the `"Chili"` recipe in the editor rather than remaining a raw ingredient.
 
 ---
 
 ## Resolved Bugs
+
+### BUG-047: Large Image Import Fails with 413 Payload Too Large on Vercel
+
+**Status:** Resolved
+**Fix:** Implemented direct browser-to-R2 upload using pre-signed upload URLs in `RecipeEditor.tsx` and `ImportRecipeModal.tsx`. Added size validation and dynamic support for standard AWS S3 SDK environment variable names, bypassing Vercel serverless size limitations.
+**Verification:** Added unit tests verifying direct PUT upload and Server Action integration.
+
+---
 
 ### BUG-039: Extraneous Cancel Button in Modals
 
