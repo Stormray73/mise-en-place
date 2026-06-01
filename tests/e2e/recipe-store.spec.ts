@@ -107,6 +107,8 @@ test.describe("Recipe Store User Journeys", () => {
 
     // Fill title
     await page.getByLabel(/recipe title/i).fill("Qualitative Test Recipe");
+    await page.locator("#yieldAmount").fill("4");
+    await page.locator("#yieldUnit").selectOption("item");
 
     // Add first ingredient (Tomatoes)
     await page.getByPlaceholder(/search ingredients/i).fill("Tomatoes");

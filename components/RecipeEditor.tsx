@@ -32,10 +32,10 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
     initialData?.isFavorite || false,
   );
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
-  const [yieldAmount, setYieldAmount] = useState(initialData?.yieldAmount || 1);
-  const [yieldUnit, setYieldUnit] = useState(
-    initialData?.yieldUnit || "servings",
+  const [yieldAmount, setYieldAmount] = useState<number | undefined>(
+    initialData?.yieldAmount || undefined,
   );
+  const [yieldUnit, setYieldUnit] = useState(initialData?.yieldUnit || "");
   const [servings, setServings] = useState<number | undefined>(
     initialData?.servings || undefined,
   );
@@ -65,8 +65,8 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
         try {
           const data = JSON.parse(saved) as RecipeSaveData;
           setTitle(data.title || "");
-          setYieldAmount(data.yieldAmount || 1);
-          setYieldUnit(data.yieldUnit || "servings");
+          setYieldAmount(data.yieldAmount || undefined);
+          setYieldUnit(data.yieldUnit || "");
           setServings(data.servings || undefined);
           setSteps(data.steps || []);
           setComponents(data.components || []);
@@ -221,6 +221,20 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
 
     if (!title.trim()) {
       setError("Recipe title is required.");
+      return;
+    }
+
+    if (
+      yieldAmount === undefined ||
+      isNaN(parseFloat(yieldAmount.toString())) ||
+      parseFloat(yieldAmount.toString()) <= 0
+    ) {
+      setError("Yield amount is required and must be greater than 0.");
+      return;
+    }
+
+    if (!yieldUnit) {
+      setError("Yield unit is required.");
       return;
     }
 
@@ -408,9 +422,14 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
           <Input
             id="yieldAmount"
             type="number"
-            value={yieldAmount}
-            onChange={(e) => setYieldAmount(parseFloat(e.target.value))}
+            value={yieldAmount !== undefined ? yieldAmount : ""}
+            onChange={(e) =>
+              setYieldAmount(
+                e.target.value ? parseFloat(e.target.value) : undefined,
+              )
+            }
             className="mt-1"
+            placeholder="e.g. 4"
           />
         </div>
         <div>
@@ -426,6 +445,7 @@ export function RecipeEditor({ initialData }: RecipeEditorProps) {
             onChange={(e) => setYieldUnit(e.target.value)}
             className="mt-1"
           >
+            <option value="">Select Unit...</option>
             {getUnits().map((unit) => (
               <option key={unit} value={unit}>
                 {unit}

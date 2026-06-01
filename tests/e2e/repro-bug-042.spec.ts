@@ -14,6 +14,8 @@ test.describe("BUG-042: Prep-Ahead Aggregator Sync on Recipe Deletion", () => {
     await page.goto("/recipes/new");
     const uniqueTitle = `UXRecipe${Date.now()}`;
     await page.getByLabel(/Recipe Title/i).fill(uniqueTitle);
+    await page.locator("#yieldAmount").fill("4");
+    await page.locator("#yieldUnit").selectOption("item");
 
     // Add tomatoes as an ingredient
     await page.getByPlaceholder(/search ingredients/i).fill("Tomatoes");

@@ -141,6 +141,14 @@ describe("RecipeEditor", () => {
       target: { value: "Test Recipe" },
     });
 
+    fireEvent.change(screen.getByLabelText(/Yield Amount/i), {
+      target: { value: "4" },
+    });
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Yield Unit/i }), {
+      target: { value: "cup" },
+    });
+
     const addStepButton = screen.getByText(/Add Step/i);
     fireEvent.click(addStepButton); // Step 1
     fireEvent.click(addStepButton); // Step 2
@@ -184,6 +192,14 @@ describe("RecipeEditor", () => {
       target: { value: "Onion Recipe" },
     });
 
+    fireEvent.change(screen.getByLabelText(/Yield Amount/i), {
+      target: { value: "1" },
+    });
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Yield Unit/i }), {
+      target: { value: "item" },
+    });
+
     // Add ingredient
     const searchInput = screen.getByPlaceholderText(/Search ingredients.../i);
     fireEvent.change(searchInput, { target: { value: "Onion" } });
@@ -217,6 +233,55 @@ describe("RecipeEditor", () => {
           ]),
         }),
       );
+    });
+  });
+
+  test("BUG-048 UX servings/yield polish validation", async () => {
+    render(<RecipeEditor />);
+
+    // 1. Servings and Yield Amount should be empty/undefined by default
+    const yieldAmountInput = screen.getByLabelText(
+      /Yield Amount/i,
+    ) as HTMLInputElement;
+    const servingsInput = screen.getByLabelText(
+      /Servings/i,
+    ) as HTMLInputElement;
+    const yieldUnitSelect = screen.getByRole("combobox", {
+      name: /Yield Unit/i,
+    }) as HTMLSelectElement;
+
+    expect(yieldAmountInput.value).toBe("");
+    expect(servingsInput.value).toBe("");
+    expect(yieldUnitSelect.value).toBe("");
+
+    // 2. Click save and check validation errors
+    const titleInput = screen.getByLabelText(/Recipe Title/i);
+    fireEvent.change(titleInput, { target: { value: "A Perfect Pie" } });
+
+    const saveButton = screen.getByText(/Save Recipe/i);
+    fireEvent.click(saveButton);
+
+    // Yield amount error is displayed
+    await waitFor(() => {
+      expect(screen.getByText(/Yield amount is required/i)).toBeInTheDocument();
+    });
+
+    // Provide yield amount, but no unit
+    fireEvent.change(yieldAmountInput, { target: { value: "2" } });
+    fireEvent.click(saveButton);
+
+    // Yield unit error is displayed
+    await waitFor(() => {
+      expect(screen.getByText(/Yield unit is required/i)).toBeInTheDocument();
+    });
+
+    // Provide unit
+    fireEvent.change(yieldUnitSelect, { target: { value: "item" } });
+    fireEvent.click(saveButton);
+
+    // No validation errors, should invoke save
+    await waitFor(() => {
+      expect(mockSaveRecipe).toHaveBeenCalled();
     });
   });
 });

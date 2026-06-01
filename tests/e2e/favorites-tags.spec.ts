@@ -12,6 +12,8 @@ test.describe("Favorites and Tags User Journeys", () => {
     // 1. Create a new recipe with tags and favorite status
     await page.goto("/recipes/new");
     await page.getByLabel(/recipe title/i).fill(recipeTitle);
+    await page.locator("#yieldAmount").fill("4");
+    await page.locator("#yieldUnit").selectOption("item");
     await page.getByTitle(/favorite/i).click(); // Toggle favorite on
 
     // Add tags
