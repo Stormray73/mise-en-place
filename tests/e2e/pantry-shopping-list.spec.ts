@@ -179,6 +179,8 @@ test.describe("Pantry & Shopping List", () => {
     await page.goto("/recipes/new");
     await page.waitForSelector("#title", { state: "visible" });
     await page.locator("#title").fill(`Uncookable ${uniqueIngName}`);
+    await page.locator("#yieldAmount").fill("4");
+    await page.locator("#yieldUnit").selectOption("item");
 
     await page.getByPlaceholder(/Search ingredients/i).fill(uniqueIngName);
     const listbox = page.locator('[role="listbox"]');

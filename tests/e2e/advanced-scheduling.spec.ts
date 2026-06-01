@@ -15,6 +15,8 @@ test.describe("Story 12: Advanced Scheduling User Journeys", () => {
     await page.goto("/recipes/new");
     const uniqueTitle = `SchedRecipe${Date.now()}`;
     await page.getByLabel(/Recipe Title/i).fill(uniqueTitle);
+    await page.locator("#yieldAmount").fill("4");
+    await page.locator("#yieldUnit").selectOption("item");
 
     // Add an ingredient so it has prep content
     await page.getByPlaceholder(/search ingredients/i).fill("Tomatoes");

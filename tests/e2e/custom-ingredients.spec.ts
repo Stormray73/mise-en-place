@@ -47,7 +47,7 @@ test.describe("Custom Ingredients User Journeys", () => {
     await expect(page).toHaveURL(/\/dashboard\/pantry/, { timeout: 15000 });
 
     // Verify it appears in My Ingredients
-    const customSection = page.getByText("My Custom Ingredients");
+    const customSection = page.getByText("My Custom Ingredients").first();
     await expect(customSection).toBeVisible();
 
     const ingredientCard = page

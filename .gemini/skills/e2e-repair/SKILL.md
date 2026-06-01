@@ -10,8 +10,9 @@ This skill provides specialized instructions for an agent to fetch remote E2E te
 ## Core Mandates
 
 1.  **Remote Report Fetching:**
-    - Run the fetch-e2e-report script to retrieve the latest Playwright report artifact from GitHub Actions:
-      `./scripts/fetch-e2e-report.sh`
+    - Identify the current branch using git: `git branch --show-current`
+    - Run the fetch-e2e-report script with the `--branch` flag to target only this branch:
+      `./scripts/fetch-e2e-report.sh --branch <current-branch>`
     - Analyze the HTML report/JSON files located in `playwright-report/` to pinpoint exactly which tests failed and why.
 
 2.  **Surgical Test & Component Repair:**
@@ -33,7 +34,8 @@ This skill provides specialized instructions for an agent to fetch remote E2E te
 ## Workflow
 
 1.  **Fetch & Analyze:**
-    - Run `./scripts/fetch-e2e-report.sh` to populate the `playwright-report/` directory.
+    - Get the current git branch name using `git branch --show-current`.
+    - Run `./scripts/fetch-e2e-report.sh --branch <current-branch>` to populate the `playwright-report/` directory.
     - Parse the reports to identify the failing specs.
 
 2.  **Triage:**

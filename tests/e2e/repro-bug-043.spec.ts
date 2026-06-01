@@ -10,6 +10,8 @@ test("BUG-043: Duplicate planned recipes are prevented in a single meal slot", a
   await page.goto("/recipes/new");
   const uniqueTitle = `UXRecipe${Date.now()}`;
   await page.getByLabel(/Recipe Title/i).fill(uniqueTitle);
+  await page.locator("#yieldAmount").fill("4");
+  await page.locator("#yieldUnit").selectOption("item");
 
   // Add tomatoes as an ingredient
   await page.getByPlaceholder(/search ingredients/i).fill("Tomatoes");
