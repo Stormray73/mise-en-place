@@ -35,3 +35,10 @@ As a user creating a new recipe, I want portions and yield fields to have no pre
 - **AC 1:** In the recipe editor form, the `Servings` input should have no default number (i.e. empty or undefined, not defaulting to 1 or 4), and the `Yield Amount` input should default to empty/undefined when creating a new recipe.
 - **AC 2:** The `Yield Unit` dropdown should have an empty/unselected first option (e.g. "Select Unit...") as the default selection, rather than defaulting to "servings", forcing the user to explicitly select the appropriate unit.
 - **AC 3:** Ensure that client-side validation displays a clear error warning if the user attempts to save a recipe with an empty yield amount or unselected yield unit, helping maintain high data quality for downstream prep-ahead and leftover allocations.
+
+### Story 4: Import Dialog Hover Layout Refinement
+
+As a user, I want the import recipe dialog container to remain stable in size when hovering over action buttons, so that no unexpected horizontal or vertical scrollbars appear on the screen.
+
+- **AC 1:** Investigate and resolve the layout glitch illustrated in `./docs/screenshots/import-scroll-bars.png` where hovering over the "Import" action button inside the import modal causes horizontal and vertical scrollbars to briefly or permanently appear.
+- **AC 2:** Ensure the `Modal` body/container has robust overflow constraints (e.g. hidden or auto scrollbars without layout shifting) or that button hover transitions (e.g. scales, margins, shadows, or outline/borders) do not shift adjacent elements or expand the container beyond its limits.

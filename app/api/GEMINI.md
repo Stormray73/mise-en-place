@@ -17,8 +17,8 @@ These are Next.js Route Handlers (not Server Actions). They exist where a tradit
 The unified ingredient search endpoint. Returns a merged, prioritized list of foods:
 
 1. **Custom Ingredients** (from the app's own `Ingredient` table, scoped to `userId`)
-2. **USDA FoodData Central** (via `USDA_API_KEY` env var) — used for whole foods
-3. **Open Food Facts (OFF)** — fallback when USDA returns no results, or when `branded=true` is passed to search packaged/branded products
+2. **USDA FoodData Central** (via `USDA_API_KEY` env var) — queried for whole foods
+3. **Open Food Facts (OFF)** — queried in parallel and combined with USDA results to cover branded items and spices (or queried alone when `branded=true` is passed)
 
 The response shape is `{ foods: USDAFood[] }`, where each item includes `fdcId`, `description`, `foodNutrients`, `foodPortions`, and a `source` field (`"USDA"`, `"OFF"`, or `"Local"`).
 

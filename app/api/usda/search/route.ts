@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
     const branded = searchParams.get("branded") === "true";
     const apiKey = process.env.USDA_API_KEY;
     let usdaFoods: (Record<string, unknown> | OFFNormalizedFood)[] = [];
+    let offFoods: OFFNormalizedFood[] = [];
 
     if (process.env.ENABLE_MSW === "true") {
       usdaFoods = [
@@ -81,36 +82,46 @@ export async function GET(request: NextRequest) {
           foodNutrients: [],
         },
       ];
-    } else if (!branded && apiKey) {
-      try {
-        const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
-        const response = await fetch(url);
-        if (response.ok) {
-          const data = await response.json();
-          usdaFoods = (data.foods || []).map(
-            (food: Record<string, unknown>) => ({
-              ...food,
-              source: "USDA",
-            }),
-          );
-        }
-      } catch (err) {
-        console.error("USDA fetch failed:", err);
+      offFoods = await searchOpenFoodFacts(query);
+    } else {
+      const promises: Promise<void>[] = [];
+
+      if (!branded && apiKey) {
+        promises.push(
+          (async () => {
+            try {
+              const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
+              const response = await fetch(url);
+              if (response.ok) {
+                const data = await response.json();
+                usdaFoods = (data.foods || []).map(
+                  (food: Record<string, unknown>) => ({
+                    ...food,
+                    source: "USDA",
+                  }),
+                );
+              }
+            } catch (err) {
+              console.error("USDA fetch failed:", err);
+            }
+          })(),
+        );
       }
+
+      promises.push(
+        (async () => {
+          try {
+            offFoods = await searchOpenFoodFacts(query);
+          } catch (err) {
+            console.error("Open Food Facts search failed:", err);
+          }
+        })(),
+      );
+
+      await Promise.all(promises);
     }
 
-    // Waterfall to Open Food Facts if USDA returned no results, or if specifically looking for branded items,
-    // or if USDA API key is not configured.
-    if (usdaFoods.length === 0 || branded) {
-      try {
-        const offFoods = await searchOpenFoodFacts(query);
-        usdaFoods = offFoods; // already mapped with source: "OFF"
-      } catch (err) {
-        console.error("Open Food Facts search failed:", err);
-      }
-    }
-
-    const foods = [...customIngredients, ...usdaFoods];
+    const foods = [...customIngredients, ...usdaFoods, ...offFoods];
     return NextResponse.json({ foods });
   } catch (error) {
     console.error("Ingredient Search Error:", error);
